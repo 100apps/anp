@@ -1,0 +1,40 @@
+{
+  "scope": "新版工作台管理入口修复；API 与实际管理页面路径验证，不等于全部管理页面交互验收",
+  "checked_at_utc": "2026-10-17T21:22:42.598209+00:00",
+  "before": {
+    "rustfs_probe": "仍使用旧配置的 9000 端口",
+    "rustfs_link": "硬编码 localhost:9001",
+    "lens_entry": "缺失",
+    "address_rewrite": "127.0.0.1 被强制改成 localhost"
+  },
+  "after": {
+    "rustfs_api": "http://127.0.0.1:9002/health",
+    "rustfs_console": "http://127.0.0.1:9003/rustfs/console/",
+    "lens": "http://127.0.0.1:8089/lens/ui/",
+    "litellm": "http://127.0.0.1:8089/litellm/ui/",
+    "agent_docs": "http://127.0.0.1:8089/agent/docs",
+    "cloud_console_and_health": "仅使用显式配置，无配置时标记外部服务，不猜测厂商接口"
+  },
+  "tests": [
+    {
+      "scope": "配置、实际管理入口、角色变更",
+      "passed": 7,
+      "seconds": 1.79
+    },
+    {
+      "scope": "匿名、开发者、只读与跨工作空间权限",
+      "passed": 1,
+      "seconds": 1.12
+    }
+  ],
+  "initial_probe_failure": {
+    "rustfs_console_port_root": 403,
+    "correct_console_path": 200,
+    "result": "已修正默认路径，不把端口根路径计为成功"
+  },
+  "api_reload": {
+    "new_session": 71520,
+    "reason": "生成的环境变量已改变，重启自己的 API 控制器使新配置生效；源码热更新继续保留"
+  },
+  "local_runtime_image_update": "待将最新 SDK 打包并复验；API 当前由本机源码运行"
+}

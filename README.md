@@ -125,3 +125,5 @@ RustFS 控制台属于存储层，地址由宿主端口配置。LangSmith Studio
 最新源码可能带来数据库迁移，切换正式镜像前应保留各数据库的逻辑备份。新平台五库已逐库实际还原验证，备份位于 Git 忽略的 `.local/backups/v3-postgres-before-ci-20261017T211306Z/`，私有备份不要提交仓库。Supabase 镜像中完整还原所有权需要 `supabase_admin` 管理角色，普通 `postgres` 角色会因不能 `SET ROLE supabase_admin` 失败。
 
 本次验证保留所有权和 ACL，但依赖当前实例已有角色；不代表跨库原子备份或四种存储的完整灾难恢复。后续新写入不在该快照内，正式升级前需要按当时数据重新备份。实际范围见 [备份与还原证据](docs/evidence/v3-postgres-backup-restore-20261018.json)。
+
+工作台“平台连接”的管理地址来自当前部署配置。RustFS 默认使用 API 端口加一的控制台端口和 `/rustfs/console/` 路径；也可设置 `storage.s3_console_url`、`storage.s3_health_url`。改用云对象存储时，控制台和健康地址需显式提供；未提供健康接口时显示“外部工具”，不会探测旧本机实例。生成配置后重新启动 F5/API，使新的环境变量生效。

@@ -21,6 +21,30 @@ def address(url):
     return host+(':'+str(parsed.port) if parsed.port else '')
 
 
+def storage_management(resources):
+    """宿主探测与浏览器管理地址；云存储的控制台和健康接口需要显式提供。"""
+    local='rustfs' in resources.get('local',[])
+    endpoint=resources.get('s3_host_url','http://127.0.0.1:9000')
+    console=resources.get('s3_console_url')
+    health=resources.get('s3_health_url')
+    if local:
+        parsed=urlsplit(endpoint)
+        if not parsed.hostname:raise ValueError('对象存储 URL 缺少主机地址')
+        host='['+parsed.hostname+']' if ':' in parsed.hostname else parsed.hostname
+        console=console or urlunsplit((parsed.scheme,
+            host+':'+str(resources.get('s3_console_port',(parsed.port or 9000)+1)),'/rustfs/console/','',''))
+        health=health or endpoint.rstrip('/')+'/health'
+    for url in [endpoint,console,health]:
+        if not url:continue
+        parsed=urlsplit(url)
+        if parsed.scheme not in ('http','https') or not parsed.hostname or parsed.username or parsed.password:
+            raise ValueError('对象存储管理地址必须是无内嵌凭据的 HTTP(S) URL')
+        if parsed.port is not None and not 1<=parsed.port<=65535:
+            raise ValueError('对象存储管理地址端口必须为 1–65535')
+    return {'endpoint':endpoint,'console_url':console or '', 'health_url':health or '',
+        'kind':'rustfs' if local else 's3'}
+
+
 def relocate(original,base):
     old,new=urlsplit(original),urlsplit(base)
     credentials=quote(unquote(old.username or ''),safe='')+':'+quote(unquote(old.password or ''),safe='')

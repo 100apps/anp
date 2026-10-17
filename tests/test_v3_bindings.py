@@ -6,7 +6,7 @@ from urllib.parse import urlsplit
 import pytest
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from platform_bindings import bind,expand,relocate
+from platform_bindings import bind,expand,relocate,storage_management
 from bundle_platform import validate_release
 
 
@@ -67,6 +67,22 @@ def test_no_binding_preserves_default_endpoints():
     bind(config,{}, {})
     assert config['services']==old['services']
     assert config['storage']==old['storage']
+
+
+def test_storage_management_uses_isolated_ports_and_explicit_cloud_urls():
+    local=storage_management({'local':['rustfs'],'s3_host_url':'http://127.0.0.1:9002'})
+    assert local=={'endpoint':'http://127.0.0.1:9002','console_url':'http://127.0.0.1:9003/rustfs/console/',
+        'health_url':'http://127.0.0.1:9002/health','kind':'rustfs'}
+    ipv6=storage_management({'local':['rustfs'],'s3_host_url':'http://[::1]:9002','s3_console_port':9103})
+    assert ipv6['console_url']=='http://[::1]:9103/rustfs/console/'
+    cloud={'local':[],'s3_host_url':'https://objects.example'}
+    addresses=storage_management(cloud)
+    assert addresses['kind']=='s3' and addresses['console_url']==addresses['health_url']==''
+    cloud.update(s3_console_url='https://console.example/project',s3_health_url='https://status.example/ready')
+    assert storage_management(cloud)['console_url']=='https://console.example/project'
+    for address in ['https://user:private@console.example','javascript:alert(1)']:
+        with pytest.raises(ValueError,match='无内嵌凭据'):
+            storage_management({**cloud,'s3_console_url':address})
 
 
 def test_formal_image_cannot_omit_agent_engine_even_when_other_components_exist():

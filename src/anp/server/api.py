@@ -132,25 +132,30 @@ async def change_role(user_id:str,body:MemberRole,actor=Depends(get_actor)):
 async def connections(actor=Depends(get_actor)):
     if not await actor.objects.rpc('is_admin'):
         raise BusinessError('仅平台管理员可以管理基础设施连接',403,'FORBIDDEN')
-    items=[
+    definitions=[
         ('supabase','Supabase',value('supabase','url'),'/auth/v1/health','认证、对象与文件'),
         ('litellm','LiteLLM',value('litellm','url').removesuffix('/v1'),'/health/liveliness','模型网关'),
         ('langfuse','Langfuse',value('langfuse','url'),'/api/public/health','运行追踪'),
-        ('rustfs','RustFS',value('storage','endpoint'),'/health/ready','对象存储'),
         ('dbx','DBX',value('dbx','url'),'/api/auth/check','数据库管理'),
         ('agent','Agent Server',value('agent','url'),'/ok','图执行引擎'),
     ]
+    items=[(name,label,url+probe,
+        url+('/ui/' if name=='litellm' else '/docs' if name=='agent' else '/'),description)
+        for name,label,url,probe,description in definitions]
+    items.append(('rustfs','RustFS' if value('storage','kind','rustfs')=='rustfs' else 'S3 对象存储',
+        value('storage','health_url'),value('storage','console_url') or value('storage','endpoint'),'对象存储'))
+    lens=value('lens','url')
+    if lens:items.append(('lens','Lens',lens+'/health/ready',lens+'/ui/','模型调用追踪与诊断'))
     async def check(item):
-        name,label,url,probe,description=item
+        name,label,probe,public,description=item
+        if not probe:return {'id':name,'name':label,'url':public,'status':'external','description':description}
         try:
             async with async_client(timeout=4,trust_env=False) as client:
                 headers={'apikey':secret('ANON_KEY')} if name=='supabase' else {}
                 if name=='agent': headers={'Authorization':'Bearer '+secret('ENGINE_TOKEN')}
-                r=await client.get(url+probe,headers=headers)
+                r=await client.get(probe,headers=headers)
             status='ok' if r.is_success else 'unavailable'
         except httpx.HTTPError: status='unavailable'
-        public=url.replace('127.0.0.1','localhost')
-        if name=='rustfs': public='http://localhost:9001'
         return {'id':name,'name':label,'url':public,'status':status,'description':description}
     result=await asyncio.gather(*(check(i) for i in items))
     from urllib.parse import quote

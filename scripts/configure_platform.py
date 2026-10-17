@@ -7,7 +7,7 @@ import secrets
 import tomllib
 import os
 from urllib.parse import quote,urlsplit
-from platform_bindings import bind,expand,relocate
+from platform_bindings import bind,expand,relocate,storage_management
 from anp.applications.registry import applications
 import yaml
 from dotenv import dotenv_values
@@ -176,8 +176,13 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
     (output/'handoff').mkdir(exist_ok=True)
     host_pg=expanded.get('storage',{}).get('postgres_host_url') or dsn('postgres','supabase_admin',s['POSTGRES_PASSWORD']).replace('postgres:5432',f'127.0.0.1:{54323 if smoke else 54322}')
     agent_dsn=expanded.get('postgres',{}).get('urls',{}).get('agent') or relocate(dsn('agent_local','agent',s['AGENT_DB_PASSWORD']),host_pg)
+    object_management=storage_management(expanded.get('storage') or {
+        'local':['rustfs'],'s3_host_url':f'http://127.0.0.1:{9002 if smoke else 9000}'})
     environment={'ANP_PROFILE':'v3','ANP_SUPABASE_URL':public+'/supabase','ANP_AGENT_URL':public+'/agent',
         'ANP_AGENT_SHARED':'true','ANP_LANGFUSE_URL':public+'/langfuse','ANP_LITELLM_URL':public+'/litellm/v1',
+        'ANP_LENS_URL':public+'/lens','ANP_STORAGE_ENDPOINT':object_management['endpoint'],
+        'ANP_STORAGE_CONSOLE_URL':object_management['console_url'],'ANP_STORAGE_HEALTH_URL':object_management['health_url'],
+        'ANP_STORAGE_KIND':object_management['kind'],
         'ANP_DBX_URL':public+'/dbx','ANP_WORKBENCH_API_URL':public,'ANP_WORKBENCH_WORKER_URL':worker,
         'ANP_WORKBENCH_WEB_URL':public+'/workbench/','ANP_DEVELOPMENT_API_PORT':str(api_port),
         'ANP_DEVELOPMENT_WORKER_PORT':str(worker_port),'ANP_UI_PORT':str(ui_port),'ANP_API_TARGET':api,
@@ -203,6 +208,7 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
 | Langfuse | {public}/langfuse/ | 邮箱 `{s['ADMIN_EMAIL']}`，密码 `{s['ADMIN_PASSWORD']}` |
 | LiteLLM | {public}/litellm/ui/ | 用户名 `admin`，密码 `{s['LITELLM_KEY']}` |
 | DBX | {public}/dbx/ | 密码 `{s['DBX_PASSWORD']}` |
+| 对象存储管理 | {object_management['console_url'] or object_management['endpoint']} | Access Key `{expanded.get('storage',{}).get('s3_access_key',s['S3_ACCESS_KEY'])}`；Secret Key `{expanded.get('storage',{}).get('s3_secret_key',s['S3_SECRET_KEY'])}` |
 | Lens 独立后台 | {public}/lens/ui/ | Admin Token `{s['LENS_ADMIN_TOKEN']}` |
 | Agent API | {public}/agent/ | 请求头 `Authorization: Bearer {s['ENGINE_TOKEN']}` |
 | LangGraph Studio | https://smith.langchain.com/studio/?baseUrl={quote(public+'/agent',safe='')} | 使用已有 LangSmith 账号；连接设置使用上行 Authorization 请求头 |

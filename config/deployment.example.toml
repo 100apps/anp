@@ -20,6 +20,10 @@ s3_container_url = "http://rustfs:9000"
 s3_access_key = "${S3_ACCESS_KEY}"
 s3_secret_key = "${S3_SECRET_KEY}"
 s3_region = "us-east-1"
+# 本地 RustFS 默认使用 API 端口 + 1 作为控制台端口，也可显式覆盖。
+# 云存储只使用显式提供的管理/健康地址，不猜测厂商的控制台或匿名健康接口。
+# s3_console_url = "https://对象存储管理后台"
+# s3_health_url = "https://健康接口"
 initialize_databases = true
 initialize_buckets = true
 

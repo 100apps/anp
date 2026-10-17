@@ -19,6 +19,9 @@ url = "redis://127.0.0.1:6379"
 
 [storage]
 endpoint = "http://127.0.0.1:9000"
+console_url = "http://127.0.0.1:9001/rustfs/console/"
+health_url = "http://127.0.0.1:9000/health"
+kind = "rustfs"
 endpoint_internal = "http://rustfs:9000"
 region = "us-east-1"
 

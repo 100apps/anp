@@ -70,6 +70,23 @@ def test_default_local_cli_and_http_cli_save_identical_results(business):
             assert {item['subject']['id'] for item in scores}=={item['id'] for item in observations if item['name'].startswith('业务节点/')}
 
 
+def test_management_links_follow_current_deployment_not_legacy_ports(business):
+    _,headers=business
+    environment=dotenv_values(ROOT/'.local/generated/platform-v3/business.env')
+    with httpx.Client(base_url=BASE,trust_env=False,timeout=20) as client:
+        assert client.get('/api/connections').status_code==401
+        response=client.get('/api/connections',headers=headers);response.raise_for_status()
+        connections={item['id']:item for item in response.json()}
+        assert connections['rustfs']['url']==environment['ANP_STORAGE_CONSOLE_URL']
+        assert connections['rustfs']['status']=='ok'
+        assert client.get(connections['rustfs']['url'],follow_redirects=True).status_code==200
+        assert connections['lens']['url']==BASE+'/lens/ui/' and connections['lens']['status']=='ok'
+        assert connections['litellm']['url']==BASE+'/litellm/ui/'
+        assert connections['agent']['url']==BASE+'/agent/docs'
+        assert client.get('/agent/docs',headers={'Authorization':'Bearer '+secret('ENGINE_TOKEN')}).status_code==200
+        assert all('localhost' not in item['url'] for item in connections.values())
+
+
 def test_agent_studio_sse_executes_worker_and_saves_result(business):
     _,headers=business
     engine={'Authorization':'Bearer '+secret('ENGINE_TOKEN')}

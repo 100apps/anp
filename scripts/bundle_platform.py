@@ -25,6 +25,8 @@ def prepare(components,partial=False):
         if config.get('Labels',{}).get('org.opencontainers.image.revision')!=revision:
             raise RuntimeError(f'{name} 的镜像与 submodule SHA 不一致，必须先重建')
         metadata['components'][name]={'image':image['Id'],'revision':revision,
+            'build_recipe':config.get('Labels',{}).get('dev.anp.build.recipe'),
+            'build_profile':config.get('Labels',{}).get('dev.anp.build.profile','legacy'),
             'environment':config.get('Env') or [],'user':config.get('User') or '',
             'command':(config.get('Entrypoint') or [])+(config.get('Cmd') or []),
             'working_dir':config.get('WorkingDir') or '/'}

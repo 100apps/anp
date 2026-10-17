@@ -1,6 +1,6 @@
 # V3 目标配置：宿主/F5 与容器连接分别明确，不猜测 localhost 的含义。
 [platform]
-url = "http://localhost:8080"
+url = "http://127.0.0.1:8080"
 listen = "0.0.0.0:8080"
 image = "ghcr.io/100apps/anp-platform:latest"
 

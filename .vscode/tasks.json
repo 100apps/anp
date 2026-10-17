@@ -148,6 +148,15 @@
         "reveal": "always",
         "panel": "dedicated"
       }
+    },
+    {
+      "label": "anp:v3:frontend-ready",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "anp:v3:web",
+        "anp:v3:wait"
+      ],
+      "problemMatcher": []
     }
   ]
 }

@@ -10,6 +10,7 @@ import time
 import tomllib
 from contextlib import redirect_stdout
 import io
+import hashlib
 from urllib.parse import urlsplit
 
 import httpx
@@ -46,6 +47,7 @@ def initialize():
         'ANP_S3_PORT':str(ports['s3'] or 9000),'ANP_S3_CONSOLE_PORT':str(storage.get('s3_console_port',(ports['s3'] or 9000)+1)),
         'ANP_PLATFORM_PORT':str(urlsplit(public).port or 8080),
         'ANP_PLATFORM_IMAGE':deployment['platform']['image'],'ANP_STORAGE_NETWORK':'anp-storage_default',
+        'ANP_PLATFORM_CONFIG_REVISION':hashlib.sha256((GENERATED/'config.json').read_bytes()+(GENERATED/'litellm.yaml').read_bytes()).hexdigest(),
         'ANP_PLATFORM_STATE_VOLUME':prefix+'_platform_state','ANP_AGENT_STATE_VOLUME':prefix+'_agent_state'}
     envfile(GENERATED/'storage.env',environment)
     return deployment

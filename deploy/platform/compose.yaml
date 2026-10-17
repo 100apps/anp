@@ -4,6 +4,8 @@ services:
   platform:
     image: ${ANP_PLATFORM_IMAGE:-ghcr.io/100apps/anp-platform:latest}
     restart: unless-stopped
+    labels:
+      dev.anp.configuration_revision: ${ANP_PLATFORM_CONFIG_REVISION:-unconfigured}
     ports: ['127.0.0.1:${ANP_PLATFORM_PORT:-8080}:8080']
     volumes:
       - ../../.local/generated/platform-v3/config.json:/run/anp/config.json:ro

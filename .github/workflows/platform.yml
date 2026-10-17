@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 env:
   REGISTRY: ghcr.io/100apps
+  ANP_BUILD_PROFILE: ci
 jobs:
   dependencies:
     runs-on: ubuntu-24.04
@@ -67,6 +68,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMPONENT_CACHE_RUN: ${{ inputs.component_cache_run }}
         run: python scripts/reuse_component.py --component '${{ matrix.name }}' --run "$COMPONENT_CACHE_RUN"
+      - name: 记录实际运行器资源，辅助区分编译错误和资源问题
+        run: python -c "import os,json,shutil;from pathlib import Path;p=Path('/sys/fs/cgroup/memory.max');print(json.dumps({'cpus':os.cpu_count(),'disk_free_gb':round(shutil.disk_usage('/').free/2**30,2),'memory_gb':round(os.sysconf('SC_PHYS_PAGES')*os.sysconf('SC_PAGE_SIZE')/2**30,2),'cgroup_memory_max':p.read_text().strip() if p.exists() else None}))"
       - name: 从记录的最新源码构建组件
         if: steps.reuse.outputs.hit != 'true'
         run: python scripts/build_components.py --locked --component '${{ matrix.name }}'
@@ -105,7 +108,7 @@ jobs:
           uv run python scripts/bundle_platform.py --tag anp/platform:ci
       - name: 生成隔离配置并实启四存储与单平台
         run: |
-          uv run python -c "from pathlib import Path;p=Path('config/deployment.example.toml').read_text();Path('config/deployment.local.toml').write_text(p.replace('localhost:8080','localhost:8089').replace('ghcr.io/100apps/anp-platform:latest','anp/platform:ci').replace(':8180',':8181').replace(':8281',':8282').replace(':5173',':5174'))"
+          uv run python -c "from pathlib import Path;p=Path('config/deployment.example.toml').read_text();Path('config/deployment.local.toml').write_text(p.replace('127.0.0.1:8080','127.0.0.1:8089').replace('ghcr.io/100apps/anp-platform:latest','anp/platform:ci').replace(':8180',':8181').replace(':8281',':8282').replace(':5173',':5174'))"
           uv run python -m anp.dev.v3 prepare --mode docker
       - name: 在镜像外启动示例 API 与 Worker
         env:

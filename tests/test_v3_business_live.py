@@ -11,7 +11,7 @@ from anp import ROOT
 from anp.config import secret
 
 pytestmark=pytest.mark.skipif(os.environ.get('ANP_V3_BUSINESS_SMOKE')!='1',reason='需显式开启 V3 业务验收')
-BASE='http://localhost:8089'
+BASE=os.environ.get('ANP_V3_TEST_URL','http://127.0.0.1:8089')
 
 
 @pytest.fixture(scope='module')

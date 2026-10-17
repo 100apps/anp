@@ -11,7 +11,7 @@ from anp.config import secret
 from anp import ROOT
 
 pytestmark=pytest.mark.skipif(os.environ.get('ANP_V3_PLATFORM_SMOKE')!='1',reason='需显式开启隔离平台验收')
-BASE='http://127.0.0.1:8089'
+BASE=os.environ.get('ANP_V3_TEST_URL','http://127.0.0.1:8089')
 
 
 @pytest.fixture(scope='module',autouse=True)

@@ -1,0 +1,32 @@
+{
+  "scope": "相同 Docker 平台、相同健康接口、每次新建客户端；不是总吞吐或 deep_dub 实时率",
+  "canonical_url": "http://127.0.0.1:8089",
+  "measurements": {
+    "localhost": {
+      "samples_ms": [
+        2078.611,
+        2039.817,
+        2044.856,
+        2038.303,
+        2067.516
+      ],
+      "median_ms": 2044.856
+    },
+    "127.0.0.1": {
+      "samples_ms": [
+        10.962,
+        11.475,
+        16.946,
+        11.554,
+        11.409
+      ],
+      "median_ms": 11.475
+    }
+  },
+  "full_regression": {
+    "passed": 28,
+    "seconds": 20.38
+  },
+  "existing_login_session_remains_valid": true,
+  "configuration_digest_label_matches": true
+}

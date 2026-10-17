@@ -1,6 +1,12 @@
 """从真实 submodule 构建平台组件中间制品，不部署额外平台容器。"""
 import argparse
 import subprocess
+import hashlib
+import json
+import os
+import threading
+import shutil
+from pathlib import Path
 from sync_upstreams import ROOT,sync
 
 RECIPES={
@@ -17,7 +23,7 @@ RECIPES={
 }
 
 
-def build(component):
+def recipe(component):
     repository,filename,target=RECIPES[component]
     source=ROOT/'third_party'/repository
     dockerfile_path=ROOT/'deploy/build/postgrest.Dockerfile' if component=='postgrest' else source/filename
@@ -50,6 +56,37 @@ def build(component):
         dockerfile=dockerfile.replace(marker,marker+
             'ENV NEXT_PUBLIC_LENS_API_URL=/lens\n'+
             '''RUN sed -i 's|basePath: "/ui"|basePath: "/lens/ui"|' src/ui/app/next.config.mjs\n''')
+    profile=os.environ.get('ANP_BUILD_PROFILE','default')
+    if profile not in ('default','ci'):raise ValueError('未知构建资源配置')
+    if profile=='ci':
+        if component=='studio':dockerfile=dockerfile.replace('--max-old-space-size=6144','--max-old-space-size=3072')
+        if component=='langfuse-web':
+            marker="NODE_OPTIONS='--max-old-space-size-percentage=75'"
+            if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse 构建内存配置发生变化，需要适配')
+            dockerfile=dockerfile.replace(marker,"NODE_OPTIONS='--max-old-space-size-percentage=50'")
+    return dockerfile
+
+
+def fingerprint(component):
+    flags={'target':RECIPES[component][2],'base_path':'/langfuse' if component=='langfuse-web' else None}
+    return hashlib.sha256((recipe(component)+json.dumps(flags,sort_keys=True)).encode()).hexdigest()
+
+
+def monitor(stopping):
+    while not stopping.is_set():
+        memory={}
+        source=Path('/proc/meminfo')
+        if source.exists():
+            memory={line.split(':')[0]:line.split(':')[1].strip() for line in source.read_text().splitlines()
+                if line.startswith(('MemTotal:','MemAvailable:','SwapFree:'))}
+        print('ANP_BUILD_RESOURCES',json.dumps({'memory':memory,'disk_free_gb':round(shutil.disk_usage(ROOT).free/2**30,2)}),flush=True)
+        stopping.wait(30)
+
+
+def build(component):
+    repository,filename,target=RECIPES[component]
+    source=ROOT/'third_party'/repository
+    dockerfile=recipe(component)
     output=ROOT/'.local/build'/f'{component}.Dockerfile'
     output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(dockerfile,encoding='utf8')
@@ -59,8 +96,16 @@ def build(component):
     if component=='langfuse-web':command+=['--build-arg','NEXT_PUBLIC_BASE_PATH=/langfuse']
     revision=subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip()
     command+=['--label','org.opencontainers.image.revision='+revision,
+        '--label','dev.anp.build.recipe='+fingerprint(component),
+        '--label','dev.anp.build.profile='+os.environ.get('ANP_BUILD_PROFILE','default'),
         '-f',str(output),'-t',f'anp-build/{component}:source',str(source)]
-    subprocess.run(command,check=True)
+    stopping=threading.Event();thread=None
+    if os.environ.get('GITHUB_ACTIONS')=='true':
+        thread=threading.Thread(target=monitor,args=(stopping,),daemon=True);thread.start()
+    try:subprocess.run(command,check=True)
+    finally:
+        stopping.set()
+        if thread:thread.join(timeout=1)
 
 
 if __name__=='__main__':

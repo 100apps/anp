@@ -78,7 +78,7 @@
         "*/workbench/@fs/*": "*"
       },
       "userDataDir": "${workspaceFolder}/.local/edge-v3-debug-profile",
-      "preLaunchTask": "anp:v3:web",
+      "preLaunchTask": "anp:v3:frontend-ready",
       "presentation": {
         "hidden": true
       }
@@ -95,9 +95,6 @@
       "envFile": "${workspaceFolder}/.local/generated/platform-v3/business.env",
       "env": {
         "PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}"
-      },
-      "presentation": {
-        "hidden": true
       },
       "name": "ANP V3: 默认本地 CLI 调试",
       "args": [

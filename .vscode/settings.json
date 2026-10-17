@@ -31,5 +31,5 @@
     "editor.tabSize": 2
   },
   "terminal.integrated.defaultProfile.windows": "PowerShell",
-  "anp.platformUrl": "http://localhost:8089"
+  "anp.platformUrl": "http://127.0.0.1:8089"
 }

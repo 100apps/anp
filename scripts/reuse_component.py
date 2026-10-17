@@ -4,7 +4,7 @@ import json
 import os
 import re
 import subprocess
-from build_components import RECIPES
+from build_components import RECIPES,fingerprint
 from sync_upstreams import ROOT,git
 
 
@@ -16,10 +16,6 @@ def reuse(component,run):
     if not re.fullmatch('[0-9a-f]{40}',revision):raise ValueError('无效构建提交')
     if info.get('path')!='.github/workflows/platform.yml':raise ValueError('只复用本平台流水线的制品')
     git('fetch','--depth','1','origin',revision)
-    for file in ['scripts/build_components.py','deploy/build/postgrest.Dockerfile']:
-        previous=subprocess.check_output(['git','show',revision+':'+file],cwd=ROOT)
-        if previous!=(ROOT/file).read_bytes():
-            print('构建配方已变化，重新构建：',component);return False
     image=f'ghcr.io/100apps/anp-build-{component}:run-{run}'
     pulled=subprocess.run(['docker','pull',image])
     if pulled.returncode:
@@ -29,6 +25,18 @@ def reuse(component,run):
     expected=git('-C',str(source),'rev-parse','HEAD')
     if actual['Config'].get('Labels',{}).get('org.opencontainers.image.revision')!=expected:
         print('上游已变化，重新构建：',component);return False
+    recorded=actual['Config'].get('Labels',{}).get('dev.anp.build.recipe')
+    if recorded:
+        if recorded!=fingerprint(component):
+            print('组件配方或资源配置已变化，重新构建：',component);return False
+    else:
+        # 兼容早期未写配方摘要的制品，宁可重建也不猜测其构建参数。
+        files=['scripts/build_components.py']
+        if component=='postgrest':files.append('deploy/build/postgrest.Dockerfile')
+        for file in files:
+            previous=subprocess.check_output(['git','show',revision+':'+file],cwd=ROOT)
+            if previous!=(ROOT/file).read_bytes():
+                print('旧制品缺少配方摘要且配方文件已变化，重新构建：',component);return False
     subprocess.run(['docker','tag',image,f'anp-build/{component}:source'],check=True)
     print('已复用同一源码与配方的组件：',component,expected)
     return True

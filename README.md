@@ -119,3 +119,9 @@ RustFS 控制台属于存储层，地址由宿主端口配置。LangSmith Studio
 本机连接与图执行并发的实测、复现命令及参数选择见 [平台性能测量](docs/平台性能.md)。提高执行器并发未改善所测 demo 吞吐，默认保留为 1。
 
 复制业务：`uv run anp app new my_app --from demo`，随后检查权限、迁移与 flow，执行 `uv run anp migrate`。详见 [Agent 与业务开发](docs/Agent与业务开发.md)。
+
+## 更新前的数据备份
+
+最新源码可能带来数据库迁移，切换正式镜像前应保留各数据库的逻辑备份。新平台五库已逐库实际还原验证，备份位于 Git 忽略的 `.local/backups/v3-postgres-before-ci-20261017T211306Z/`，私有备份不要提交仓库。Supabase 镜像中完整还原所有权需要 `supabase_admin` 管理角色，普通 `postgres` 角色会因不能 `SET ROLE supabase_admin` 失败。
+
+本次验证保留所有权和 ACL，但依赖当前实例已有角色；不代表跨库原子备份或四种存储的完整灾难恢复。后续新写入不在该快照内，正式升级前需要按当时数据重新备份。实际范围见 [备份与还原证据](docs/evidence/v3-postgres-backup-restore-20261018.json)。

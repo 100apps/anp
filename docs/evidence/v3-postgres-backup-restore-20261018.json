@@ -1,0 +1,119 @@
+{
+  "scope": "新平台五个 PostgreSQL 数据库的备份和逐库实际还原校验；不是全平台灾难恢复验收",
+  "created_at_utc": "2026-10-17T21:13:07.338850+00:00",
+  "container": "anp-storage-postgres-1",
+  "volume": "anp_v3_smoke_pg_data",
+  "server_image": "supabase/postgres:17.6.1.136",
+  "databases": [
+    {
+      "file": "database-00.dump",
+      "bytes": 870,
+      "sha256": "17516a06b5a3cc9a7e7c0b07039f87deae60fe8d77683d3cc01bb40fe3d0f60f",
+      "database": "_supabase",
+      "archive_catalog_readable": true
+    },
+    {
+      "file": "database-01.dump",
+      "bytes": 51384,
+      "sha256": "d4cb76df42cd3d546e05b94b00f02a6f454f397af8e4088d9960c1d082785ddd",
+      "database": "agent_local",
+      "archive_catalog_readable": true
+    },
+    {
+      "file": "database-02.dump",
+      "bytes": 383273,
+      "sha256": "afd59ffb2096b7ff0bc27255019a518f8eaf9f655d58f72816313cce396ecab7",
+      "database": "langfuse",
+      "archive_catalog_readable": true
+    },
+    {
+      "file": "database-03.dump",
+      "bytes": 369513,
+      "sha256": "688d907ac2dd53302621a91400ea2d92e396e4c0a8c229ecb125fdeb1a83dd74",
+      "database": "litellm",
+      "archive_catalog_readable": true
+    },
+    {
+      "file": "database-04.dump",
+      "bytes": 563968,
+      "sha256": "b226a808ed78bb799e35d3f0852e4bd47133724dc827d986e8c65dab8095a662",
+      "database": "postgres",
+      "archive_catalog_readable": true
+    }
+  ],
+  "postgres_restore_attempts": [
+    {
+      "role": "postgres",
+      "result": "failed",
+      "reason": "must be able to SET ROLE supabase_admin",
+      "temporary_database_removed": true
+    },
+    {
+      "role": "supabase_admin",
+      "result": "passed"
+    }
+  ],
+  "postgres_restore_probe": {
+    "checked_at_utc": "2026-10-17T21:14:04.682644+00:00",
+    "same_instance": true,
+    "separate_disposable_database": true,
+    "full_archive_with_owners_and_acl": true,
+    "pg_restore_exit_on_error": true,
+    "data": {
+      "tasks": 360,
+      "results": 338,
+      "studio_task_present": true
+    },
+    "limitation": "该项为主库单项检查；另外四库实际还原结果见 all_database_restore_probes。"
+  },
+  "all_database_restore_probes": {
+    "checked_at_utc": "2026-10-17T21:14:29.693410+00:00",
+    "databases": [
+      {
+        "database": "postgres",
+        "result": "passed",
+        "role": "supabase_admin",
+        "full_owners_and_acl": true,
+        "evidence": "postgres_restore_probe"
+      },
+      {
+        "database": "_supabase",
+        "result": "passed",
+        "role": "supabase_admin",
+        "full_owners_and_acl": true,
+        "restored_tables": 0,
+        "source_table_count_matches": true
+      },
+      {
+        "database": "agent_local",
+        "result": "passed",
+        "role": "supabase_admin",
+        "full_owners_and_acl": true,
+        "restored_tables": 4,
+        "source_table_count_matches": true
+      },
+      {
+        "database": "langfuse",
+        "result": "passed",
+        "role": "supabase_admin",
+        "full_owners_and_acl": true,
+        "restored_tables": 84,
+        "source_table_count_matches": true
+      },
+      {
+        "database": "litellm",
+        "result": "passed",
+        "role": "supabase_admin",
+        "full_owners_and_acl": true,
+        "restored_tables": 102,
+        "source_table_count_matches": true
+      }
+    ],
+    "temporary_databases_removed": true,
+    "limitation": "在原实例已有角色下还原各库；未验证角色重建和全平台灾难恢复，不覆盖 ClickHouse/RustFS/Redis，非跨库原子快照"
+  },
+  "backup_directory": ".local/backups/v3-postgres-before-ci-20261017T211306Z",
+  "checked_at_utc": "2026-10-17T21:14:59.537789+00:00",
+  "globals_backup_created": true,
+  "globals_restore_verified": false
+}

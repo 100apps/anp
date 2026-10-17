@@ -474,5 +474,8 @@
   "synthetic_state_probe_removed": true,
   "cached_native_preparation_while_running": true,
   "cold_pull_scope": "缺失镜像先拉取、已有镜像离线复用的单测通过；真实 GHCR 拉取仍待授权与发布",
-  "current_mode": "docker"
+  "current_mode": "docker",
+  "threads_before_reload_verified": 10,
+  "threads_present_after_reload": 12,
+  "threads_handoff_hash_verified": 12
 }

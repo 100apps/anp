@@ -1,0 +1,37 @@
+{
+  "scope": "Langfuse Webpack 8 GiB 堆失败后的新 CI 配方；新完整构建尚未运行",
+  "previous_run": 39074073866,
+  "previous_job": 117517493013,
+  "previous_job_status_at_observation": "in_progress，日志已有 fatal，等原作业自然收尾",
+  "observed_fatal": "Reached heap limit Allocation failed - JavaScript heap out of memory",
+  "previous_heap_mib": 8192,
+  "next_builder": "上游 package.json 的 next build 默认构建器",
+  "next_node_heap_mib": 5120,
+  "extra_swap_gib": 8,
+  "next_disable_build_cache": true,
+  "page_workers": 1,
+  "source_maps_preserved": true,
+  "upstream_build_script_preserved": true,
+  "type_checks_preserved": true,
+  "otel_worker_preserved": true,
+  "local_reference": {
+    "same_upstream_sha": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3",
+    "noncached_tasks": 4,
+    "build_step_seconds": 87,
+    "log_sha256": "fba39c749b244488b1e37da509768c692bb74033556e95bc8af0def4302f580a",
+    "limitation": "本机不同资源，不能代替云端验收"
+  },
+  "local_validation": {
+    "recipe_changes": {
+      "default": [],
+      "ci": [
+        "langfuse-web"
+      ]
+    },
+    "actual_node_patch_and_complete_mjs_check": true,
+    "duplicate_patch_rejected": true,
+    "all_other_upstream_config_preserved": true,
+    "unit_tests_passed": 17
+  },
+  "full_cloud_build_verified": false
+}

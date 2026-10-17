@@ -109,25 +109,19 @@ def recipe(component):
         if component=='langfuse-web':
             marker="NODE_OPTIONS='--max-old-space-size-percentage=75'"
             if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse 构建内存配置发生变化，需要适配')
-            dockerfile=dockerfile.replace(marker,"NODE_OPTIONS='--max-old-space-size=8192'")
-            # 只改镜像内 web 的构建脚本，保留 turbo 依赖、类型检查与 OTEL worker 构建。
+            dockerfile=dockerfile.replace(marker,"NODE_OPTIONS='--max-old-space-size=5120'")
+            # Webpack 在 8 GiB V8 堆仍耗尽；同源码本机的上游默认构建器已成功。
+            # CI 增加交换空间后重验默认构建器，保留原 build 脚本、类型检查和 source map。
             marker='RUN NODE_OPTIONS='
             if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse 构建入口发生变化，需要适配')
-            patch_script=('const fs=require("fs");const p="./web/package.json";'
-                'const d=JSON.parse(fs.readFileSync(p,"utf8"));'
-                'const s=d.scripts.build;'
-                'if(s.split("next build").length!==2||s.includes("--webpack"))'
-                'throw new Error("Langfuse web build changed");'
-                'd.scripts.build=s.replace("next build","next build --webpack");'
-                'fs.writeFileSync(p,JSON.stringify(d,null,2)+"\\n");')
-            patch_script+=('const q="./web/next.config.mjs";let t=fs.readFileSync(q,"utf8");'
+            patch_script=('const fs=require("fs");const q="./web/next.config.mjs";let t=fs.readFileSync(q,"utf8");'
                 'const a="  experimental: {\\n";'
-                'if(t.split(a).length!==2||/\\b(?:cpus|webpackBuildWorker|webpackMemoryOptimizations)\\s*:/.test(t))'
+                'if(t.split(a).length!==2||/\\bcpus\\s*:/.test(t))'
                 'throw new Error("Langfuse Next memory config changed");'
-                't=t.replace(a,a+"    cpus: 1,\\n    webpackBuildWorker: true,\\n    webpackMemoryOptimizations: true,\\n");'
+                't=t.replace(a,a+"    cpus: 1,\\n");'
                 'fs.writeFileSync(q,t);')
             # 日志仍保留完整错误堆栈；CI 不生成数 GiB 的未采集 core 文件。
-            dockerfile=dockerfile.replace(marker,"RUN node -e '"+patch_script+"'\nRUN ulimit -c 0 && NODE_OPTIONS=")
+            dockerfile=dockerfile.replace(marker,"RUN node -e '"+patch_script+"'\nRUN ulimit -c 0 && NEXT_DISABLE_BUILD_CACHE=true NODE_OPTIONS=")
             marker='turbo run build --filter=web...\n'
             if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse turbo 构建命令发生变化，需要适配')
             dockerfile=dockerfile.replace(marker,'turbo run build --filter=web... --concurrency=1 --output-logs=full\n')

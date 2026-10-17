@@ -1,0 +1,26 @@
+{
+  "scope": "Chrome 新版 Studio 单端口实际交互与结果保存，不代表 IDE F5",
+  "checked_at_utc": "2026-10-17T21:04:22.593508+00:00",
+  "platform_url": "http://127.0.0.1:8089",
+  "engine_path": "/agent",
+  "thread_id": "01a14bad-209a-76e0-bdc5-04e817558216",
+  "task_id": "34270fa3-6236-421a-b0f2-a7bf52d8a742",
+  "status": "succeeded",
+  "mode": "studio",
+  "nodes": [
+    "normalize",
+    "analyze",
+    "save"
+  ],
+  "saved": true,
+  "authenticated_object_read_matches_database": true,
+  "object_path": "artifacts/00000000-0000-4000-8000-000000000001/demo/34270fa3-6236-421a-b0f2-a7bf52d8a742/report.json",
+  "report_sha256": "8f42a0e2567647aaefee408fe7d1223aeadba9c270e92d3a6fb88a55a11c12e9",
+  "langsmith_cloud_tracing": false,
+  "screenshot": "v3-studio-browser-saved-20261018.png",
+  "initial_attempt": {
+    "thread_id": "01a14bac-230d-75b2-9ab3-b835849d35fa",
+    "result": "empty_input_rejected",
+    "cause": "自动输入控件未写入非空内容；后用原始 JSON 新建线程。失败线程保留，未计为成功"
+  }
+}

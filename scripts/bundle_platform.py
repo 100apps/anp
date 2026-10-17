@@ -56,6 +56,7 @@ FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends nginx tini ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=ghcr.io/astral-sh/uv:0.9.16 /uv /usr/local/bin/uv
 WORKDIR /opt/anp
+'''+ '\n'.join(copies)+'''
 COPY pyproject.toml uv.lock ./
 COPY src ./src
 RUN uv sync --frozen --no-dev
@@ -68,7 +69,6 @@ COPY config/settings.example.toml ./config/settings.example.toml
 COPY migrations ./migrations
 COPY --from=platform_manifest components.json ./components.json
 COPY --from=platform_manifest dependencies.json ./dependencies.json
-'''+ '\n'.join(copies)+'''
 EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=3s --start-period=90s --retries=12 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/_platform/health',timeout=2)"
 ENTRYPOINT ["/usr/bin/tini","-g","--","python","-m","anp_platform.supervisor"]

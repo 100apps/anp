@@ -154,7 +154,7 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
         document=tomllib.loads(Path(deployment).read_text(encoding='utf8'))
         bind(configuration,document,{**s,**os.environ},target)
     expanded=expand(document,{**s,**os.environ})
-    concurrency=int(expanded.get('agent',{}).get('max_concurrent_runs',4))
+    concurrency=int(expanded.get('agent',{}).get('max_concurrent_runs',1))
     if not 1<=concurrency<=32:raise ValueError('Agent 并发任务数须为 1–32')
     services['agent']['environment']['ANP_AGENT_CONCURRENCY']=str(concurrency)
     lens=expanded.get('lens',{})

@@ -28,6 +28,7 @@ CI 没有私人模型密钥，只跳过最后一项真实上游调用；模型�
 - 首轮 `39059425337`：依赖更新成功，上传 Artifact 时额度不足；已改成作业输出和镜像内清单。
 - 第二轮 `39059610124`：Auth、Storage、Meta 已完成。Studio 运行器收到停止信号，退出 143，当前没有足够证据认定是编译错误或内存不足；本轮仍有其他组件运行。Langfuse Web 后续也以运行器停止信号 143 退出。
 - 同轮 PostgREST：Nix 自动识别 submodule `.git` 文件，试图访问容器内不存在的父仓库；已改成 `path:/src#static`，本机修复构建正在运行，不能先记为完整构建通过。
+- 同轮 LiteLLM：在最终运行层处理 Prisma 权限时明确报 `No space left on device`，属于已证实的磁盘容量问题。下一轮已有托管运行器磁盘准备步骤；尚未实跑通过，不能声称问题已解决，也不能据此反推其他组件的 143 退出原因。
 
 后续作业会输出实际 CPU、内存、磁盘和 cgroup 限制。GitHub 官方列出的私有仓库标准 Linux 运行器为 2 CPU、8 GB 内存、14 GB 存储，不能按本机配置预估云端构建；具体仍以运行数据为准。[官方运行器规格](https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-private-repositories)
 

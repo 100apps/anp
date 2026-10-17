@@ -21,7 +21,7 @@ def main():
     state.mkdir(parents=True,exist_ok=True)
     os.chdir(state)
     run_server(host='127.0.0.1',port=18124,graphs=graph_specs(),open_browser=False,
-        n_jobs_per_worker=job_concurrency(os.environ.get('ANP_AGENT_CONCURRENCY','4')),
+        n_jobs_per_worker=job_concurrency(os.environ.get('ANP_AGENT_CONCURRENCY','1')),
         auth={'path':'anp.runtime.agent_auth:auth'},http={'mount_prefix':'/agent'},
         disable_persistence=False,server_level='INFO')
 

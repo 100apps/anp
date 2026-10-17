@@ -45,5 +45,6 @@ analysis_rpm_limit = 20
 analysis_tpm_limit = 100000
 
 [agent]
-# 图多为远程 I/O；CPU/GPU 密集节点仍须由业务执行器限制设备并发。
-max_concurrent_runs = 4
+# 当前 demo 实测提高到 4 未改善吞吐，保留 1；按真实业务基准调整。
+# CPU/GPU 密集节点仍须由业务执行器限制设备并发。
+max_concurrent_runs = 1

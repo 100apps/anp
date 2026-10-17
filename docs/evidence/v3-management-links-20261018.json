@@ -67,5 +67,21 @@
     "seconds": 56.35,
     "log_sha256": "1aa3dfa900c5af59329525d03aa2bfeaf97f43a5159c5f2c474489a91882ea88",
     "skipped_scope": "8 项旧 V2 测试和 1 项需显式开启的存储实测；不计为通过"
+  },
+  "rustfs_browser": {
+    "checked_at_utc": "2026-10-17T21:32:42.264220+00:00",
+    "url": "http://127.0.0.1:9003/rustfs/console/browser/",
+    "existing_credentials_login": "passed",
+    "version": "1.0.2",
+    "buckets": [
+      "anp-v3-probe",
+      "langfuse",
+      "supabase-storage"
+    ],
+    "all_buckets_private": true,
+    "supabase_storage_objects_visible": 349,
+    "langfuse_objects_visible": 2457,
+    "screenshot_private": ".local/v3-rustfs-browser-20261018.png",
+    "scope": "登录与读取存储桶列表；没有创建密钥、修改权限或删除对象"
   }
 }

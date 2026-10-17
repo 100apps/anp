@@ -74,19 +74,21 @@ def stop_native():
     distro=document().get('development',{}).get('distro','Ubuntu')
     names=available.stdout.decode('utf-16-le',errors='replace').replace('\x00','').splitlines()
     if available.returncode or distro not in [name.strip('\ufeff \r\n') for name in names]:return
-    source='''import json,os,signal,time
+    workspace=subprocess.check_output(['wsl','-d',distro,'--exec','wslpath','-u',str(ROOT)],text=True).strip()
+    source='''import json,os,signal,time,sys
 from pathlib import Path
 marker=Path('/run/anp/native.pid.json')
 if marker.exists():
  identity=json.loads(marker.read_text());pid=identity['pid'];cmd=Path('/proc/'+str(pid)+'/cmdline')
  if cmd.exists():
+  if identity.get('workspace')!=sys.argv[1]:raise SystemExit('原生平台属于其他工作区，拒绝停止')
   assert b'anp_platform.native' in cmd.read_bytes(),'原生进程身份不符'
   os.kill(pid,signal.SIGTERM)
   deadline=time.monotonic()+45
   while cmd.exists() and time.monotonic()<deadline:time.sleep(.2)
   if cmd.exists():raise SystemExit('原生平台未完成退出，不启动另一平台')
 '''
-    command(['wsl','-d',distro,'-u','root','--exec','python3','-c',source])
+    command(['wsl','-d',distro,'-u','root','--exec','python3','-c',source,workspace])
 
 
 def stop_docker():

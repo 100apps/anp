@@ -78,5 +78,13 @@
     "tpm": 100000
   },
   "known_wait": "首次 20000 TPM 触发网关 429，包含退避等待；并未扣除等待后宣称性能达标",
-  "rate_limit_idempotent_update_verified": true
+  "rate_limit_idempotent_update_verified": true,
+  "rebuilt_image": "sha256:571474371dcc50548618edc31e6299b42f18a59185461aafa5d97024dd8ea29f",
+  "bootstrap_source_sha256": "b6bce1508089da2d416ad645345dba9fec1f0abcac148cad63b37c080e8a8f9f",
+  "image_revision": "f1773627391efdf18829c7e65285c5d6a20fabf8",
+  "live_regression": {
+    "passed": 6,
+    "seconds": 59.91
+  },
+  "analysis_persisted_after_recreation": true
 }

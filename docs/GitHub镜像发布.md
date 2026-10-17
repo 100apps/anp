@@ -65,3 +65,11 @@ PostgREST 显式使用路径 flake，并接受其源码声明的签名构建缓�
 CI 验收已补入动态地址的本地 CLI、HTTP 权限、观测和 Studio 检查。本机完整运行得到 42 passed、9 skipped（62.92 秒）；其中 8 项属于明确归档的 V2 检查，另 1 项需显式开启存储持久化验收。直接 Supabase 写入和私有对象下载包含授权成功对照，以及只读/跨工作空间拒绝；没有用旧平台的通过结果代替新平台。
 
 加入执行器并发契约后，本机对应镜像完整检查为 43 passed、9 skipped（78.01 秒）；后续 HTTP SDK 优化后的 Docker 和原生模式均为 48 项通过。新轮 `39064673639` 已开始，采用该优化的干净提交 `84922e5`；旧轮 `39059610124` 最终失败，成功的 Auth、Storage、Meta、Langfuse Worker、Lens 仅为中间制品。最终发布与本机 GHCR 拉取仍未通过。
+
+## 从实际运行数据补足组装空间
+
+新轮 Auth 已构建成功。日志记录该运行器为 2 CPU、7.75 GiB 内存，根磁盘从清理前 10.69 GiB 增至 30.23 GiB；这仍低于组装阶段要求的 35 GiB，不能凭组件编译成功就假定组装一定有足够空间。
+
+清理脚本补入两个本流程不用的宿主工具链固定目录：Swift 的 `/usr/share/swift` 和 Haskell 的 `/usr/local/.ghcup`。路径分别核对了 GitHub 官方运行器的 [Swift 安装脚本](https://github.com/actions/runner-images/blob/main/images/ubuntu/scripts/build/install-swift.sh) 和 [Haskell 安装脚本](https://github.com/actions/runner-images/blob/main/images/ubuntu/scripts/build/install-haskell.sh)。平台编译使用 Docker 内的相应工具链，不依赖这些宿主目录；达到门槛后立即停止清理。宿主 Python、Docker 数据、工作区及本机目录均不清理。
+
+新增手动工作流 `runner-disk.yml`，在相同 Ubuntu 运行器和递归源码检出之后独立验证 35 GiB 门槛，避免等整套组件编译完才发现空间不足。脚本在 Windows 的拒绝执行已验证；新增目录能释放多少空间仍待该工作流实测，不降低原有容量门槛来制造通过。

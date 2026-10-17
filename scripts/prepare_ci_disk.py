@@ -5,7 +5,8 @@ from pathlib import Path
 import shutil
 import sys
 
-TARGETS=('/usr/local/lib/android','/usr/share/dotnet','/opt/ghc','/usr/lib/jvm','/opt/hostedtoolcache/CodeQL')
+TARGETS=('/usr/local/lib/android','/usr/share/dotnet','/opt/ghc','/usr/lib/jvm',
+    '/opt/hostedtoolcache/CodeQL','/usr/share/swift','/usr/local/.ghcup')
 
 
 def main():
@@ -23,7 +24,12 @@ def main():
         elif target.exists():
             if target.resolve()!=target:raise RuntimeError('预装 SDK 路径解析异常，拒绝清理')
             shutil.rmtree(target)
-        print('已处理未使用的预装 SDK：'+name,flush=True)
+        else:
+            print('预装 SDK 不存在，跳过：'+name,flush=True)
+            continue
+        remaining=shutil.disk_usage('/').free/2**30
+        print(f'已处理未使用的预装 SDK：{name}；剩余 {remaining:.2f} GiB',flush=True)
+        if remaining>=args.minimum_gb:break
     after=shutil.disk_usage('/').free/2**30
     print(f'CI 清理后可用空间：{after:.2f} GiB',flush=True)
     if after<args.minimum_gb:raise SystemExit('剩余空间不足以安全组装平台镜像；保留诊断，不启动必然超限的构建')

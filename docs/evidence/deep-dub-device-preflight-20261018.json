@@ -1,0 +1,47 @@
+{
+  "recorded_at_utc": "2026-10-17T23:06:49.122701+00:00",
+  "scope": "只读设备预检查；平台完整验收前不实施 deep_dub，不启动计算任务",
+  "local": {
+    "gpu_name": "NVIDIA GeForce RTX 5060 Ti",
+    "memory_total_mib": 16311,
+    "memory_used_mib": 2792,
+    "utilization_percent": 3,
+    "driver": "617.14",
+    "cpu_name": "Intel Core i9-13900K",
+    "physical_cores": 24,
+    "logical_cpus": 32
+  },
+  "remote": {
+    "ssh_batch_mode_existing_trust": true,
+    "gpu_name": "Tesla V100-SXM2-16GB",
+    "memory_total_mib": 16384,
+    "memory_used_mib": 14917,
+    "utilization_percent": 0,
+    "driver": "580.178.04",
+    "cpu_name": "Intel Xeon E5-2699 v4 @ 2.20GHz",
+    "physical_cores": 22,
+    "logical_cpus": 44,
+    "resident_compute_process_count": 4,
+    "resident_process_memory_mib": [
+      346,
+      3346,
+      5922,
+      5300
+    ],
+    "ffmpeg_on_path": true,
+    "uv_on_noninteractive_path": false
+  },
+  "mutations": {
+    "downloads": false,
+    "models_loaded": false,
+    "processes_stopped": false,
+    "services_restarted": false
+  },
+  "limitations": [
+    "各查询是瞬时观测，不是同步采样或性能验收",
+    "利用率为零不代表模型进程退出、显存释放或设备可重新分配",
+    "远端非交互 PATH 未找到 uv，不证明机器上没有 uv",
+    "未核对现有常驻进程的任务归属，不能擅自清理显存",
+    "未验证 RTF、模型兼容性或 deep_dub 任务运行"
+  ]
+}

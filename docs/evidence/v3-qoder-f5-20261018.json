@@ -32,7 +32,17 @@
     "real_vite_reused_twice": true,
     "pid_before": 14728,
     "pid_after": 14728,
-    "full_ide_repeat_f5_verified": false
+    "full_ide_repeat_f5_verified": false,
+    "isolated_real_launch": {
+      "actual_spawn": true,
+      "ready": true,
+      "launches_after_two_ensure_calls": 1,
+      "port": 36842,
+      "pid": 10552,
+      "startup_seconds": 2.797,
+      "full_ide_f5": false,
+      "test_process_stopped": true
+    }
   },
   "preservation": {
     "existing_thread_states_unchanged": 281,

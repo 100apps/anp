@@ -69,5 +69,21 @@
     "build_started": false,
     "next_change": "继续清理固定列表中不用的 Azure/AWS/Google Cloud CLI 和 PowerShell 宿主机工具；不降低磁盘阈值",
     "log_sha256": "a51abb6cd3381ba3e1ea9090d883523b820ab94dae6b3b55446e47c00553af7b"
+  },
+  "langfuse_resource_preparation_followup": {
+    "run": 39074073866,
+    "job": 117517493013,
+    "resource_step": "success",
+    "build_step": "in_progress",
+    "full_build_verified": false
+  },
+  "studio_live_progress": {
+    "run": 39073495497,
+    "job": 117515780161,
+    "compiled_successfully": true,
+    "static_pages_generated": 196,
+    "stage": "Collecting build traces",
+    "full_build_verified": false,
+    "type_validation": "上游默认跳过，不能视为完整类型检查通过"
   }
 }

@@ -59,6 +59,14 @@ def recipe(component):
     profile=os.environ.get('ANP_BUILD_PROFILE','default')
     if profile not in ('default','ci'):raise ValueError('未知构建资源配置')
     if profile=='ci':
+        if component=='dbx':
+            # 托管运行器仅 2 CPU / 7.75 GiB；实测最终 release 阶段内存及交换空间接近耗尽。
+            # 保留 release 优化级别、panic/strip，使用跨 crate ThinLTO 分摊链接负担。
+            marker='ENV CARGO_BUILD_JOBS=4 CMAKE_BUILD_PARALLEL_LEVEL=4\n'
+            if dockerfile.count(marker)!=1:raise RuntimeError('DBX 构建资源配置发生变化，需要适配')
+            dockerfile=dockerfile.replace(marker,
+                'ENV CARGO_BUILD_JOBS=2 CMAKE_BUILD_PARALLEL_LEVEL=2 '
+                'CARGO_PROFILE_RELEASE_LTO=thin CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16\n')
         if component=='studio':
             dockerfile=dockerfile.replace('--max-old-space-size=6144','--max-old-space-size=3072')
             marker='RUN pnpm --filter studio exec next build\n'
@@ -67,7 +75,21 @@ def recipe(component):
         if component=='langfuse-web':
             marker="NODE_OPTIONS='--max-old-space-size-percentage=75'"
             if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse 构建内存配置发生变化，需要适配')
-            dockerfile=dockerfile.replace(marker,"NODE_OPTIONS='--max-old-space-size-percentage=50'")
+            dockerfile=dockerfile.replace(marker,"NODE_OPTIONS='--max-old-space-size=3072'")
+            # 只改镜像内 web 的构建脚本，保留 turbo 依赖、类型检查与 OTEL worker 构建。
+            marker='RUN NODE_OPTIONS='
+            if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse 构建入口发生变化，需要适配')
+            patch_script=('const fs=require("fs");const p="./web/package.json";'
+                'const d=JSON.parse(fs.readFileSync(p,"utf8"));'
+                'const s=d.scripts.build;'
+                'if(s.split("next build").length!==2||s.includes("--webpack"))'
+                'throw new Error("Langfuse web build changed");'
+                'd.scripts.build=s.replace("next build","next build --webpack");'
+                'fs.writeFileSync(p,JSON.stringify(d,null,2)+"\\n");')
+            dockerfile=dockerfile.replace(marker,"RUN node -e '"+patch_script+"'\n"+marker)
+            marker='turbo run build --filter=web...\n'
+            if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse turbo 构建命令发生变化，需要适配')
+            dockerfile=dockerfile.replace(marker,'turbo run build --filter=web... --concurrency=1 --output-logs=full\n')
     return dockerfile
 
 

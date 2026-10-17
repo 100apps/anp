@@ -1,0 +1,51 @@
+{
+  "scope": "托管运行器构建失败的资源证据与待验证适配，不代表发布成功",
+  "observed_at_utc": "2026-10-17T21:01:00.937715+00:00",
+  "run": 39064673639,
+  "jobs": {
+    "langfuse-web": {
+      "job": 117491212877,
+      "log_sha256": "a4a209239c5f26f87b6a313d43236e4d7d929ef8126f3b92a39469e8d9567dd4",
+      "snapshots": 43,
+      "lowest_available_memory_snapshot": {
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "22316 kB",
+          "SwapFree": "88 kB"
+        },
+        "disk_free_gb": 22.39
+      },
+      "runner_shutdown_signal": true,
+      "reported_exit_143": true
+    },
+    "dbx": {
+      "job": 117491212967,
+      "log_sha256": "e24a651bbc4562becc6a454f72598ba2cc3ed7d541707d6798dc1972d38d5fce",
+      "snapshots": 71,
+      "lowest_available_memory_snapshot": {
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "9592 kB",
+          "SwapFree": "232 kB"
+        },
+        "disk_free_gb": 22.67
+      },
+      "runner_shutdown_signal": true,
+      "reported_exit_143": false
+    }
+  },
+  "implemented_not_cloud_verified": {
+    "langfuse_web": "CI 使用 Webpack、3072 MiB Node 堆、turbo 并发 1，保留依赖构建、类型检查、OTEL worker；完整日志输出",
+    "dbx": "CI 并发 2，release ThinLTO 与 16 个 codegen units；优化级别、panic、strip 保持上游值。尚无运行性能对照，不能声明与旧配方同等性能"
+  },
+  "local_recipe_verification": {
+    "default_components": 10,
+    "ci_components": 10,
+    "node_patch_executed_on_actual_web_package": true,
+    "unrelated_package_fields_preserved": true,
+    "otel_worker_preserved": true,
+    "duplicate_patch_rejected": true,
+    "submodule_files_unchanged": true
+  },
+  "limitation": "日志证明资源接近耗尽和后续停止信号，没有内核 OOM 记录，不能断言已证实 OOM kill。新配方需云端实际构建与最终服务验收。"
+}

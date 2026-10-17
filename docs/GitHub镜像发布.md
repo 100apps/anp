@@ -73,3 +73,5 @@ CI 验收已补入动态地址的本地 CLI、HTTP 权限、观测和 Studio 检
 清理脚本补入两个本流程不用的宿主工具链固定目录：Swift 的 `/usr/share/swift` 和 Haskell 的 `/usr/local/.ghcup`。路径分别核对了 GitHub 官方运行器的 [Swift 安装脚本](https://github.com/actions/runner-images/blob/main/images/ubuntu/scripts/build/install-swift.sh) 和 [Haskell 安装脚本](https://github.com/actions/runner-images/blob/main/images/ubuntu/scripts/build/install-haskell.sh)。平台编译使用 Docker 内的相应工具链，不依赖这些宿主目录；达到门槛后立即停止清理。宿主 Python、Docker 数据、工作区及本机目录均不清理。
 
 新增手动工作流 `runner-disk.yml`，在相同 Ubuntu 运行器和递归源码检出之后独立验证 35 GiB 门槛，避免等整套组件编译完才发现空间不足。脚本在 Windows 的拒绝执行已验证；新增目录能释放多少空间仍待该工作流实测，不降低原有容量门槛来制造通过。
+
+容量验证 `39066020184` 已成功：完整检出后的可用空间为 10.77 GiB，原五个目录处理后为 30.31 GiB，清理 Swift 后为 33.76 GiB，再处理 GHCup 后为 37.42 GiB。根目录、`/mnt` 和 Docker 数据目录均在同一 72 GiB 文件系统上，不能依赖另一个隐藏的大磁盘。源码编译和最终组装的准备门槛统一提高为 35 GiB；这证明准备步骤具备足够起始空间，不等于大型组件和整合镜像已经完成。下一轮将复用当前轮中源码 SHA 与配方一致的制品，保留正在运行的构建。

@@ -1,0 +1,33 @@
+{
+  "scope": "GitHub 托管 Ubuntu 运行器的实际容量验证，非最终平台镜像验收",
+  "observed_at_utc": "2026-10-17T20:20:06.195937+00:00",
+  "probe_run": 39066020184,
+  "probe_job": 117493750927,
+  "probe_conclusion": "success",
+  "probe_source_commit": "f50a8c65345c5bf4e4a4cb5ad225abae4cf97e0f",
+  "filesystem_total_gib_rounded": 72,
+  "same_filesystem": [
+    "/",
+    "/mnt",
+    "/var/lib/docker"
+  ],
+  "free_gib_before": 10.77,
+  "free_gib_after_original_targets": 30.31,
+  "free_gib_after_swift": 33.76,
+  "free_gib_after_ghcup": 37.42,
+  "required_gib": 35,
+  "windows_refusal_verified": true,
+  "prior_successful_auth": {
+    "run": 39064673639,
+    "job": 117491213000,
+    "cpus": 2,
+    "memory_gib": 7.75,
+    "free_gib_before": 10.69,
+    "free_gib_after_original_cleanup": 30.23
+  },
+  "targets_added": [
+    "/usr/share/swift",
+    "/usr/local/.ghcup"
+  ],
+  "limitation": "未完成组件矩阵、最终组装、发布与私有 GHCR 拉取；不能将容量通过当作整体通过"
+}

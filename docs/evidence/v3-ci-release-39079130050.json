@@ -59,5 +59,128 @@
     "cloud_log_verified": true,
     "new_source_build_required": true
   },
-  "local_read_packages_authorized": false
+  "local_read_packages_authorized": false,
+  "all_component_jobs_success": true,
+  "component_results": [
+    {
+      "name": "component (postgrest)",
+      "job": 117532543075,
+      "conclusion": "success",
+      "source_build": [
+        "skipped"
+      ],
+      "reuse_check": [
+        "success"
+      ]
+    },
+    {
+      "name": "component (auth)",
+      "job": 117532543089,
+      "conclusion": "success",
+      "source_build": [
+        "skipped"
+      ],
+      "reuse_check": [
+        "success"
+      ]
+    },
+    {
+      "name": "component (studio)",
+      "job": 117532543094,
+      "conclusion": "success",
+      "source_build": [
+        "skipped"
+      ],
+      "reuse_check": [
+        "success"
+      ]
+    },
+    {
+      "name": "component (dbx)",
+      "job": 117532543096,
+      "conclusion": "success",
+      "source_build": [
+        "skipped"
+      ],
+      "reuse_check": [
+        "success"
+      ]
+    },
+    {
+      "name": "component (litellm)",
+      "job": 117532543098,
+      "conclusion": "success",
+      "source_build": [
+        "success"
+      ],
+      "reuse_check": [
+        "success"
+      ]
+    },
+    {
+      "name": "component (langfuse-web)",
+      "job": 117532543142,
+      "conclusion": "success",
+      "source_build": [
+        "skipped"
+      ],
+      "reuse_check": [
+        "success"
+      ]
+    },
+    {
+      "name": "component (meta)",
+      "job": 117532543157,
+      "conclusion": "success",
+      "source_build": [
+        "skipped"
+      ],
+      "reuse_check": [
+        "success"
+      ]
+    },
+    {
+      "name": "component (langfuse-worker)",
+      "job": 117532543159,
+      "conclusion": "success",
+      "source_build": [
+        "skipped"
+      ],
+      "reuse_check": [
+        "success"
+      ]
+    },
+    {
+      "name": "component (storage)",
+      "job": 117532543164,
+      "conclusion": "success",
+      "source_build": [
+        "skipped"
+      ],
+      "reuse_check": [
+        "success"
+      ]
+    },
+    {
+      "name": "component (lens)",
+      "job": 117532543167,
+      "conclusion": "success",
+      "source_build": [
+        "skipped"
+      ],
+      "reuse_check": [
+        "success"
+      ]
+    }
+  ],
+  "platform_job": 117537146112,
+  "platform_status_last_checked": "in_progress",
+  "local_registry_pull": {
+    "image": "ghcr.io/100apps/anp-build-dbx:run-39076163045",
+    "exit_code": 1,
+    "registry_error": "unauthorized",
+    "existing_docker_credentials_used": true,
+    "credentials_changed": false
+  },
+  "recorded_at_utc": "2026-10-17T23:56:19.712204+00:00"
 }

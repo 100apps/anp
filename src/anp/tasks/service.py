@@ -40,6 +40,10 @@ class TaskService:
         return await actor.objects.select('tasks',workspace_id='eq.'+actor.workspace_id,
             app_id='eq.'+self.app_id,order='created_at.desc',limit='100')
 
+    async def summary(self,actor):
+        await actor.require(self.app_id+'.task.read')
+        return await actor.objects.rpc('task_summary',p_workspace=actor.workspace_id,p_app=self.app_id)
+
     async def get(self,actor,task_id):
         try: UUID(task_id)
         except ValueError: raise BusinessError('任务 ID 格式不正确',422,'VALIDATION_ERROR')

@@ -15,4 +15,5 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
 }
 export type Me = { id:string;email:string;workspace_id:string;role:string;permissions:string[];workspaces:{id:string;name:string}[];is_platform_admin:boolean }
 export type Task = { id:string;app_id:string;title:string;status:string;mode:string|null;created_at:string;input:Record<string,unknown>;error:string|null;result:Record<string,unknown>|null;nodes?:{node:string;output:unknown;created_at:string}[] }
+export type TaskSummary = { total:number;pending:number;running:number;succeeded:number;failed:number;cancelled:number }
 export type Result = { task_id:string;report:Record<string,unknown>;object_path:string }

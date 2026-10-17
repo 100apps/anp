@@ -120,5 +120,27 @@
     "kernel_oom_log_available": false,
     "next_change": "保持 jobs=1 / LTO=off / codegen_units=256，临时 CI 主机新增 8 GiB swap，分配后仍保留 35 GiB 磁盘",
     "new_probe_verified": false
+  },
+  "dbx_extra_swap_terminal_result": {
+    "run": 39076163045,
+    "job": 117523651754,
+    "conclusion": "success",
+    "job_duration_seconds": 2605,
+    "source_commit": "b23053caddf2ed51bc6d244f42d738924e7bd388",
+    "dbx_source_sha": "3ebaf047e09eb7a2fbd7b63ffc51a8cce24fca65",
+    "updated_to_remote_head": true,
+    "manifest_recorded_at": "2026-10-17T22:43:47.610551+00:00",
+    "image": "ghcr.io/100apps/anp-build-dbx:run-39076163045",
+    "registry_digest": "sha256:5171f6f8064dfd439d7e219c85a1cbecbe17d259a11624aeb6ea5bc554c58a5b",
+    "build_image_id": "sha256:af0e4b1e7a843cb5f3b16d00d3644f1bdf32985425807a4296953b4461ebd05c",
+    "log_sha256": "8e219772d77d20f973b551f3eb66d0b52a070c275b4ff17680acd28d53a79463",
+    "extra_swap_gib": 8,
+    "lto": "off",
+    "codegen_units": 256,
+    "cargo_build_jobs": 1,
+    "full_platform_verified": false,
+    "local_ghcr_pull_verified": false,
+    "new_binary_runtime_performance_verified": false,
+    "limitation": "组件源码构建和推送通过；仍需正式流程校验上游 SHA 与配方、组装实启与业务回归，尚未证明新 DBX 的运行性能"
   }
 }

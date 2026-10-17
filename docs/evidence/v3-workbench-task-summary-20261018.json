@@ -1,0 +1,32 @@
+{
+  "scope": "工作台完整统计修复，真实 Supabase 和 RLS；API 经进程内 ASGI HTTP 验证，不冒充浏览器与 IDE 验收",
+  "migration": "migrations/003_task_summary.sql",
+  "database_target": "当前独立 anp-storage PostgreSQL 的 54323 端口，未操作旧 anp2",
+  "fixture": "新建的隔离验收工作空间内 105 条合成任务，状态仅用于统计检查，非真实运行或产物成功证据",
+  "result": {
+    "list_rows": 100,
+    "summary": {
+      "total": 105,
+      "pending": 100,
+      "running": 2,
+      "succeeded": 3,
+      "failed": 0,
+      "cancelled": 0
+    },
+    "cross_workspace_api_denied": true,
+    "cross_workspace_rpc_denied": true,
+    "unauthorized_application_rpc_denied": true,
+    "anonymous_api_denied": true,
+    "viewer_read_allowed": true
+  },
+  "test": {
+    "file": "tests/test_v3_task_summary.py",
+    "passed": 1,
+    "seconds": 1.36
+  },
+  "typescript_and_production_build_passed": true,
+  "vite_build_seconds": 2.87,
+  "browser_render_verified": false,
+  "full_platform_release_verified": false,
+  "implementation": "统计使用 SECURITY INVOKER 的一次 SQL 聚合、当前 JWT 与工作空间；最近任务列表仍保留分页，统计失败不显示零"
+}

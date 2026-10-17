@@ -17,6 +17,10 @@ def task_router(app_id):
     async def list_tasks(actor=Depends(get_actor)):
         return await service.list(actor)
 
+    @router.get('/summary')
+    async def task_summary(actor=Depends(get_actor)):
+        return await service.summary(actor)
+
     @router.get('/{task_id}')
     async def get_task(task_id: str,actor=Depends(get_actor)):
         return await service.get(actor,task_id)

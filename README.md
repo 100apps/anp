@@ -1,5 +1,17 @@
 # ANP 本地 AI 原生工作台
 
+> **V3 正在重构，尚未完成迁移。** 目标是“四个官方存储依赖 + 单容器平台 + 本机业务 F5”。[完整目标与验收账本](docs/重构实施与验收.md)记录已完成项与未完成项；下文仍包含当前可运行 V2 的入口，不能据此认为单容器平台已经交付。
+
+代码仓库：[100apps/anp](https://github.com/100apps/anp)（私有）。新增 `third_party/` 保存真正的 Git submodule，`deploy/storage/` 定义四种存储，`config/deployment.example.toml` 定义本机/容器/云地址边界。
+
+```powershell
+git clone --recurse-submodules https://github.com/100apps/anp.git
+# 更新上游并记录真实 SHA（发布构建默认执行，不使用旧 SHA 冒充最新）
+uv run python scripts/sync_upstreams.py
+```
+
+V3 存储独立验证使用新卷 `anp_v3_*`，不会复用或删除现有 `anp_v2_*`。当前端口仍被 V2 使用时，不应直接启动同端口的 V3；迁移必须先完成备份和切换验证。
+
 默认入口是本机 CLI，业务服务无需启动。Web、HTTP CLI 和本地 CLI 共用业务服务、输入校验、身份和权限。平台依赖全部运行在 Docker，不使用 Windows PostgreSQL。
 
 ## 开始使用

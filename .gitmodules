@@ -1,0 +1,30 @@
+[submodule "third_party/supabase"]
+	path = third_party/supabase
+	url = https://github.com/supabase/supabase.git
+[submodule "third_party/langfuse"]
+	path = third_party/langfuse
+	url = https://github.com/langfuse/langfuse.git
+[submodule "third_party/litellm"]
+	path = third_party/litellm
+	url = https://github.com/BerriAI/litellm.git
+[submodule "third_party/dbx"]
+	path = third_party/dbx
+	url = https://github.com/t8y2/dbx.git
+[submodule "third_party/supabase-auth"]
+	path = third_party/supabase-auth
+	url = https://github.com/supabase/auth.git
+[submodule "third_party/supabase-storage"]
+	path = third_party/supabase-storage
+	url = https://github.com/supabase/storage.git
+[submodule "third_party/postgres-meta"]
+	path = third_party/postgres-meta
+	url = https://github.com/supabase/postgres-meta.git
+[submodule "third_party/postgrest"]
+	path = third_party/postgrest
+	url = https://github.com/PostgREST/postgrest.git
+[submodule "third_party/langgraph"]
+	path = third_party/langgraph
+	url = https://github.com/langchain-ai/langgraph.git
+[submodule "third_party/lens"]
+	path = third_party/lens
+	url = https://github.com/BerriAI/lens.git

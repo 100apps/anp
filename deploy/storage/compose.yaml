@@ -1,0 +1,89 @@
+# 存储层最多四个官方镜像。按服务选择 profile；云端资源不启动本地替身。
+name: anp-storage
+services:
+  postgres:
+    image: supabase/postgres:17.6.1.136
+    profiles: [local, postgres]
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请先生成私有配置}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      JWT_SECRET: ${JWT_SECRET:?缺少 JWT_SECRET}
+      JWT_EXP: '3600'
+    ports: ['127.0.0.1:${ANP_PG_PORT:-54322}:5432']
+    command: [postgres, -c, config_file=/etc/postgresql/postgresql.conf, -c, max_connections=120, -c, shared_buffers=512MB, -c, effective_cache_size=4GB, -c, work_mem=8MB, -c, maintenance_work_mem=128MB, -c, random_page_cost=1.1, -c, max_parallel_workers_per_gather=2]
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - pg_config:/etc/postgresql-custom
+      - ../../third_party/supabase/docker/volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:ro
+      - ../../third_party/supabase/docker/volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:ro
+      - ../../third_party/supabase/docker/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:ro
+      - ../../third_party/supabase/docker/volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    shm_size: 512mb
+  redis:
+    image: redis:8-alpine
+    profiles: [local, redis]
+    restart: unless-stopped
+    command: [redis-server, --appendonly, 'yes', --appendfsync, everysec, --maxmemory, 1gb, --maxmemory-policy, noeviction, --requirepass, '${REDIS_PASSWORD:?缺少 Redis 密码}']
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    ports: ['127.0.0.1:${ANP_REDIS_PORT:-6379}:6379']
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.9.6.6
+    profiles: [local, clickhouse]
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_USER: anp
+      CLICKHOUSE_PASSWORD: ${CH_PASSWORD:?缺少 ClickHouse 密码}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: '1'
+    ports: ['127.0.0.1:${ANP_CH_PORT:-8123}:8123']
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+      - ./clickhouse.xml:/etc/clickhouse-server/config.d/anp.xml:ro
+    ulimits:
+      nofile: {soft: 262144, hard: 262144}
+    healthcheck:
+      test: [CMD-SHELL, 'clickhouse-client --user anp --password "$${CLICKHOUSE_PASSWORD}" --query "SELECT 1" >/dev/null']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  rustfs:
+    image: rustfs/rustfs@sha256:7e948dad4748bda48f8985fda7195f8cf2e4259427011f6120acc2c9acf51587
+    profiles: [local, rustfs]
+    restart: unless-stopped
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:?缺少 S3 Access Key}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:?缺少 S3 Secret Key}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: 'true'
+      RUSTFS_ADDRESS: ':9000'
+      RUSTFS_CONSOLE_ADDRESS: ':9001'
+      RUSTFS_OBS_LOG_DIRECTORY: /logs
+    ports: ['127.0.0.1:${ANP_S3_PORT:-9000}:9000', '127.0.0.1:${ANP_S3_CONSOLE_PORT:-9001}:9001']
+    volumes: [rustfs_data:/data, rustfs_logs:/logs]
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:9000/health >/dev/null']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+volumes:
+  pg_data: {name: '${ANP_STORAGE_PREFIX:-anp_v3}_pg_data'}
+  pg_config: {name: '${ANP_STORAGE_PREFIX:-anp_v3}_pg_config'}
+  redis_data: {name: '${ANP_STORAGE_PREFIX:-anp_v3}_redis_data'}
+  clickhouse_data: {name: '${ANP_STORAGE_PREFIX:-anp_v3}_clickhouse_data'}
+  clickhouse_logs: {name: '${ANP_STORAGE_PREFIX:-anp_v3}_clickhouse_logs'}
+  rustfs_data: {name: '${ANP_STORAGE_PREFIX:-anp_v3}_rustfs_data'}
+  rustfs_logs: {name: '${ANP_STORAGE_PREFIX:-anp_v3}_rustfs_logs'}

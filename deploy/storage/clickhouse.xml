@@ -1,0 +1,15 @@
+<clickhouse>
+  <max_connections>1024</max_connections>
+  <max_concurrent_queries>48</max_concurrent_queries>
+  <mark_cache_size>536870912</mark_cache_size>
+  <uncompressed_cache_size>134217728</uncompressed_cache_size>
+  <keeper_server>
+    <tcp_port>9181</tcp_port>
+    <server_id>1</server_id>
+    <log_storage_path>/var/lib/clickhouse/coordination/log</log_storage_path>
+    <snapshot_storage_path>/var/lib/clickhouse/coordination/snapshots</snapshot_storage_path>
+    <raft_configuration><server><id>1</id><hostname>127.0.0.1</hostname><port>9234</port></server></raft_configuration>
+  </keeper_server>
+  <zookeeper><node><host>127.0.0.1</host><port>9181</port></node></zookeeper>
+  <keeper_map_path_prefix>/anp/keeper_map</keeper_map_path_prefix>
+</clickhouse>

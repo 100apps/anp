@@ -1,0 +1,25 @@
+# V3 目标配置：宿主/F5 与容器连接分别明确，不猜测 localhost 的含义。
+[platform]
+url = "http://localhost:8080"
+listen = "0.0.0.0:8080"
+image = "ghcr.io/100apps/anp-platform:latest"
+
+[storage]
+local = ["postgres", "redis", "clickhouse", "rustfs"]
+volume_prefix = "anp_v3"
+postgres_host_url = "postgresql://supabase_admin:${POSTGRES_PASSWORD}@127.0.0.1:54322/postgres"
+postgres_container_url = "postgresql://supabase_admin:${POSTGRES_PASSWORD}@host.docker.internal:54322/postgres"
+redis_host_url = "redis://:${REDIS_PASSWORD}@127.0.0.1:6379/0"
+redis_container_url = "redis://:${REDIS_PASSWORD}@host.docker.internal:6379/0"
+clickhouse_host_url = "http://127.0.0.1:8123"
+clickhouse_container_url = "http://host.docker.internal:8123"
+s3_host_url = "http://127.0.0.1:9000"
+s3_container_url = "http://host.docker.internal:9000"
+
+[business]
+api_host_url = "http://127.0.0.1:8180"
+api_container_url = "http://host.docker.internal:8180"
+worker_host_url = "http://127.0.0.1:8281"
+worker_container_url = "http://host.docker.internal:8281"
+ui_host_url = "http://127.0.0.1:5173"
+ui_container_url = "http://host.docker.internal:5173"

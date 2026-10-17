@@ -1,0 +1,63 @@
+{
+  "scope": "最新 SDK 的 WSL 原生运行、TLS 契约和 Docker 往返状态交接；不作为 IDE F5 或 GHCR 验收",
+  "thread_checksums": {
+    "01a14b59-5d06-7ac2-b41d-7a6093e96f2d": "e418b67d3e3da17986179d33689f28029e3946d19f5d84a462e1ee5bc90fc4d0",
+    "197df063-7942-5f58-8a3b-fe62082a85ce": "06affb319e0ebf0612e21f75cd5cf8a2816ba21bd682e85248dc988ef836b603",
+    "cd5c75b9-e8e4-5b9e-9d4c-205d6b56b019": "8eeffa59268d8ee9485bd8cc07a35b8e2b0cca4ec87d8670d03f9df8a2912704",
+    "01a14b6e-c2d7-78b2-9bd6-ca63ed4e4033": "5b6797794c3d34db3ba064766b8e2c5c203ef7bdf0b9c39eabc8f028ef9ef7db",
+    "01a14b72-271c-7532-bbc2-644a39aadc02": "4c3a4c7bb1b9570af1aad484d233c4238320ca69b058d28d36557c407a6947b8",
+    "01a14b79-e76a-7992-a3ef-f33de27b0e01": "60c604d1a49bbdfa213fbdbbd9bcec006dc7e8be360efc1e68cf7a7c8656a296",
+    "a1d61fbf-33b6-583b-988f-dbd4f619c4a9": "8bc438afdceffa87598610106997b9bae7d3c032e49aeb2ae812a2c7b796d1e5",
+    "47fed5c5-c43b-5ae3-b6b4-728c9c4aaab1": "02984e6ad55ae0b7e841000141b39266748aec6df4672ec06d2674ab5dd67848"
+  },
+  "native_runtime": {
+    "marker": {
+      "workspace": "E:\\anp",
+      "image": "sha256:a367927b050b5ffa6ce5f69cd01ea29d23a20edaf6fc3956b01d513a58243e7e"
+    },
+    "tls_verify_required": true,
+    "tls_hostname_verified": true,
+    "tls_context_cached": true
+  },
+  "native_regression": {
+    "passed": 48,
+    "skipped": 9,
+    "seconds": 60.86
+  },
+  "debug_listener_ready": true,
+  "ide_f5_verified": false,
+  "launch_scope": "run_native.py --reload --debug-port 5684；未等待 IDE 附加，不作为 IDE F5 验收",
+  "returned_to_docker": true,
+  "preserved_threads_on_return": 8,
+  "old_and_storage_container_ids_unchanged": true,
+  "before_counts": {
+    "thread_checksums": 6,
+    "preserved_old_containers": 17,
+    "storage_containers": 4
+  },
+  "return_business_regression": {
+    "passed": 2,
+    "seconds": 14.57
+  },
+  "native_debug_port_released": true,
+  "native_pid_marker_removed": true,
+  "image_source_commit": "84922e5f943a9de375ec5e899508f54fe691b3f4",
+  "current_mode": "docker",
+  "previous_ci": {
+    "run_id": 39059610124,
+    "conclusion": "failure",
+    "dbx_job_id": 117474909620,
+    "started_at": "2026-10-17T18:48:07Z",
+    "completed_at": "2026-10-17T20:03:32Z",
+    "annotation": "The hosted runner lost communication with the server.",
+    "logs_available": false,
+    "root_cause": "未证实 CPU、内存或网络中的具体原因"
+  },
+  "current_ci": {
+    "run_id": 39064673639,
+    "source_commit": "84922e5f943a9de375ec5e899508f54fe691b3f4",
+    "dependencies": "success",
+    "disk_prepare_step": "studio、dbx、auth 均 success",
+    "component_builds": "上述三项仍 in_progress，其余排队，未发布最终镜像"
+  }
+}

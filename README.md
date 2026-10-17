@@ -90,7 +90,7 @@ API/Worker 使用 debugpy 跟踪 Uvicorn 热重载子进程，前端使用 Vite 
 
 首次原生运行从已构建镜像提取制品到受管理的 WSL `/opt/anp`；停止的临时导出容器随后删除，不运行嵌套 Docker。模式切换时先停止另一平台，再通过私有 Agent 归档交接，保留旧快照。
 
-**验收边界：** 原生实跑 27 项检查通过，源码重载后既有线程保持一致；实际 IDE F5/断点尚未验收。VS Code 当前为 Restricted Mode，需要用户自行信任工作区。
+**验收边界：** 最新 SDK 在原生模式通过 48 项检查，切回 Docker 后八条既有及原生新建线程状态一致，真实业务回归通过；实际 IDE F5/断点尚未验收。VS Code 当前为 Restricted Mode，需要用户自行信任工作区。[往返交接证据](docs/evidence/v3-latest-native-handoff-20261018.json)
 
 ## 单端口管理入口
 

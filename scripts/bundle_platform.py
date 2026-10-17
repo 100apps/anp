@@ -39,6 +39,16 @@ def prepare(components,partial=False):
     destination=ROOT/'.local/build/platform'
     destination.mkdir(parents=True,exist_ok=True)
     (destination/'components.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2),encoding='utf8')
+    manifest=ROOT/'.local/build/dependencies.json'
+    if manifest.exists():
+        dependencies=json.loads(manifest.read_text(encoding='utf8'))
+        for entry in dependencies['dependencies']:
+            actual=subprocess.check_output(['git','-C',str(ROOT/entry['path']),'rev-parse','HEAD'],text=True).strip()
+            if actual!=entry['commit']:raise RuntimeError('依赖清单与源码不一致：'+entry['path'])
+    else:
+        dependencies={'updated_to_remote_head':False,'dependencies':[
+            {'name':name,'commit':item['revision']} for name,item in metadata['components'].items()]}
+    (destination/'dependencies.json').write_text(json.dumps(dependencies,ensure_ascii=False,indent=2),encoding='utf8')
     dockerfile='\n'.join(stages)+'''
 FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends nginx tini ca-certificates && rm -rf /var/lib/apt/lists/*
@@ -55,6 +65,7 @@ COPY platform/runtime/www ./www
 COPY config/settings.example.toml ./config/settings.example.toml
 COPY migrations ./migrations
 COPY --from=platform_manifest components.json ./components.json
+COPY --from=platform_manifest dependencies.json ./dependencies.json
 '''+ '\n'.join(copies)+'''
 EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=3s --start-period=90s --retries=12 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/_platform/health',timeout=2)"

@@ -14,6 +14,8 @@ env:
 jobs:
   dependencies:
     runs-on: ubuntu-24.04
+    outputs:
+      manifest: ${{ steps.resolve.outputs.manifest }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,12 +24,10 @@ jobs:
         with:
           python-version: '3.12'
       - name: 拉取所有最新上游并记录真实 SHA
-        run: python scripts/sync_upstreams.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: platform-dependencies
-          path: .local/build/dependencies.json
-          include-hidden-files: true
+        id: resolve
+        run: |
+          python scripts/sync_upstreams.py
+          echo "manifest=$(base64 -w0 .local/build/dependencies.json)" >> "$GITHUB_OUTPUT"
   component:
     needs: dependencies
     runs-on: ubuntu-24.04
@@ -44,10 +44,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@v4
-        with:
-          name: platform-dependencies
-          path: .local/ci
+      - name: 复原同一份构建清单
+        env:
+          DEPENDENCIES_BASE64: ${{ needs.dependencies.outputs.manifest }}
+        run: python -c "import os,base64;from pathlib import Path;p=Path('.local/ci/dependencies.json');p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(base64.b64decode(os.environ['DEPENDENCIES_BASE64']))"
       - run: python scripts/checkout_dependencies.py .local/ci/dependencies.json
       - name: 从记录的最新源码构建组件
         run: python scripts/build_components.py --locked --component '${{ matrix.name }}'
@@ -61,7 +61,7 @@ jobs:
           docker tag anp-build/${{ matrix.name }}:source $REGISTRY/anp-build-${{ matrix.name }}:run-${{ github.run_id }}
           docker push $REGISTRY/anp-build-${{ matrix.name }}:run-${{ github.run_id }}
   platform:
-    needs: component
+    needs: [dependencies, component]
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -71,10 +71,10 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@v4
-        with:
-          name: platform-dependencies
-          path: .local/ci
+      - name: 复原同一份构建清单
+        env:
+          DEPENDENCIES_BASE64: ${{ needs.dependencies.outputs.manifest }}
+        run: python -c "import os,base64;from pathlib import Path;p=Path('.local/ci/dependencies.json');p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(base64.b64decode(os.environ['DEPENDENCIES_BASE64']))"
       - run: python scripts/checkout_dependencies.py .local/ci/dependencies.json
       - uses: docker/login-action@v3
         with:
@@ -115,11 +115,10 @@ jobs:
           docker tag anp/platform:ci $REGISTRY/anp-platform:latest
           docker push $REGISTRY/anp-platform:sha-${{ github.sha }}
           docker push $REGISTRY/anp-platform:latest
-      - uses: actions/upload-artifact@v4
+      - name: 保存构建清单到作业摘要（镜像内也包含该清单）
         if: always()
-        with:
-          name: platform-release-manifest
-          path: |
-            .local/build/dependencies.json
-            .local/build/platform/components.json
-          include-hidden-files: true
+        run: |
+          echo '### 实际依赖 SHA' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat .local/build/dependencies.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

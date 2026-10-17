@@ -43,6 +43,10 @@ def main():
     args=parser.parse_args()
     if sys.platform!='linux' or os.environ.get('GITHUB_ACTIONS')!='true' or os.environ.get('RUNNER_ENVIRONMENT')!='github-hosted':
         raise SystemExit('拒绝清理：只允许一次性 GitHub 托管 Linux 运行器')
+    core=Path('/proc/sys/kernel/core_pattern')
+    if core.exists():
+        kind='管道（内核不应用 RLIMIT_CORE）' if core.read_text().strip().startswith('|') else '普通文件'
+        print('CI core 转储接收方式：'+kind,flush=True)
     before=shutil.disk_usage('/').free/2**30
     print(f'CI 根磁盘可用空间：{before:.2f} GiB',flush=True)
     required=args.minimum_gb+args.extra_swap_gb

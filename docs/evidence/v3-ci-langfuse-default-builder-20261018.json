@@ -33,5 +33,13 @@
     "all_other_upstream_config_preserved": true,
     "unit_tests_passed": 17
   },
-  "full_cloud_build_verified": false
+  "full_cloud_build_verified": false,
+  "previous_job_final_conclusion": "cancelled",
+  "cancellation_reason": "明确 V8 致命错误后作业仍在运行，磁盘从 28.09 GiB 降至 12.52 GiB；保留日志后取消，非仅因观察超时重启",
+  "previous_log_sha256": "c55e657ae95b21f21f03f67634cb889a2e5fdf548818c5c31e803f999c594007",
+  "core_dump_diagnostic": {
+    "known": "Linux 将 core 转储送入管道时不会执行 RLIMIT_CORE 限额；新 CI 准备会记录接收方式",
+    "source": "https://man7.org/linux/man-pages/man5/core.5.html",
+    "not_proven": "旧作业磁盘增长是否由 core 转储导致，尚无直接文件证据，不能断言"
+  }
 }

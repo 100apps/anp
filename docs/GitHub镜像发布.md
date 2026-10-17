@@ -60,7 +60,7 @@ docker pull ghcr.io/100apps/anp-platform:latest
 
 PostgREST 显式使用路径 flake，并接受其源码声明的签名构建缓存。此前活构建捕获的是增加缓存接受参数前的命令，现已成功结束；其 static 构建步骤耗时 2310.8 秒，不能把这次结果当作签名缓存加速已经验证。源码提交、版本及二进制校验和见 `docs/evidence/v3-runtime-final-20261018.json`。
 
-源码编译和镜像组装前增加磁盘准备：仅在 GitHub 托管 Linux 运行器中清理本构建不用的固定预装 SDK，分别要求至少 28 / 35 GiB 空闲。脚本在本机或自托管运行器拒绝执行；不清理 Docker 数据、工作区或其他项目产物。新轮 `39064673639` 的 Studio、DBX、Auth 均已通过 28 GiB 准备步骤，正在编译；组装步骤尚未执行，不能据此宣称已经解决此前失败或发布成功。
+源码编译和镜像组装前增加磁盘准备：仅在 GitHub 托管 Linux 运行器中清理本构建不用的固定预装 SDK。早期门槛分别为 28 / 35 GiB，最新配方已统一为 35 GiB。脚本在本机或自托管运行器拒绝执行；不清理 Docker 数据、工作区或其他项目产物。`39064673639` 的 Studio、DBX、Auth 使用的是早期配方，均已通过 28 GiB 准备步骤；不能据此宣称已经解决此前失败或发布成功。
 
 CI 验收已补入动态地址的本地 CLI、HTTP 权限、观测和 Studio 检查。本机完整运行得到 42 passed、9 skipped（62.92 秒）；其中 8 项属于明确归档的 V2 检查，另 1 项需显式开启存储持久化验收。直接 Supabase 写入和私有对象下载包含授权成功对照，以及只读/跨工作空间拒绝；没有用旧平台的通过结果代替新平台。
 
@@ -72,6 +72,6 @@ CI 验收已补入动态地址的本地 CLI、HTTP 权限、观测和 Studio 检
 
 清理脚本补入两个本流程不用的宿主工具链固定目录：Swift 的 `/usr/share/swift` 和 Haskell 的 `/usr/local/.ghcup`。路径分别核对了 GitHub 官方运行器的 [Swift 安装脚本](https://github.com/actions/runner-images/blob/main/images/ubuntu/scripts/build/install-swift.sh) 和 [Haskell 安装脚本](https://github.com/actions/runner-images/blob/main/images/ubuntu/scripts/build/install-haskell.sh)。平台编译使用 Docker 内的相应工具链，不依赖这些宿主目录；达到门槛后立即停止清理。宿主 Python、Docker 数据、工作区及本机目录均不清理。
 
-新增手动工作流 `runner-disk.yml`，在相同 Ubuntu 运行器和递归源码检出之后独立验证 35 GiB 门槛，避免等整套组件编译完才发现空间不足。脚本在 Windows 的拒绝执行已验证；新增目录能释放多少空间仍待该工作流实测，不降低原有容量门槛来制造通过。
+新增手动工作流 `runner-disk.yml`，在相同 Ubuntu 运行器和递归源码检出之后独立验证 35 GiB 门槛，避免等整套组件编译完才发现空间不足。脚本在 Windows 的拒绝执行已验证；容量通过采用实际日志，不降低原有门槛来制造通过。
 
 容量验证 `39066020184` 已成功：完整检出后的可用空间为 10.77 GiB，原五个目录处理后为 30.31 GiB，清理 Swift 后为 33.76 GiB，再处理 GHCup 后为 37.42 GiB。根目录、`/mnt` 和 Docker 数据目录均在同一 72 GiB 文件系统上，不能依赖另一个隐藏的大磁盘。源码编译和最终组装的准备门槛统一提高为 35 GiB；这证明准备步骤具备足够起始空间，不等于大型组件和整合镜像已经完成。下一轮将复用当前轮中源码 SHA 与配方一致的制品，保留正在运行的构建。

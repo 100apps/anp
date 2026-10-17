@@ -72,7 +72,7 @@ jobs:
         run: python -c "import os,json,shutil;from pathlib import Path;p=Path('/sys/fs/cgroup/memory.max');print(json.dumps({'cpus':os.cpu_count(),'disk_free_gb':round(shutil.disk_usage('/').free/2**30,2),'memory_gb':round(os.sysconf('SC_PHYS_PAGES')*os.sysconf('SC_PAGE_SIZE')/2**30,2),'cgroup_memory_max':p.read_text().strip() if p.exists() else None}))"
       - name: 为源码编译准备托管运行器磁盘
         if: steps.reuse.outputs.hit != 'true'
-        run: sudo --preserve-env=GITHUB_ACTIONS,RUNNER_ENVIRONMENT python3 scripts/prepare_ci_disk.py --minimum-gb 35
+        run: sudo --preserve-env=GITHUB_ACTIONS,RUNNER_ENVIRONMENT python3 scripts/prepare_ci_disk.py --minimum-gb 35 --extra-swap-gb ${{ matrix.name == 'langfuse-web' && '8' || '0' }}
       - name: 从记录的最新源码构建组件
         if: steps.reuse.outputs.hit != 'true'
         run: python scripts/build_components.py --locked --component '${{ matrix.name }}'

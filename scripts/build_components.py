@@ -61,18 +61,26 @@ def recipe(component):
     if profile=='ci':
         if component=='dbx':
             # 托管运行器仅 2 CPU / 7.75 GiB；实测最终 release 阶段内存及交换空间接近耗尽。
-            # 保留 release 优化级别、panic/strip，使用跨 crate ThinLTO 分摊链接负担。
+            # ThinLTO/16 单元仍耗尽 7.75 GiB + 3 GiB swap；分拆单元并关闭跨 crate LTO。
+            # 保留 release 优化级别、panic/strip；CI 制品的运行性能需要另外实测。
             marker='ENV CARGO_BUILD_JOBS=4 CMAKE_BUILD_PARALLEL_LEVEL=4\n'
             if dockerfile.count(marker)!=1:raise RuntimeError('DBX 构建资源配置发生变化，需要适配')
             dockerfile=dockerfile.replace(marker,
-                'ENV CARGO_BUILD_JOBS=2 CMAKE_BUILD_PARALLEL_LEVEL=2 '
-                'CARGO_PROFILE_RELEASE_LTO=thin CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16\n')
+                'ENV CARGO_BUILD_JOBS=1 CMAKE_BUILD_PARALLEL_LEVEL=1 '
+                'CARGO_PROFILE_RELEASE_LTO=off CARGO_PROFILE_RELEASE_CODEGEN_UNITS=256\n')
         if component=='studio':
             dockerfile=dockerfile.replace('--max-old-space-size=6144','--max-old-space-size=5120')
             marker='RUN pnpm --filter studio exec next build\n'
             if dockerfile.count(marker)!=1:raise RuntimeError('Studio 构建命令已变化，需要适配')
             # 上游只配置了 Turbopack 的文本加载规则；Webpack 也必须保留原始文本。
             webpack='''  webpack(config) {
+    // Next 的 tsconfig 路径插件会跳过 .d.ts；这两份文件是 Monaco 所需的原始文本。
+    if (!config.context) throw new Error("Studio Webpack context missing");
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@/public/deno/edge-runtime.d.ts$": config.context + "/public/deno/edge-runtime.d.ts",
+      "@/public/deno/lib.deno.d.ts$": config.context + "/public/deno/lib.deno.d.ts",
+    };
     const rawText = /(?:\\.md|(?:^|[\\\\/])(?:edge-runtime|lib\\.deno)\\.d\\.ts)$/;
     const excludeRaw = (rules: any[]) => {
       for (const rule of rules) {
@@ -101,7 +109,7 @@ def recipe(component):
         if component=='langfuse-web':
             marker="NODE_OPTIONS='--max-old-space-size-percentage=75'"
             if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse 构建内存配置发生变化，需要适配')
-            dockerfile=dockerfile.replace(marker,"NODE_OPTIONS='--max-old-space-size=5120'")
+            dockerfile=dockerfile.replace(marker,"NODE_OPTIONS='--max-old-space-size=8192'")
             # 只改镜像内 web 的构建脚本，保留 turbo 依赖、类型检查与 OTEL worker 构建。
             marker='RUN NODE_OPTIONS='
             if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse 构建入口发生变化，需要适配')

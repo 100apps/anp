@@ -39,7 +39,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: 为源码编译准备托管运行器磁盘
-        run: sudo --preserve-env=GITHUB_ACTIONS,RUNNER_ENVIRONMENT python3 scripts/prepare_ci_disk.py --minimum-gb 35
+        run: sudo --preserve-env=GITHUB_ACTIONS,RUNNER_ENVIRONMENT python3 scripts/prepare_ci_disk.py --minimum-gb 35 --extra-swap-gb ${{ inputs.component == 'langfuse-web' && '8' || '0' }}
       - name: 从实际源码构建指定组件
         run: python scripts/build_components.py --locked --component "$COMPONENT"
       - name: 保存可供正式流水线验证和复用的中间制品

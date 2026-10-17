@@ -1,0 +1,52 @@
+{
+  "scope": "CI 终态失败及下一轮修复；尚未完成云构建和运行性能验收",
+  "failures": [
+    {
+      "component": "studio",
+      "run": 39072431571,
+      "job": 117512624210,
+      "conclusion": "failure",
+      "heap_mib": 5120,
+      "error": "Webpack tsconfig 路径插件跳过 .d.ts，无法解析两份 Monaco Deno 类型原始文本",
+      "source_support": "https://github.com/vercel/next.js/blob/canary/packages/next/src/build/webpack/plugins/jsconfig-paths-plugin.ts",
+      "next_change": "为这两份原始文本添加精确 Webpack alias，保留 asset/source 与其余加载规则"
+    },
+    {
+      "component": "langfuse-web",
+      "run": 39072434076,
+      "job": 117512630025,
+      "conclusion": "failure",
+      "heap_mib": 5120,
+      "error": "FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory",
+      "next_change": "CI Node 堆 8192 MiB，临时托管运行器新增专用 8 GiB swap；保留类型检查、source map、OTEL worker 与 Sentry"
+    },
+    {
+      "component": "dbx",
+      "run": 39069178512,
+      "job": 117506703810,
+      "conclusion": "failure",
+      "error": "内存与交换空间接近耗尽后 runner shutdown、退出 143；未取得内核 OOM 记录",
+      "next_change": "CI jobs=1、LTO=off、codegen_units=256；保留 release 优化级别，性能待真实制品验收"
+    }
+  ],
+  "log_hashes": {
+    "ci-studio-39072431571.log": "d5d4344718055a4ed09479456489ca4e0559f33f87e0ffc699439c69f2507de4",
+    "ci-langfuse-web-39072434076.log": "d09fe022afe65b0f80b18c7702c88e7abe4034e3eb8772772a4c3ea86a6b70a9",
+    "ci-dbx-39069178512.log": "701604a3217ad4414b749a6edcccd4be7809747dc7a15f2a1607241f736b264e"
+  },
+  "safety": "只在 GITHUB_ACTIONS=true、RUNNER_ENVIRONMENT=github-hosted 的 Linux 主机配置交换文件；现有交换空间不替换，先保障额外交换文件之外仍有 35 GiB 可用磁盘；不改本机存储和旧 anp2",
+  "local_checks": {
+    "component_cache_tests_passed": 9,
+    "default_recipe_changes": [],
+    "ci_recipe_changes": [
+      "studio",
+      "dbx",
+      "langfuse-web"
+    ],
+    "webpack_alias_compile_and_real_deno_text_equal": true,
+    "langfuse_config_node_script_and_syntax": true,
+    "all_other_langfuse_config_preserved": true,
+    "windows_ci_resource_command_rejected": true,
+    "full_cloud_build": false
+  }
+}

@@ -126,6 +126,10 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm --dir console build
+      - name: 验证前端独立启动、真实 HMR 与退出
+        env:
+          ANP_DEV_HOST: '0.0.0.0'
+        run: uv run python scripts/verify_frontend_runtime.py --output .local/ci/frontend-runtime.json
       - name: 在镜像外启动示例 API、Worker 与工作台
         env:
           ANP_DEV_HOST: '0.0.0.0'

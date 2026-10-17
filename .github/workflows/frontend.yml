@@ -1,0 +1,58 @@
+name: 验证 Linux 前端启动与热更新
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - console/**
+      - apps/**/ui/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - src/anp/dev/frontend.py
+      - scripts/verify_frontend_runtime.py
+      - .github/workflows/frontend.yml
+      - .github/workflows/platform.yml
+permissions:
+  contents: read
+concurrency:
+  group: anp-frontend-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+      - uses: pnpm/setup@v1
+        with:
+          runtime: node@22
+          install: false
+          cache: true
+      - name: 安装锁定依赖并完成类型与生产构建
+        env:
+          VITE_BASE_PATH: /workbench/
+        run: |
+          uv sync --frozen
+          pnpm install --frozen-lockfile
+          pnpm --dir console build
+      - name: 验证工作区隔离和前置任务重复执行
+        run: uv run pytest tests/test_v3_frontend.py -q
+      - name: 真实启动、修改恢复源码并验证 HMR 与进程退出
+        env:
+          ANP_DEV_HOST: '0.0.0.0'
+        run: uv run python scripts/verify_frontend_runtime.py --output .local/ci/frontend-runtime.json
+      - name: 保存真实前端运行证据
+        if: success()
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf8') as output:
+              output.write('仅 Linux 前端启动、源码修改/恢复 HMR 和进程退出；不是完整平台或 IDE F5 验收。\n\n```json\n')
+              output.write(Path('.local/ci/frontend-runtime.json').read_text())
+              output.write('\n```\n')
+          PY

@@ -11,7 +11,7 @@ export default defineConfig({
     '@console': fileURLToPath(new URL('./src', import.meta.url)),
   } },
   server: {
-    host: '127.0.0.1', port: Number(process.env.ANP_UI_PORT || 5173), strictPort: true,
+    host: process.env.ANP_DEV_HOST || '127.0.0.1', port: Number(process.env.ANP_UI_PORT || 5173), strictPort: true,
     fs: { allow: ['..'] },
     proxy: { '/api': process.env.ANP_API_TARGET || 'http://127.0.0.1:8180' },
     hmr: process.env.VITE_PUBLIC_PORT ? {clientPort:Number(process.env.VITE_PUBLIC_PORT)} : undefined,

@@ -3,8 +3,9 @@ from html.parser import HTMLParser
 import hashlib
 import json
 import os
+import re
 import time
-from urllib.parse import urljoin
+from urllib.parse import urljoin,quote
 import httpx
 import pytest
 from anp.config import secret
@@ -60,6 +61,34 @@ def test_source_components_and_gateway_assets():
         assert redirect.status_code in (302,307,308)
         assert redirect.headers['location'].startswith('/lens/ui/')
         assert client.get('/dbx').headers['location']=='/dbx/'
+
+
+def test_workbench_assets_application_route_and_hmr_websocket():
+    from websockets.sync.client import connect
+    with httpx.Client(base_url=BASE,trust_env=False,timeout=15) as client:
+        page=client.get('/workbench/')
+        assert page.status_code==200 and 'ANP 工作台' in page.text
+        assets=Assets();assets.feed(page.text)
+        assert assets.urls
+        for path in dict.fromkeys(assets.urls):
+            url=urljoin(str(page.url),path)
+            assert httpx.URL(url).path.startswith('/workbench/')
+            response=client.get(url)
+            assert response.status_code==200
+            assert 'javascript' in response.headers.get('content-type','')
+        redirect=client.get('/demo/')
+        assert redirect.status_code==308
+        assert redirect.headers['location']=='/workbench/apps/demo'
+        configuration=client.get('/api/public/config')
+        assert configuration.status_code==200
+        assert configuration.json()['supabase_url']==BASE+'/supabase'
+        source=client.get('/workbench/@vite/client');source.raise_for_status()
+        token=re.search(r'const wsToken\s*=\s*"([^"]+)"',source.text)
+        assert token,'Vite 客户端没有提供 HMR 会话标识'
+    websocket=BASE.replace('https://','wss://',1).replace('http://','ws://',1)
+    with connect(websocket+'/workbench/?token='+quote(token.group(1),safe=''),
+        origin=BASE,subprotocols=['vite-hmr'],proxy=None,open_timeout=10) as stream:
+        assert json.loads(stream.recv(timeout=10))['type']=='connected'
 
 
 def test_dbx_saved_connections_really_connect():

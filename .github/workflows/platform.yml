@@ -72,7 +72,7 @@ jobs:
         run: python -c "import os,json,shutil;from pathlib import Path;p=Path('/sys/fs/cgroup/memory.max');print(json.dumps({'cpus':os.cpu_count(),'disk_free_gb':round(shutil.disk_usage('/').free/2**30,2),'memory_gb':round(os.sysconf('SC_PHYS_PAGES')*os.sysconf('SC_PAGE_SIZE')/2**30,2),'cgroup_memory_max':p.read_text().strip() if p.exists() else None}))"
       - name: 为源码编译准备托管运行器磁盘
         if: steps.reuse.outputs.hit != 'true'
-        run: sudo --preserve-env=GITHUB_ACTIONS,RUNNER_ENVIRONMENT python3 scripts/prepare_ci_disk.py --minimum-gb 35 --extra-swap-gb ${{ matrix.name == 'langfuse-web' && '8' || '0' }}
+        run: sudo --preserve-env=GITHUB_ACTIONS,RUNNER_ENVIRONMENT python3 scripts/prepare_ci_disk.py --minimum-gb 35 --extra-swap-gb ${{ (matrix.name == 'langfuse-web' || matrix.name == 'dbx') && '8' || '0' }}
       - name: 从记录的最新源码构建组件
         if: steps.reuse.outputs.hit != 'true'
         run: python scripts/build_components.py --locked --component '${{ matrix.name }}'
@@ -115,13 +115,24 @@ jobs:
         run: |
           uv run python -c "from pathlib import Path;p=Path('config/deployment.example.toml').read_text();Path('config/deployment.local.toml').write_text(p.replace('127.0.0.1:8080','127.0.0.1:8089').replace('ghcr.io/100apps/anp-platform:latest','anp/platform:ci').replace(':8180',':8181').replace(':8281',':8282').replace(':5173',':5174'))"
           uv run python -m anp.dev.v3 prepare --mode docker
-      - name: 在镜像外启动示例 API 与 Worker
+      - uses: pnpm/setup@v1
+        with:
+          runtime: node@22
+          install: false
+          cache: true
+      - name: 验证工作台 TypeScript 与生产构建
+        env:
+          VITE_BASE_PATH: /workbench/
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --dir console build
+      - name: 在镜像外启动示例 API、Worker 与工作台
         env:
           ANP_DEV_HOST: '0.0.0.0'
         run: |
           uv run python -m anp.dev.v3 api > .local/ci-api.log 2>&1 &
           uv run python -m anp.dev.v3 worker > .local/ci-worker.log 2>&1 &
-          uv run python -c "from anp.dev.v3 import wait_health;wait_health('http://127.0.0.1:8181/health');wait_health('http://127.0.0.1:8282/health')"
+          uv run python -m anp.dev.v3 frontend-ready > .local/ci-web-ready.log 2>&1
       - name: 验收真实管理接口、登录、连接与状态交接契约
         env:
           ANP_V3_PLATFORM_SMOKE: '1'

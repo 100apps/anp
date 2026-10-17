@@ -1,0 +1,43 @@
+{
+  "scope": "工作台发布门槛补齐，本机真实 HTTP/WS 验收；尚未完成新正式云流水线",
+  "checked_at_utc": "2026-10-17T22:40:33.852704+00:00",
+  "base_url": "http://127.0.0.1:8089",
+  "live_test": {
+    "name": "test_workbench_assets_application_route_and_hmr_websocket",
+    "passed": 1,
+    "seconds": 0.26,
+    "covers": [
+      "工作台 HTML",
+      "单端口 JavaScript 静态资源",
+      "demo 应用路径跳转",
+      "匿名公开登录配置",
+      "经单端口网关的 vite-hmr WebSocket 握手"
+    ]
+  },
+  "frontend_build": {
+    "typescript": true,
+    "vite_version": "7.3.7",
+    "vite_seconds": 6.87,
+    "base_path": "/workbench/",
+    "production_asset_paths_verified": true,
+    "index_sha256": "e26711b750998975d0db040605cc1eefc5c4de5d2e445bdeffe654f37a8d1cf3",
+    "chunk_warning": "主 JS 超过 500 kB，构建通过；未调整告警阈值或关闭 source map"
+  },
+  "ci_change": {
+    "frontend_outside_platform_image": true,
+    "package_manager_from_package_json": "pnpm@11.25.0",
+    "setup_action": "pnpm/setup@v1",
+    "setup_source": "https://github.com/pnpm/action-setup",
+    "node_runtime": "22",
+    "frozen_lockfile": true,
+    "typescript_and_build_before_publish": true,
+    "frontend_ready_before_live_tests": true,
+    "linux_ci_host_binding": "ANP_DEV_HOST=0.0.0.0，默认本地仍为 127.0.0.1",
+    "full_cloud_execution_verified": false
+  },
+  "not_proven": [
+    "浏览器中登录与交互的本次 CI 执行",
+    "IDE 重载后断点再次命中",
+    "完整平台镜像发布与本机拉取启动"
+  ]
+}

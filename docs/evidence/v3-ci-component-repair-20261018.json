@@ -104,5 +104,21 @@
     "local_ghcr_pull_verified": false,
     "oci_labels_independently_read": false,
     "limitation": "仅 Studio 中间组件编译并推送成功；正式流水线仍需拉取、比对源码和配方、组装与实启平台"
+  },
+  "dbx_off_lto_terminal_result": {
+    "run": 39073500482,
+    "job": 117515794637,
+    "conclusion": "failure",
+    "exit_code": 143,
+    "last_resources": {
+      "MemTotal_kib": 8128876,
+      "MemAvailable_kib": 149052,
+      "SwapFree_kib": 316,
+      "disk_free_gib": 29.89
+    },
+    "log_sha256": "0207a6da5a549cdb37181253665221dd6f639fb8e6e32b16d699d97b1170f687",
+    "kernel_oom_log_available": false,
+    "next_change": "保持 jobs=1 / LTO=off / codegen_units=256，临时 CI 主机新增 8 GiB swap，分配后仍保留 35 GiB 磁盘",
+    "new_probe_verified": false
   }
 }

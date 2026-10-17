@@ -108,7 +108,8 @@ def test_lens_session_auto_catalog_and_restricted_analysis_key():
         assert response.status_code==200 and response.json()['info']['models']==['auto']
         for name,limit in configuration.get('lens_analysis_limits',{}).items():
             assert response.json()['info'][name]==limit
-        body={'model':'auto:fast','messages':[{'role':'user','content':'只回复：连接成功'}],'max_tokens':32}
+        # auto 可能路由到推理模型；32 token 曾耗尽于推理而没有可见正文。
+        body={'model':'auto:fast','messages':[{'role':'user','content':'只回复：连接成功'}],'max_tokens':512}
         headers={'Authorization':'Bearer '+key}
         assert client.post('/litellm/v1/chat/completions',headers=headers,json=body).status_code==403
         if os.environ.get('ANP_SKIP_LIVE_LLM')=='1':return  # CI 无私人上游密钥，仅跳过最后的真实付费模型调用。

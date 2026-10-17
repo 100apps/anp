@@ -48,7 +48,7 @@ services:
       CLICKHOUSE_USER: anp
       CLICKHOUSE_PASSWORD: ${CH_PASSWORD:?缺少 ClickHouse 密码}
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: '1'
-    ports: ['127.0.0.1:${ANP_CH_PORT:-8123}:8123']
+    ports: ['127.0.0.1:${ANP_CH_PORT:-8123}:8123', '127.0.0.1:${ANP_CH_NATIVE_PORT:-19000}:9000']
     volumes:
       - clickhouse_data:/var/lib/clickhouse
       - clickhouse_logs:/var/log/clickhouse-server

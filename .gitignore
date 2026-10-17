@@ -9,6 +9,7 @@ node_modules/
 .pytest_cache/
 .ruff_cache/
 config/settings.local.toml
+config/deployment.local.toml
 config/secrets.local.env
 config/local-credentials.md
 platform/.env

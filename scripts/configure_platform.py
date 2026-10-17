@@ -4,22 +4,26 @@ import hashlib
 import json
 from pathlib import Path
 import secrets
-from urllib.parse import urlsplit
+import tomllib
+import os
+from urllib.parse import quote
+from platform_bindings import bind
 import yaml
 from dotenv import dotenv_values
 from anp import ROOT
 from anp.management.platform import envfile
 
 
-def generate(public='http://localhost:8080',smoke=False):
+def generate(public='http://localhost:8080',smoke=False,deployment=None,target='container'):
     private=ROOT/'config/secrets.local.env'
     s=dict(dotenv_values(private))
     for key in ['LENS_ADMIN_TOKEN','LITELLM_LENS_SERVICE_TOKEN','LENS_GATEWAY_SECRET']:
         s.setdefault(key,secrets.token_hex(32))
+    s.setdefault('LENS_V3_ANALYSIS_KEY','sk-anp-lens-'+secrets.token_hex(24))
     envfile(private,s)
     host='postgres'
     pg_port,ch_port,s3_port,redis_port=5432,8123,9000,6379
-    def dsn(db,user,password):return f'postgresql://{user}:{password}@{host}:{pg_port}/{db}'
+    def dsn(db,user,password):return f'postgresql://{quote(user,safe="")}:{quote(password,safe="")}@{host}:{pg_port}/{db}'
     storage={'postgres_url':dsn('postgres','supabase_admin',s['POSTGRES_PASSWORD']),
         's3_url':f'http://rustfs:{s3_port}','s3_access_key':s['S3_ACCESS_KEY'],'s3_secret_key':s['S3_SECRET_KEY']}
     services={}
@@ -111,7 +115,12 @@ def generate(public='http://localhost:8080',smoke=False):
         'LENS_PUBLIC_URL':public,'LITELLM_LENS_PUBLIC_URL':public+'/lens',
         'LITELLM_LENS_SERVICE_TOKEN':s['LITELLM_LENS_SERVICE_TOKEN'],'LENS_GATEWAY_SECRET':s['LENS_GATEWAY_SECRET'],
         'LENS_GATEWAY_URL':'http://127.0.0.1:14000','CLICKHOUSE_URL':f'http://anp:{s["CH_PASSWORD"]}@clickhouse:{ch_port}',
-        'CLICKHOUSE_DATABASE':'lens'},'/health/ready',strip=True)
+        'CLICKHOUSE_DATABASE':'lens','LENS_ANALYSIS_API_KEY':s['LENS_V3_ANALYSIS_KEY'],
+        'LENS_ANALYSIS_MODELS':json.dumps([{'name':'auto','model':'auto','provider':'openai_compatible',
+            'api_key_env':'LENS_ANALYSIS_API_KEY','api_base':'http://127.0.0.1:14000/v1',
+            'input_cost_per_token':0,'output_cost_per_token':0,
+            'output_limits':{'max_tokens':4096}}])},'/health/ready',strip=True)
+    routes[-1]['rewrite_relative_redirects']=True
     add('litellm',14000,'/litellm/',{'DATABASE_URL':dsn('litellm','litellm',s['LITELLM_DB_PASSWORD']),
         'LITELLM_MASTER_KEY':s['LITELLM_KEY'],'STORE_MODEL_IN_DB':'True','SERVER_ROOT_PATH':'/litellm',
         'FREELLM_API_BASE':'http://24.199.104.17:3001/v1','FREELLM_API_KEY':s.get('FREELLM_API_KEY',''),
@@ -119,20 +128,49 @@ def generate(public='http://localhost:8080',smoke=False):
         'LITELLM_LENS_SERVICE_TOKEN':s['LITELLM_LENS_SERVICE_TOKEN'],'LENS_GATEWAY_SECRET':s['LENS_GATEWAY_SECRET']},
         '/health/liveliness',dependencies=['lens'],strip=False,
         command=['litellm','--config','/app/config.yaml','--host','127.0.0.1','--port','14000'])
+    services['litellm']['configure']='litellm'
     # Agent 接入完成前，即使十个第三方组件都可用，也不能给出全平台就绪。
     services['agent']={'required':True,'environment':{},'health_url':'http://127.0.0.1:18124/ok'}
     configuration={'port':8080,'public_url':public,'storage':storage,'services':services,'routes':routes,
         'dbx_connections':dbx_connections,
+        'bootstrap_admin':{'email':s['ADMIN_EMAIL'],'password':s['ADMIN_PASSWORD'],'service_key':s['SERVICE_ROLE_KEY']},
         'studio_basic_auth':{'username':'supabase','password':s['DASHBOARD_PASSWORD']},
         'files':{'litellm':{'/run/anp/litellm.yaml':'/app/config.yaml'}},
         'databases':{name:{'role':role,'password':s[key]} for name,role,key in [
             ('langfuse','langfuse','LANGFUSE_DB_PASSWORD'),('litellm','litellm','LITELLM_DB_PASSWORD'),
             ('agent_local','agent','AGENT_DB_PASSWORD')]}}
+    if deployment:
+        document=tomllib.loads(Path(deployment).read_text(encoding='utf8'))
+        bind(configuration,document,{**s,**os.environ},target)
     output=ROOT/'.local/generated/platform-v3';output.mkdir(parents=True,exist_ok=True)
     (output/'config.json').write_text(json.dumps(configuration,ensure_ascii=False,indent=2),encoding='utf8')
     model_config=yaml.safe_load((ROOT/'platform/config/litellm/models.yaml').read_text(encoding='utf8'))
     model_config['general_settings']['tracing']={'store':{'type':'lens'}}
     (output/'litellm.yaml').write_text(yaml.safe_dump(model_config,allow_unicode=True),encoding='utf8')
+    credentials=ROOT/'config/local-credentials.md'
+    start,end='<!-- anp-v3:start -->','<!-- anp-v3:end -->'
+    block=f'''{start}
+## V3 单容器集成（开发验证）
+
+平台入口：{public}。Agent 尚未接入，当前不是完整交付版。
+
+| 系统 | 入口 | 本机登录信息 |
+| --- | --- | --- |
+| Supabase Studio | {public}/supabase/ | 用户名 `supabase`，密码 `{s['DASHBOARD_PASSWORD']}` |
+| 业务认证 | {public}/supabase/auth/v1/ | 邮箱 `{s['ADMIN_EMAIL']}`，密码 `{s['ADMIN_PASSWORD']}` |
+| Langfuse | {public}/langfuse/ | 邮箱 `{s['ADMIN_EMAIL']}`，密码 `{s['ADMIN_PASSWORD']}` |
+| LiteLLM | {public}/litellm/ui/ | 用户名 `admin`，密码 `{s['LITELLM_KEY']}` |
+| DBX | {public}/dbx/ | 密码 `{s['DBX_PASSWORD']}` |
+| Lens 独立后台 | {public}/lens/ui/ | Admin Token `{s['LENS_ADMIN_TOKEN']}` |
+
+Lens 的受限分析 Key 为 `{s['LENS_V3_ANALYSIS_KEY']}`，只允许 auto；不要把管理 Token 当作模型网关 Key。
+已有管理员不会被初始化程序重置密码；若曾主动改过密码，请使用改后的密码。
+{end}'''
+    text=credentials.read_text(encoding='utf8') if credentials.exists() else '# 本机登录信息\n'
+    if start in text and end in text:
+        text=text[:text.index(start)]+block+text[text.index(end)+len(end):]
+    else:text=text.rstrip()+'\n\n'+block+'\n'
+    credentials.write_text(text,encoding='utf8')
     print(json.dumps({'config':str(output/'config.json'),'services':len(services),'public_url':public},ensure_ascii=False))
 
 
@@ -140,4 +178,6 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--public-url',default='http://localhost:8080')
     parser.add_argument('--smoke',action='store_true')
-    options=parser.parse_args();generate(options.public_url,options.smoke)
+    parser.add_argument('--deployment',type=Path,help='存储/云资源绑定 TOML；秘密通过 ${变量名} 引用')
+    parser.add_argument('--target',choices=['host','container'],default='container')
+    options=parser.parse_args();generate(options.public_url,options.smoke,options.deployment,options.target)

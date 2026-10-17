@@ -7,6 +7,12 @@ from build_components import RECIPES
 from sync_upstreams import ROOT
 
 
+def validate_release(metadata,partial):
+    missing=set(metadata['required_components'])-set(metadata['components'])
+    if missing and not partial:
+        raise RuntimeError('正式平台缺少必须制品：'+','.join(sorted(missing)))
+
+
 def prepare(components,partial=False):
     metadata={'required_components':list(RECIPES)+['agent'],'partial':partial,'components':{}}
     stages=[]
@@ -24,6 +30,7 @@ def prepare(components,partial=False):
             'working_dir':config.get('WorkingDir') or '/'}
         stages.append(f'FROM {tag} AS component_{index}')
         copies.append(f'COPY --from=component_{index} / /opt/anp/roots/{name}/')
+    validate_release(metadata,partial)
     destination=ROOT/'.local/build/platform'
     destination.mkdir(parents=True,exist_ok=True)
     (destination/'components.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2),encoding='utf8')

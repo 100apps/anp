@@ -16,8 +16,9 @@ def render(settings):
         upstreams.append(f'upstream service_{index} {{ server {target}; keepalive 32; }}')
         slash='/' if route.get('strip_prefix') else ''
         auth='auth_basic "ANP Supabase 管理"; auth_basic_user_file /run/anp/studio.htpasswd;' if route.get('basic_auth') else ''
+        redirects=f'proxy_redirect ~^(/.*)$ {path.rstrip("/")}$1;' if route.get('rewrite_relative_redirects') else ''
         locations.append(f'location = {path.rstrip("/")} {{ return 308 {path}; }}\n'
-            f'location ^~ {path} {{ {auth} proxy_pass http://service_{index}{slash}; }}')
+            f'location ^~ {path} {{ {auth} {redirects} proxy_pass http://service_{index}{slash}; }}')
     return '''worker_processes 2;
 pid /tmp/anp-nginx.pid;
 error_log /dev/stderr warn;
@@ -48,6 +49,7 @@ http {
   server {{
     listen {port};
     server_name _;
+    absolute_redirect off;
     location = /_platform/health {{ proxy_pass http://127.0.0.1:12000/health; }}
     location = /_platform/services {{ proxy_pass http://127.0.0.1:12000/services; }}
 '''+'\n'.join(locations)+'''

@@ -96,11 +96,12 @@ class Runtime:
                 while process.returncode is None and not self.stopping:
                     if spec.get('health_url'):
                         healthy=await asyncio.to_thread(self.probe,spec['health_url'])
-                        if healthy and spec.get('configure')=='dbx' and not configured:
-                            from .bootstrap import configure_dbx
+                        if healthy and spec.get('configure') and not configured:
+                            from .bootstrap import configure_dbx,configure_litellm
                             try:
                                 state['status']='configuring'
-                                await asyncio.to_thread(configure_dbx,self.settings)
+                                initializer={'dbx':configure_dbx,'litellm':configure_litellm}[spec['configure']]
+                                await asyncio.to_thread(initializer,self.settings)
                                 configured=True
                             except Exception as error:
                                 state['status']='configuration_failed'

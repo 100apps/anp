@@ -43,6 +43,13 @@ def build(component):
         if dockerfile.count(marker)!=1:
             raise RuntimeError('LiteLLM UI 构建阶段已变化，需要适配')
         dockerfile=dockerfile.replace(marker,'RUN npm run build -- --webpack\n')
+    if component=='lens':
+        marker='COPY src/ui/ src/ui/\n'
+        if dockerfile.count(marker)!=1:
+            raise RuntimeError('Lens UI 构建阶段已变化，需要适配子路径')
+        dockerfile=dockerfile.replace(marker,marker+
+            'ENV NEXT_PUBLIC_LENS_API_URL=/lens\n'+
+            '''RUN sed -i 's|basePath: "/ui"|basePath: "/lens/ui"|' src/ui/app/next.config.mjs\n''')
     output=ROOT/'.local/build'/f'{component}.Dockerfile'
     output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(dockerfile,encoding='utf8')

@@ -1,0 +1,15 @@
+{
+  "name": "anp-workspace",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "dev": "pnpm --dir console dev",
+    "build": "pnpm --dir console build",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "react": "^19.2.0", "react-dom": "^19.2.0", "react-router-dom": "^7.13.0",
+    "@tanstack/react-query": "^5.90.0", "lucide-react": "^0.577.0", "sonner": "^2.0.7"
+  },
+  "devDependencies": {"@playwright/test": "^1.58.2", "@types/react": "^19.2.0", "@types/react-dom": "^19.2.0"}
+}

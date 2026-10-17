@@ -1,0 +1,19 @@
+{
+  "envoyproxy/envoy:v1.39.1": "envoyproxy/envoy@sha256:57e14a549d7bd43c8d3f6d03e8cfa653e037d4b38e133acd9b54f38c524401b4",
+  "supabase/gotrue:v2.197.0": "supabase/gotrue@sha256:1736a63078f5922b198c4cbe50f80ab9a2d3b54fe8b7b6cfb2e9dc5dbbc12c6b",
+  "darthsim/imgproxy:v3.31.4": "darthsim/imgproxy@sha256:73c5dda13199745b0d2d00e4149d4a589c5b2e205dbf335ca05eca8276b54712",
+  "supabase/postgres-meta:v0.100.0": "supabase/postgres-meta@sha256:145325b7e39f8ef4931d6e8cfd3f6f4d655de09d72a2ccc96d9513542c2202bd",
+  "postgrest/postgrest:v14.18": "postgrest/postgrest@sha256:c7cd7e265a85b05248abf53f4473fcec7e327c282d0bd0cf60f1551996d09fcf",
+  "supabase/storage-api:v1.81.0": "supabase/storage-api@sha256:98ffec5d0678803783c30e404c27f4ec65e97efbe014088f2a86b4b8b54b9f54",
+  "supabase/studio:2026.10.12-sha-3699278": "supabase/studio@sha256:948770ec467f00e6ae34c35018ef7cb23d7b30eb806b42c2cc0d7bcfdcf8a7a8",
+  "supabase/postgres:17.6.1.136": "supabase/postgres@sha256:f371b5f3f2ac0a05703f33d6e6134515fb2498cab708fb948a0aeb7481467c00",
+  "postgres:17": "postgres@sha256:2d2b8998d31037bf721cfdf764d76ba74171b4fab3431b7f72c27c56ddbdf9e3",
+  "redis:7": "redis@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+  "clickhouse/clickhouse-server:25.12": "clickhouse/clickhouse-server@sha256:8a790dd3468db22b1d4e7b18a176f378ff5ff6053b9c48dd4ea1fa71a24c5ba6",
+  "python:3.12-slim": "python@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1",
+  "rustfs/rustfs:latest": "rustfs/rustfs@sha256:7e948dad4748bda48f8985fda7195f8cf2e4259427011f6120acc2c9acf51587",
+  "docker.langfuse.com/langfuse/langfuse:4": "docker.langfuse.com/langfuse/langfuse@sha256:67f48d12a190e4ad585249c75ae1ce172b449de3dbbe7486b8179cd28e21408e",
+  "docker.langfuse.com/langfuse/langfuse-worker:4": "docker.langfuse.com/langfuse/langfuse-worker@sha256:ca32a8fb2a214c7b5f42dd9c540c8072e41db659cb621f317911ce695ad6bca2",
+  "ghcr.io/berriai/litellm:main-stable": "ghcr.io/berriai/litellm@sha256:b7b9e2c306343721802253d0dd9436b9634a2eb4e14da7c7cf06c5c7b7530802",
+  "t8y2/dbx:latest": "t8y2/dbx@sha256:4be573c1ef299e8b0529905c665c945adbf1718855ceda0286c215c1f0bbf7a4"
+}

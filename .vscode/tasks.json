@@ -1,0 +1,11 @@
+{
+  "version":"2.0.0",
+  "tasks":[
+    {"label":"anp:prepare","type":"process","command":"uv","args":["run","python","-m","anp.dev.prepare"],"options":{"cwd":"${workspaceFolder}"},"problemMatcher":[],"presentation":{"reveal":"always","panel":"dedicated"}},
+    {"label":"anp:web","type":"process","command":"uv","args":["run","python","-m","anp.dev.frontend"],"options":{"cwd":"${workspaceFolder}"},"isBackground":true,
+      "problemMatcher":{"owner":"anp-vite","pattern":{"regexp":"^(__ANP_NEVER_MATCH__)$","message":1},"background":{"activeOnStart":true,"beginsPattern":".*VITE.*","endsPattern":".*Local:.*5173.*"}},
+      "presentation":{"reveal":"always","panel":"dedicated"}},
+    {"label":"anp:dev","dependsOrder":"sequence","dependsOn":["anp:prepare","anp:web"],"problemMatcher":[]},
+    {"label":"anp:check","type":"process","command":"uv","args":["run","pytest","tests","-q"],"options":{"cwd":"${workspaceFolder}"},"problemMatcher":[]}
+  ]
+}

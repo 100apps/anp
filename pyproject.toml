@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "anp"
+version = "0.2.0"
+description = "以本地 CLI 为默认入口的 AI 原生应用工作台"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi==0.139.2", "uvicorn==0.54.0", "httpx==0.28.1",
+  "pydantic-settings>=2.12,<3", "python-dotenv>=1.2,<2", "PyYAML>=6,<7",
+  "typer>=0.20,<1", "rich>=14,<15", "watchfiles>=1.1,<2", "debugpy>=1.8,<2",
+  "langgraph==1.2.16", "langgraph-cli[inmem]==0.4.36", "langgraph-api==0.16.1",
+  "langgraph-runtime-inmem==0.36.1", "langgraph-sdk==0.4.8", "langfuse==4.15.6",
+  "langgraph-checkpoint-postgres>=3,<4", "psycopg[binary,pool]>=3.2,<4",
+  "boto3==1.43.114", "redis>=6,<8", "PyJWT>=2.10,<3",
+]
+
+[project.scripts]
+anp = "anp.cli.main:app"
+
+[dependency-groups]
+dev = ["pytest>=9,<10", "pytest-asyncio>=1,<2", "ruff>=0.14,<1"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/anp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "apps/demo/tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"

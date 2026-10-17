@@ -1,0 +1,28 @@
+model_list:
+  - model_name: demo-mock
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: local-mock
+      mock_response: "这是本地模型网关的模拟响应。"
+  - model_name: auto
+    litellm_params:
+      model: openai/auto
+      api_base: os.environ/FREELLM_API_BASE
+      api_key: os.environ/FREELLM_API_KEY
+      # 上游聚合路由不提供固定费率；此处为本网关内部记账价，不代表上游账单。
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+  - model_name: auto:fast
+    litellm_params:
+      model: openai/auto:fast
+      api_base: os.environ/FREELLM_API_BASE
+      api_key: os.environ/FREELLM_API_KEY
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  store_model_in_db: true
+  store_prompts_in_spend_logs: true
+  disable_spend_logs: false
+  tracing:
+    store: clickhouse

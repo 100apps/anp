@@ -1,0 +1,115 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ANP: API 热重载调试",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "anp.dev.supervisor",
+      "args": [
+        "api"
+      ],
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "subProcess": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}"
+      },
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "ANP: Worker 热重载调试",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "anp.dev.supervisor",
+      "args": [
+        "worker"
+      ],
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "subProcess": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}"
+      },
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "ANP: Agent 图调试",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "127.0.0.1",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "/workspace"
+        }
+      ],
+      "justMyCode": true,
+      "subProcess": true,
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "ANP: 前端热更新调试",
+      "type": "pwa-msedge",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "http://localhost:5173/src/*": "${workspaceFolder}/console/src/*",
+        "http://localhost:5173/@fs/*": "*"
+      },
+      "userDataDir": "${workspaceFolder}/.local/edge-debug-profile",
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "ANP: 本地 CLI 调试",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "anp.cli.entry",
+      "args": [
+        "demo",
+        "tasks",
+        "list"
+      ],
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}"
+      },
+      "presentation": {
+        "hidden": true
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "ANP: F5 完整开发（热更新 + 调试）",
+      "configurations": [
+        "ANP: API 热重载调试",
+        "ANP: Worker 热重载调试",
+        "ANP: Agent 图调试",
+        "ANP: 前端热更新调试"
+      ],
+      "preLaunchTask": "anp:dev",
+      "stopAll": true
+    }
+  ]
+}

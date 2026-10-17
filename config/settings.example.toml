@@ -1,0 +1,48 @@
+[workbench]
+title = "ANP 工作台"
+web_url = "http://localhost:5173"
+api_url = "http://127.0.0.1:8180"
+worker_url = "http://127.0.0.1:8281"
+
+[supabase]
+url = "http://127.0.0.1:8000"
+url_internal = "http://api-gw:8000"
+
+[postgres]
+host = "127.0.0.1"
+port = 54322
+agent_user = "agent"
+sslmode = "disable"
+
+[redis]
+url = "redis://127.0.0.1:6379"
+
+[storage]
+endpoint = "http://127.0.0.1:9000"
+endpoint_internal = "http://rustfs:9000"
+region = "us-east-1"
+
+[clickhouse]
+url = "http://127.0.0.1:8123"
+database = "default"
+
+[litellm]
+url = "http://127.0.0.1:4000/v1"
+upstream_url = "http://24.199.104.17:3001/v1"
+
+[langfuse]
+url = "http://127.0.0.1:3000"
+
+[dbx]
+url = "http://127.0.0.1:4224"
+
+[agent]
+url = "http://127.0.0.1:8124"
+debug_port = 5678
+
+[development]
+api_port = 8180
+worker_port = 8281
+api_debug_port = 5680
+worker_debug_port = 5681
+local_profile = true

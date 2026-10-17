@@ -1,0 +1,12 @@
+.venv
+.runtime
+.local
+node_modules
+console/node_modules
+console/dist
+.git
+config/secrets.local.env
+config/settings.local.toml
+config/local-credentials.md
+**/__pycache__
+.langgraph_api

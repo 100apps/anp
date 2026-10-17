@@ -6,12 +6,28 @@ from pathlib import Path
 import sys
 from typing import TypedDict
 import httpx
+import pytest
 from langgraph.graph import StateGraph,START,END
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'platform/runtime'))
 from anp_platform.agent import graph_specs
 from anp.applications.registry import applications
 from anp.runtime import remote_node
+
+
+def test_agent_concurrency_reaches_official_runtime(monkeypatch,tmp_path):
+    from anp_platform import agent
+    import langgraph_api.cli
+    captured={}
+    monkeypatch.setenv('ANP_AGENT_STATE',str(tmp_path))
+    monkeypatch.setenv('ANP_AGENT_CONCURRENCY','4')
+    monkeypatch.setattr(agent.os,'chdir',lambda _:None)
+    monkeypatch.setattr(langgraph_api.cli,'run_server',lambda **kwargs:captured.update(kwargs))
+    agent.main()
+    assert captured['n_jobs_per_worker']==4
+    assert captured['auth']=={'path':'anp.runtime.agent_auth:auth'}
+    for invalid in ('0','33','not-a-number'):
+        with pytest.raises(ValueError):agent.job_concurrency(invalid)
 
 
 def test_external_application_directory_controls_graph_catalog(monkeypatch,tmp_path):

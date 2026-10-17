@@ -47,7 +47,8 @@ def listening(port):
 def web_services():
     processes=[]
     logs=[]
-    for role,port,host in [('api',8180,'127.0.0.1'),('worker',8281,'0.0.0.0')]:
+    api_port=int(value('development','api_port'));worker_port=int(value('development','worker_port'))
+    for role,port,host in [('api',api_port,'127.0.0.1'),('worker',worker_port,'0.0.0.0')]:
         if listening(port): continue
         file=(ROOT/'.local/logs'/f'test-{role}.log')
         file.parent.mkdir(parents=True,exist_ok=True)
@@ -57,7 +58,7 @@ def web_services():
         processes.append(process)
     deadline=time.monotonic()+30
     while time.monotonic()<deadline:
-        if listening(8180) and listening(8281): break
+        if listening(api_port) and listening(worker_port): break
         time.sleep(.2)
     else: pytest.fail('业务服务启动超时')
     yield
@@ -68,8 +69,8 @@ def web_services():
     for log in logs: log.close()
 
 
-def cli(arguments,identity,profile='acceptance',transport='local'):
-    env={**os.environ,'ANP_PASSWORD':identity['password'],'ANP_PROFILE':profile,'PYTHONUTF8':'1'}
+def cli(arguments,identity,profile='acceptance',transport='local',environment=None):
+    env={**os.environ,'ANP_PASSWORD':identity['password'],'ANP_PROFILE':profile,'PYTHONUTF8':'1',**(environment or {})}
     login=subprocess.run([sys.executable,'-m','anp.cli.entry','auth','login','--email',identity['email']],
         cwd=ROOT,env=env,text=True,encoding='utf-8',capture_output=True)
     assert login.returncode==0,login.stdout

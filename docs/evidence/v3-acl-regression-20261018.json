@@ -1,0 +1,18 @@
+{
+  "scope": "V3 单容器平台与本机业务权限回归；不包含 IDE F5、云存储、GHCR 拉取或 deep_dub",
+  "command": "ANP_V3_PLATFORM_SMOKE=1 ANP_V3_BUSINESS_SMOKE=1 uv run pytest -q --tb=short",
+  "passed": 42,
+  "skipped": 9,
+  "seconds": 62.92,
+  "skipped_scope": {"legacy_v2": 8, "explicit_storage_live_gate": 1},
+  "local_cli": "API、Worker、Agent 地址均置为 http://127.0.0.1:1 后仍成功创建、执行、读取结果",
+  "acl_checks": [
+    "开发者可直接向 Supabase 创建所属工作空间任务",
+    "只读用户及外部工作空间伪造创建均被 42501 拒绝",
+    "只读用户直接伪造结果被 42501 拒绝",
+    "开发者和同工作空间只读用户可读真实保存对象，内容与报告一致",
+    "外部工作空间不能读取同一真实对象",
+    "管理员降级角色后，原身份立即失去创建权限"
+  ],
+  "other_coverage": ["本地和 HTTP 结果一致", "三节点真实执行及结果保存", "Studio SSE", "Langfuse 用户、会话和评分", "网关正文日志", "Lens 受限 auto 模型调用"]
+}

@@ -1,18 +1,19 @@
 import json
 import socket
-from tests.conftest import cli,listening
+from tests.conftest import cli
 
 
 def test_local_cli_without_business_web(identities):
-    # 此测试在首次验收中必须在 API/Worker 启动前执行。
-    assert not listening(8180) and not listening(8281), '请先停止业务服务，再验证默认本地 CLI'
-    created=cli(['demo','tasks','create','--title','CLI / 本地独立执行','--text','Hello AI. 本地执行。'],identities['admin'])
+    # 所有业务与图执行地址都不可访问；任何误用 Web/Worker/Agent 都会令命令失败。
+    disabled={'ANP_WORKBENCH_API_URL':'http://127.0.0.1:1','ANP_WORKBENCH_WORKER_URL':'http://127.0.0.1:1',
+        'ANP_AGENT_URL':'http://127.0.0.1:1'}
+    created=cli(['demo','tasks','create','--title','CLI / 本地独立执行','--text','Hello AI. 本地执行。'],identities['admin'],environment=disabled)
     assert created.returncode==0,created.stdout
     task=json.loads(created.stdout)
-    run=cli(['demo','tasks','run',task['id']],identities['admin'])
+    run=cli(['demo','tasks','run',task['id']],identities['admin'],environment=disabled)
     assert run.returncode==0,run.stdout
     assert json.loads(run.stdout)['status']=='succeeded'
-    result=cli(['demo','tasks','result',task['id']],identities['admin'])
+    result=cli(['demo','tasks','result',task['id']],identities['admin'],environment=disabled)
     assert result.returncode==0,result.stdout
     assert json.loads(result.stdout)['report']['normalized']['text']=='Hello AI. 本地执行。'
 

@@ -43,3 +43,7 @@ ui_container_url = "http://host.docker.internal:5173"
 # 分析 Key 仍只允许 auto；支持分析器较长的系统提示与连续工具调用。
 analysis_rpm_limit = 20
 analysis_tpm_limit = 100000
+
+[agent]
+# 图多为远程 I/O；CPU/GPU 密集节点仍须由业务执行器限制设备并发。
+max_concurrent_runs = 4

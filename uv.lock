@@ -26,6 +26,7 @@ version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
+    { name = "certifi" },
     { name = "debugpy" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -58,6 +59,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "boto3", specifier = "==1.43.114" },
+    { name = "certifi", specifier = "==2026.7.22" },
     { name = "debugpy", specifier = ">=1.8,<2" },
     { name = "fastapi", specifier = "==0.139.2" },
     { name = "httpx", specifier = "==0.28.1" },

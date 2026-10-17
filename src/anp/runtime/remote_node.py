@@ -1,4 +1,4 @@
-import httpx
+from anp.sdk.http import async_client
 import hashlib
 import json
 from anp.sdk.tracing import get_client,task_trace_id
@@ -27,7 +27,7 @@ def build_remote_graph(app_id):
                     raise ValueError('请先填写该业务图的非空输入后运行')
                 thread=str(config.get('configurable',{}).get('thread_id',''))
                 key='studio:'+hashlib.sha256((thread+json.dumps(payload,sort_keys=True)).encode()).hexdigest()
-                async with httpx.AsyncClient(timeout=30,trust_env=False) as client:
+                async with async_client(timeout=30,trust_env=False) as client:
                     response=await client.post(value('workbench','worker_url')+f'/internal/apps/{app_id}/studio/tasks',
                         headers={'Authorization':'Bearer '+secret('WORKER_TOKEN')},
                         json={'payload':payload,'request_key':key})
@@ -39,7 +39,7 @@ def build_remote_graph(app_id):
                 raise ValueError('内部任务输入需要 task_id、attempt 和 input_data；Studio 新建调试请填写该业务图的输入字段')
             with propagate_attributes(**attributes), get_client().start_as_current_observation(name='引擎节点/'+name,
                 input=state,trace_context={'trace_id':task_trace_id(state['task_id'],state['attempt'])}) as span:
-                async with httpx.AsyncClient(timeout=90,trust_env=False) as client:
+                async with async_client(timeout=90,trust_env=False) as client:
                     response=await client.post(value('workbench','worker_url')+f'/internal/apps/{app_id}/nodes/{name}',
                         headers={'Authorization':'Bearer '+secret('WORKER_TOKEN')},
                         json={'state':state,'parent_span_id':get_client().get_current_observation_id()})

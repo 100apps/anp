@@ -1,0 +1,910 @@
+{
+  "serial_baseline": {
+    "scope": "真实 demo HTTP 执行链路；不是 deep_dub 整片 RTF，也不是模型吞吐",
+    "url": "http://127.0.0.1:8089",
+    "host_logical_cpus": 32,
+    "resources_before": [
+      {
+        "BlockIO": "7.41MB / 115MB",
+        "CPUPerc": "9.30%",
+        "Container": "anp-platform-platform-1",
+        "ID": "bd41cb958f51",
+        "MemPerc": "4.59%",
+        "MemUsage": "3.246GiB / 70.67GiB",
+        "Name": "anp-platform-platform-1",
+        "NetIO": "20.4MB / 27.8MB",
+        "PIDs": "365"
+      },
+      {
+        "BlockIO": "45.8MB / 223MB",
+        "CPUPerc": "0.50%",
+        "Container": "anp-storage-postgres-1",
+        "ID": "627452dce9ce",
+        "MemPerc": "0.26%",
+        "MemUsage": "187.8MiB / 70.67GiB",
+        "Name": "anp-storage-postgres-1",
+        "NetIO": "87.2MB / 102MB",
+        "PIDs": "27"
+      },
+      {
+        "BlockIO": "56.4MB / 49.5MB",
+        "CPUPerc": "0.26%",
+        "Container": "anp-storage-redis-1",
+        "ID": "00e2183937d2",
+        "MemPerc": "0.03%",
+        "MemUsage": "20.29MiB / 70.67GiB",
+        "Name": "anp-storage-redis-1",
+        "NetIO": "232MB / 102MB",
+        "PIDs": "6"
+      },
+      {
+        "BlockIO": "155MB / 4.63GB",
+        "CPUPerc": "19.57%",
+        "Container": "anp-storage-clickhouse-1",
+        "ID": "ade57c5cf0de",
+        "MemPerc": "1.22%",
+        "MemUsage": "886.3MiB / 70.67GiB",
+        "Name": "anp-storage-clickhouse-1",
+        "NetIO": "45.3MB / 48.1MB",
+        "PIDs": "415"
+      },
+      {
+        "BlockIO": "8.54MB / 60MB",
+        "CPUPerc": "5.62%",
+        "Container": "anp-storage-rustfs-1",
+        "ID": "2ca65e9e06fe",
+        "MemPerc": "1.20%",
+        "MemUsage": "866.1MiB / 70.67GiB",
+        "Name": "anp-storage-rustfs-1",
+        "NetIO": "7.6MB / 4.34MB",
+        "PIDs": "87"
+      }
+    ],
+    "measurements": [
+      {
+        "concurrency": 1,
+        "count": 12,
+        "wall_seconds": 23.8631,
+        "tasks_per_second": 0.5029,
+        "latency_median_seconds": 2.0713,
+        "latency_max_seconds": 2.3063,
+        "tasks": [
+          {
+            "task_id": "1185bb2e-f212-47ca-8c7e-aeafca6778a5",
+            "seconds": 1.6527
+          },
+          {
+            "task_id": "831d6209-99a3-4395-b3a6-c159115ac391",
+            "seconds": 1.6623
+          },
+          {
+            "task_id": "ecddc521-f8cc-49c8-84f8-b76dee46b270",
+            "seconds": 2.1643
+          },
+          {
+            "task_id": "4a8f57da-1bbe-40ae-ad40-a325412b7f38",
+            "seconds": 2.0466
+          },
+          {
+            "task_id": "57372b49-3aee-429d-978d-b92efc0b5197",
+            "seconds": 1.6741
+          },
+          {
+            "task_id": "1550c09e-115e-48ad-b2fd-8baad41b599a",
+            "seconds": 2.2384
+          },
+          {
+            "task_id": "d1bd33b6-7d7b-4ab8-8f51-b65ec1a5a9b5",
+            "seconds": 2.0868
+          },
+          {
+            "task_id": "f04ed75f-24cc-4c50-84cc-b50f238d50d2",
+            "seconds": 2.3063
+          },
+          {
+            "task_id": "d7da001f-024c-4831-9647-1a7d809ca9dc",
+            "seconds": 2.0768
+          },
+          {
+            "task_id": "523c28ef-a97b-4577-940b-b6ec148b9ba3",
+            "seconds": 1.7198
+          },
+          {
+            "task_id": "bc1ee756-46fd-4370-8a7a-01b462a3cfd6",
+            "seconds": 2.1687
+          },
+          {
+            "task_id": "ae71937e-4920-4342-84fb-390f2fed8648",
+            "seconds": 2.0659
+          }
+        ]
+      },
+      {
+        "concurrency": 4,
+        "count": 12,
+        "wall_seconds": 8.4607,
+        "tasks_per_second": 1.4183,
+        "latency_median_seconds": 2.6787,
+        "latency_max_seconds": 3.6446,
+        "tasks": [
+          {
+            "task_id": "940a0f9f-a5e3-4676-9aba-9b33240098cb",
+            "seconds": 2.6734
+          },
+          {
+            "task_id": "7e4a774e-d6ff-4b9f-9c24-a840c4908fd9",
+            "seconds": 3.5914
+          },
+          {
+            "task_id": "611be07f-9175-4f9f-8f39-dd8df93ffc0e",
+            "seconds": 2.6841
+          },
+          {
+            "task_id": "02ae3bc9-a1fc-4518-806c-ecf0e14cbc22",
+            "seconds": 3.6446
+          },
+          {
+            "task_id": "7ae1db29-9eb5-419f-865c-30da5a9a61a5",
+            "seconds": 2.631
+          },
+          {
+            "task_id": "1e0035ef-4a14-4cbc-b92b-561fb323604e",
+            "seconds": 2.9661
+          },
+          {
+            "task_id": "73c47a4a-d39e-41b3-96d6-05d280ab9f9d",
+            "seconds": 2.0488
+          },
+          {
+            "task_id": "2ff97987-b5ca-4574-8acd-80d3ec39f7b2",
+            "seconds": 2.6149
+          },
+          {
+            "task_id": "2460b17d-4226-4657-aa81-e65e9cd89b0f",
+            "seconds": 2.9965
+          },
+          {
+            "task_id": "262ca923-0063-43d5-9691-a5d2651a7510",
+            "seconds": 2.8182
+          },
+          {
+            "task_id": "2a3f83bc-cf03-4d41-91bf-91d881f58857",
+            "seconds": 2.5038
+          },
+          {
+            "task_id": "3fac7307-6740-40a6-86d9-05acdfbaab8f",
+            "seconds": 2.2008
+          }
+        ]
+      },
+      {
+        "concurrency": 8,
+        "count": 12,
+        "wall_seconds": 7.6337,
+        "tasks_per_second": 1.572,
+        "latency_median_seconds": 4.2974,
+        "latency_max_seconds": 6.553,
+        "tasks": [
+          {
+            "task_id": "dadb3e39-fe10-4b77-8e20-50ce812d611b",
+            "seconds": 4.2939
+          },
+          {
+            "task_id": "0e53c794-58ba-44cd-92f5-b6113ceabe08",
+            "seconds": 5.4495
+          },
+          {
+            "task_id": "1e08804d-1014-420e-998d-d1276a50ecc7",
+            "seconds": 6.553
+          },
+          {
+            "task_id": "637e8200-47ef-441a-80f1-7a654c91f89f",
+            "seconds": 5.9217
+          },
+          {
+            "task_id": "713555b2-2b0b-4f1e-893c-52dd7a8304db",
+            "seconds": 3.5499
+          },
+          {
+            "task_id": "0b230dce-9ab6-4d3c-8c00-f1370215e752",
+            "seconds": 4.301
+          },
+          {
+            "task_id": "354d3fa7-593e-4fa6-a06b-d7225f64c659",
+            "seconds": 5.5916
+          },
+          {
+            "task_id": "f138d327-677a-48fa-9612-9835cc9976f6",
+            "seconds": 5.5921
+          },
+          {
+            "task_id": "212ecae3-5bd1-4fd3-93f3-52bd74abd8f1",
+            "seconds": 3.0202
+          },
+          {
+            "task_id": "6733d09d-2e7c-4826-bfb0-fe188babda1e",
+            "seconds": 3.3396
+          },
+          {
+            "task_id": "3891afdd-9c8d-4c00-92eb-b1708dec7a1f",
+            "seconds": 3.1004
+          },
+          {
+            "task_id": "06d89a15-d5f6-480b-b682-90b6cd7c1f3b",
+            "seconds": 2.0757
+          }
+        ]
+      }
+    ],
+    "resources_after": [
+      {
+        "BlockIO": "7.41MB / 117MB",
+        "CPUPerc": "20.42%",
+        "Container": "anp-platform-platform-1",
+        "ID": "bd41cb958f51",
+        "MemPerc": "4.97%",
+        "MemUsage": "3.513GiB / 70.67GiB",
+        "Name": "anp-platform-platform-1",
+        "NetIO": "41.8MB / 45.5MB",
+        "PIDs": "405"
+      },
+      {
+        "BlockIO": "45.8MB / 226MB",
+        "CPUPerc": "0.72%",
+        "Container": "anp-storage-postgres-1",
+        "ID": "627452dce9ce",
+        "MemPerc": "0.32%",
+        "MemUsage": "231.1MiB / 70.67GiB",
+        "Name": "anp-storage-postgres-1",
+        "NetIO": "95.9MB / 113MB",
+        "PIDs": "38"
+      },
+      {
+        "BlockIO": "56.6MB / 50.5MB",
+        "CPUPerc": "1.10%",
+        "Container": "anp-storage-redis-1",
+        "ID": "00e2183937d2",
+        "MemPerc": "0.03%",
+        "MemUsage": "22.12MiB / 70.67GiB",
+        "Name": "anp-storage-redis-1",
+        "NetIO": "234MB / 103MB",
+        "PIDs": "6"
+      },
+      {
+        "BlockIO": "155MB / 4.66GB",
+        "CPUPerc": "15.42%",
+        "Container": "anp-storage-clickhouse-1",
+        "ID": "ade57c5cf0de",
+        "MemPerc": "1.27%",
+        "MemUsage": "920.3MiB / 70.67GiB",
+        "Name": "anp-storage-clickhouse-1",
+        "NetIO": "46.9MB / 48.7MB",
+        "PIDs": "420"
+      },
+      {
+        "BlockIO": "8.54MB / 67.5MB",
+        "CPUPerc": "9.11%",
+        "Container": "anp-storage-rustfs-1",
+        "ID": "2ca65e9e06fe",
+        "MemPerc": "1.24%",
+        "MemUsage": "899.1MiB / 70.67GiB",
+        "Name": "anp-storage-rustfs-1",
+        "NetIO": "9.39MB / 5.37MB",
+        "PIDs": "113"
+      }
+    ]
+  },
+  "parallel_queries_trial": {
+    "scope": "真实 demo HTTP 执行链路；不是 deep_dub 整片 RTF，也不是模型吞吐",
+    "url": "http://127.0.0.1:8089",
+    "host_logical_cpus": 32,
+    "resources_before": [
+      {
+        "BlockIO": "7.41MB / 120MB",
+        "CPUPerc": "4.10%",
+        "Container": "anp-platform-platform-1",
+        "ID": "bd41cb958f51",
+        "MemPerc": "4.97%",
+        "MemUsage": "3.514GiB / 70.67GiB",
+        "Name": "anp-platform-platform-1",
+        "NetIO": "43.5MB / 47.8MB",
+        "PIDs": "409"
+      },
+      {
+        "BlockIO": "45.8MB / 227MB",
+        "CPUPerc": "0.17%",
+        "Container": "anp-storage-postgres-1",
+        "ID": "627452dce9ce",
+        "MemPerc": "0.32%",
+        "MemUsage": "229.3MiB / 70.67GiB",
+        "Name": "anp-storage-postgres-1",
+        "NetIO": "96.2MB / 114MB",
+        "PIDs": "38"
+      },
+      {
+        "BlockIO": "56.8MB / 50.8MB",
+        "CPUPerc": "0.29%",
+        "Container": "anp-storage-redis-1",
+        "ID": "00e2183937d2",
+        "MemPerc": "0.03%",
+        "MemUsage": "20.14MiB / 70.67GiB",
+        "Name": "anp-storage-redis-1",
+        "NetIO": "235MB / 103MB",
+        "PIDs": "6"
+      },
+      {
+        "BlockIO": "156MB / 4.71GB",
+        "CPUPerc": "9.53%",
+        "Container": "anp-storage-clickhouse-1",
+        "ID": "ade57c5cf0de",
+        "MemPerc": "1.17%",
+        "MemUsage": "843.7MiB / 70.67GiB",
+        "Name": "anp-storage-clickhouse-1",
+        "NetIO": "47.5MB / 49.1MB",
+        "PIDs": "420"
+      },
+      {
+        "BlockIO": "8.54MB / 71.4MB",
+        "CPUPerc": "1.63%",
+        "Container": "anp-storage-rustfs-1",
+        "ID": "2ca65e9e06fe",
+        "MemPerc": "1.26%",
+        "MemUsage": "914.3MiB / 70.67GiB",
+        "Name": "anp-storage-rustfs-1",
+        "NetIO": "9.5MB / 5.44MB",
+        "PIDs": "89"
+      }
+    ],
+    "measurements": [
+      {
+        "concurrency": 1,
+        "count": 12,
+        "wall_seconds": 24.2705,
+        "tasks_per_second": 0.4944,
+        "latency_median_seconds": 2.119,
+        "latency_max_seconds": 2.3327,
+        "tasks": [
+          {
+            "task_id": "8da96620-bae8-46be-ad8a-57b426fa9b69",
+            "seconds": 2.0834
+          },
+          {
+            "task_id": "a6aa92e0-7ba3-4b70-ba17-4cc7caa94198",
+            "seconds": 1.3922
+          },
+          {
+            "task_id": "32cfa200-8a52-4a3f-986a-790d944a57d9",
+            "seconds": 2.3182
+          },
+          {
+            "task_id": "cd73d961-b61f-44bd-899d-14ed335fd75d",
+            "seconds": 2.1676
+          },
+          {
+            "task_id": "2c3eb713-8982-4c63-9540-61105f1e9ffd",
+            "seconds": 1.6392
+          },
+          {
+            "task_id": "b356f94c-463f-49b1-877e-a74079902da8",
+            "seconds": 2.0701
+          },
+          {
+            "task_id": "21daa54b-2c4f-4349-92bc-87cb0fbdcd9d",
+            "seconds": 2.3327
+          },
+          {
+            "task_id": "f92b59ac-fdbe-4305-b8f5-f5c1b4c4f97e",
+            "seconds": 2.1364
+          },
+          {
+            "task_id": "e32cffe5-14fa-4a8a-9d1b-52f86846eb36",
+            "seconds": 2.2848
+          },
+          {
+            "task_id": "3d5e0a9c-7dea-4bb7-8cb9-dd2301c282da",
+            "seconds": 2.1016
+          },
+          {
+            "task_id": "a9f08a00-f86f-4169-ac5c-e609943d9dff",
+            "seconds": 1.6034
+          },
+          {
+            "task_id": "0b82973b-aecc-4488-95c2-145304f21b39",
+            "seconds": 2.1405
+          }
+        ]
+      },
+      {
+        "concurrency": 4,
+        "count": 12,
+        "wall_seconds": 8.8371,
+        "tasks_per_second": 1.3579,
+        "latency_median_seconds": 2.5479,
+        "latency_max_seconds": 3.7422,
+        "tasks": [
+          {
+            "task_id": "7b59c803-68fa-4e26-8020-aca9a6508525",
+            "seconds": 2.9546
+          },
+          {
+            "task_id": "fb5f689b-76d4-4c12-9d0c-926f0a935ab1",
+            "seconds": 3.739
+          },
+          {
+            "task_id": "9c3dc203-90f1-466f-a1c2-0951e8f406dd",
+            "seconds": 3.7422
+          },
+          {
+            "task_id": "897b2592-a1b1-4104-a835-cedb7ae26fc0",
+            "seconds": 2.9647
+          },
+          {
+            "task_id": "947d4f8d-ccc0-4c92-bfb4-94cd4abde0dd",
+            "seconds": 2.2881
+          },
+          {
+            "task_id": "5cfbedb7-ee13-4d90-9a46-3f4572a02953",
+            "seconds": 2.2768
+          },
+          {
+            "task_id": "e0b8234b-123c-4477-8e9b-b78ac77bd70b",
+            "seconds": 2.5466
+          },
+          {
+            "task_id": "954c1e08-3937-44b8-a16e-1cf608c6b09e",
+            "seconds": 2.5439
+          },
+          {
+            "task_id": "344498f5-1843-455f-834d-33f90d38e7db",
+            "seconds": 2.4539
+          },
+          {
+            "task_id": "7312e70f-6c73-44bf-a634-3fa6c430334a",
+            "seconds": 3.5941
+          },
+          {
+            "task_id": "bb54223c-3103-4bcc-9a1c-fa892b7d68c5",
+            "seconds": 2.5486
+          },
+          {
+            "task_id": "c0a1df84-077a-4a3d-9f3a-8984c07b5897",
+            "seconds": 2.5472
+          }
+        ]
+      },
+      {
+        "concurrency": 8,
+        "count": 12,
+        "wall_seconds": 8.4056,
+        "tasks_per_second": 1.4276,
+        "latency_median_seconds": 5.0485,
+        "latency_max_seconds": 5.947,
+        "tasks": [
+          {
+            "task_id": "33d8b8c5-e4b9-4b03-9443-64cd93f7b347",
+            "seconds": 5.0511
+          },
+          {
+            "task_id": "ec8f8cab-acf0-4f93-9b8d-89f6a775c17e",
+            "seconds": 4.4504
+          },
+          {
+            "task_id": "fbb5bfb4-22ff-4cfe-b2bd-ff129239eef0",
+            "seconds": 5.0479
+          },
+          {
+            "task_id": "e3a12900-dfdd-4945-b778-516e3e5f61e3",
+            "seconds": 5.0637
+          },
+          {
+            "task_id": "6d0fe5f8-2d40-4df4-9709-a17558ba3ff4",
+            "seconds": 5.5146
+          },
+          {
+            "task_id": "c33a0036-c76c-41aa-a408-539fd6437a45",
+            "seconds": 5.945
+          },
+          {
+            "task_id": "c032aa32-b96c-45b3-933b-d821e3832208",
+            "seconds": 5.947
+          },
+          {
+            "task_id": "9d1accf0-66e6-4274-b169-a117f326da53",
+            "seconds": 5.0491
+          },
+          {
+            "task_id": "2b5e42da-b305-4985-90f1-d1bc6175d3bc",
+            "seconds": 3.2439
+          },
+          {
+            "task_id": "0a187177-4b47-4df4-b64c-ea75c60bc821",
+            "seconds": 3.3573
+          },
+          {
+            "task_id": "e5741153-609c-459d-943a-8d223bd994b2",
+            "seconds": 3.136
+          },
+          {
+            "task_id": "fc8d4b5a-dafa-4cb4-8821-37bcb5940004",
+            "seconds": 2.4954
+          }
+        ]
+      }
+    ],
+    "resources_after": [
+      {
+        "BlockIO": "7.41MB / 123MB",
+        "CPUPerc": "11.64%",
+        "Container": "anp-platform-platform-1",
+        "ID": "bd41cb958f51",
+        "MemPerc": "5.06%",
+        "MemUsage": "3.579GiB / 70.67GiB",
+        "Name": "anp-platform-platform-1",
+        "NetIO": "65MB / 65.7MB",
+        "PIDs": "437"
+      },
+      {
+        "BlockIO": "45.8MB / 230MB",
+        "CPUPerc": "2.46%",
+        "Container": "anp-storage-postgres-1",
+        "ID": "627452dce9ce",
+        "MemPerc": "0.35%",
+        "MemUsage": "252.1MiB / 70.67GiB",
+        "Name": "anp-storage-postgres-1",
+        "NetIO": "105MB / 125MB",
+        "PIDs": "43"
+      },
+      {
+        "BlockIO": "57MB / 52MB",
+        "CPUPerc": "0.67%",
+        "Container": "anp-storage-redis-1",
+        "ID": "00e2183937d2",
+        "MemPerc": "0.03%",
+        "MemUsage": "19.84MiB / 70.67GiB",
+        "Name": "anp-storage-redis-1",
+        "NetIO": "237MB / 104MB",
+        "PIDs": "6"
+      },
+      {
+        "BlockIO": "156MB / 4.75GB",
+        "CPUPerc": "14.16%",
+        "Container": "anp-storage-clickhouse-1",
+        "ID": "ade57c5cf0de",
+        "MemPerc": "1.40%",
+        "MemUsage": "1015MiB / 70.67GiB",
+        "Name": "anp-storage-clickhouse-1",
+        "NetIO": "49.2MB / 49.8MB",
+        "PIDs": "421"
+      },
+      {
+        "BlockIO": "8.54MB / 77.6MB",
+        "CPUPerc": "9.62%",
+        "Container": "anp-storage-rustfs-1",
+        "ID": "2ca65e9e06fe",
+        "MemPerc": "1.28%",
+        "MemUsage": "928.3MiB / 70.67GiB",
+        "Name": "anp-storage-rustfs-1",
+        "NetIO": "11.3MB / 6.47MB",
+        "PIDs": "111"
+      }
+    ]
+  },
+  "host_sdk_tls_trial": {
+    "scope": "真实 demo HTTP 执行链路；不是 deep_dub 整片 RTF，也不是模型吞吐",
+    "url": "http://127.0.0.1:8089",
+    "host_logical_cpus": 32,
+    "resources_before": [
+      {
+        "BlockIO": "7.41MB / 129MB",
+        "CPUPerc": "4.35%",
+        "Container": "anp-platform-platform-1",
+        "ID": "bd41cb958f51",
+        "MemPerc": "5.07%",
+        "MemUsage": "3.583GiB / 70.67GiB",
+        "Name": "anp-platform-platform-1",
+        "NetIO": "68.3MB / 70.1MB",
+        "PIDs": "448"
+      },
+      {
+        "BlockIO": "45.8MB / 231MB",
+        "CPUPerc": "0.21%",
+        "Container": "anp-storage-postgres-1",
+        "ID": "627452dce9ce",
+        "MemPerc": "0.33%",
+        "MemUsage": "240MiB / 70.67GiB",
+        "Name": "anp-storage-postgres-1",
+        "NetIO": "106MB / 125MB",
+        "PIDs": "39"
+      },
+      {
+        "BlockIO": "57.5MB / 52.6MB",
+        "CPUPerc": "0.34%",
+        "Container": "anp-storage-redis-1",
+        "ID": "00e2183937d2",
+        "MemPerc": "0.03%",
+        "MemUsage": "20.12MiB / 70.67GiB",
+        "Name": "anp-storage-redis-1",
+        "NetIO": "240MB / 105MB",
+        "PIDs": "6"
+      },
+      {
+        "BlockIO": "166MB / 4.85GB",
+        "CPUPerc": "12.15%",
+        "Container": "anp-storage-clickhouse-1",
+        "ID": "ade57c5cf0de",
+        "MemPerc": "1.24%",
+        "MemUsage": "898.6MiB / 70.67GiB",
+        "Name": "anp-storage-clickhouse-1",
+        "NetIO": "50.1MB / 50.7MB",
+        "PIDs": "421"
+      },
+      {
+        "BlockIO": "8.54MB / 88.4MB",
+        "CPUPerc": "0.01%",
+        "Container": "anp-storage-rustfs-1",
+        "ID": "2ca65e9e06fe",
+        "MemPerc": "1.29%",
+        "MemUsage": "932.1MiB / 70.67GiB",
+        "Name": "anp-storage-rustfs-1",
+        "NetIO": "11.4MB / 6.55MB",
+        "PIDs": "91"
+      }
+    ],
+    "measurements": [
+      {
+        "concurrency": 1,
+        "count": 12,
+        "wall_seconds": 24.6283,
+        "tasks_per_second": 0.4872,
+        "latency_median_seconds": 2.0951,
+        "latency_max_seconds": 3.6726,
+        "tasks": [
+          {
+            "task_id": "241e9193-28e4-4d8c-b985-9927c5811985",
+            "seconds": 3.6726
+          },
+          {
+            "task_id": "0594b906-962d-4291-8d66-2fb434d9fb20",
+            "seconds": 1.6477
+          },
+          {
+            "task_id": "5de76eb3-7c8d-43c9-b048-2f38124fe948",
+            "seconds": 1.4066
+          },
+          {
+            "task_id": "985845d8-7c93-4bef-a16b-a201c2e1ea27",
+            "seconds": 2.3724
+          },
+          {
+            "task_id": "1151b49b-a4fb-46f6-9d07-1d74bd566860",
+            "seconds": 1.4075
+          },
+          {
+            "task_id": "74ea7b2a-56b0-482a-bf3d-bc33577edab9",
+            "seconds": 2.3072
+          },
+          {
+            "task_id": "533a401d-2351-4e98-af42-0fddfb893204",
+            "seconds": 2.1273
+          },
+          {
+            "task_id": "07f5e728-dc40-415d-b0bb-14d6c94a2f04",
+            "seconds": 2.5633
+          },
+          {
+            "task_id": "d4084853-1167-4e5d-9855-d6232b30c5f9",
+            "seconds": 2.0907
+          },
+          {
+            "task_id": "e0db961b-9436-4a08-a8ab-87623b1146a5",
+            "seconds": 1.5399
+          },
+          {
+            "task_id": "86a89dfe-c535-4bea-b13e-84a8b7538e25",
+            "seconds": 1.3934
+          },
+          {
+            "task_id": "497440a2-2f1d-45a5-b056-b85982080fd1",
+            "seconds": 2.0994
+          }
+        ]
+      },
+      {
+        "concurrency": 4,
+        "count": 12,
+        "wall_seconds": 6.7149,
+        "tasks_per_second": 1.7871,
+        "latency_median_seconds": 2.1989,
+        "latency_max_seconds": 2.3405,
+        "tasks": [
+          {
+            "task_id": "5866faad-533e-4e3c-8e21-649f12506209",
+            "seconds": 1.442
+          },
+          {
+            "task_id": "f67a468b-9c44-466c-9c57-5976e695288c",
+            "seconds": 2.3273
+          },
+          {
+            "task_id": "e5c32d0f-6e13-4db3-8f65-471b2dc8f1a5",
+            "seconds": 2.3405
+          },
+          {
+            "task_id": "6a41381a-19ee-4a73-bdf5-b3432cbf3a27",
+            "seconds": 2.3396
+          },
+          {
+            "task_id": "ef04ec03-373b-40fb-8a15-ab21c552049b",
+            "seconds": 0.8958
+          },
+          {
+            "task_id": "8182a117-3c4f-43c2-b6bf-3aee0c4462ba",
+            "seconds": 2.1705
+          },
+          {
+            "task_id": "c25d7762-5f0b-4dc4-a275-a23715b85bed",
+            "seconds": 2.148
+          },
+          {
+            "task_id": "fe6859bb-7784-453c-bc97-d277618838df",
+            "seconds": 2.143
+          },
+          {
+            "task_id": "9c3779eb-a111-41f7-8f0b-88dcd340c7a5",
+            "seconds": 2.1427
+          },
+          {
+            "task_id": "d6065478-5bd0-46d2-8a85-34fe29e91021",
+            "seconds": 2.2319
+          },
+          {
+            "task_id": "b21fa6d3-5451-4a53-8d3e-19ae1f95cb45",
+            "seconds": 2.2307
+          },
+          {
+            "task_id": "4b15cbce-d152-4af4-a2ba-de85d4f3c1f5",
+            "seconds": 2.2274
+          }
+        ]
+      },
+      {
+        "concurrency": 8,
+        "count": 12,
+        "wall_seconds": 3.8915,
+        "tasks_per_second": 3.0837,
+        "latency_median_seconds": 2.1653,
+        "latency_max_seconds": 3.1316,
+        "tasks": [
+          {
+            "task_id": "dddf2390-07ef-411d-8a48-a17a9643261f",
+            "seconds": 3.1304
+          },
+          {
+            "task_id": "30ec933f-d3cf-4e0e-bcdf-8d2b000b6f14",
+            "seconds": 1.565
+          },
+          {
+            "task_id": "9efa430f-abe9-49af-ade1-7ef597f8957c",
+            "seconds": 3.1316
+          },
+          {
+            "task_id": "9b6598a7-8d15-47f6-9427-1ca4003117be",
+            "seconds": 2.1661
+          },
+          {
+            "task_id": "7f920b44-d21e-4663-a757-10f3519beda2",
+            "seconds": 3.0533
+          },
+          {
+            "task_id": "8904b2d4-43f7-4aed-b876-33b602dd6268",
+            "seconds": 2.4278
+          },
+          {
+            "task_id": "ee445a37-518b-41e7-bba5-724a25553e78",
+            "seconds": 2.4513
+          },
+          {
+            "task_id": "d401deb5-6972-4626-bd54-b83c066f2ed9",
+            "seconds": 2.1644
+          },
+          {
+            "task_id": "c014cbf1-07b6-4859-8982-39785fb5e30d",
+            "seconds": 1.568
+          },
+          {
+            "task_id": "bb0b1bb2-f719-43d9-a5f1-cf753b789f15",
+            "seconds": 1.7253
+          },
+          {
+            "task_id": "867e6bd8-f50c-49e3-be99-c4e6005f3f1f",
+            "seconds": 0.9647
+          },
+          {
+            "task_id": "c4cf0f2f-997b-44bc-b3f2-818f8d38bb78",
+            "seconds": 1.4618
+          }
+        ]
+      }
+    ],
+    "resources_after": [
+      {
+        "BlockIO": "7.41MB / 132MB",
+        "CPUPerc": "9.55%",
+        "Container": "anp-platform-platform-1",
+        "ID": "bd41cb958f51",
+        "MemPerc": "5.10%",
+        "MemUsage": "3.605GiB / 70.67GiB",
+        "Name": "anp-platform-platform-1",
+        "NetIO": "91.9MB / 89.1MB",
+        "PIDs": "454"
+      },
+      {
+        "BlockIO": "45.8MB / 236MB",
+        "CPUPerc": "0.41%",
+        "Container": "anp-storage-postgres-1",
+        "ID": "627452dce9ce",
+        "MemPerc": "0.35%",
+        "MemUsage": "256.8MiB / 70.67GiB",
+        "Name": "anp-storage-postgres-1",
+        "NetIO": "116MB / 139MB",
+        "PIDs": "43"
+      },
+      {
+        "BlockIO": "57.6MB / 53.5MB",
+        "CPUPerc": "0.57%",
+        "Container": "anp-storage-redis-1",
+        "ID": "00e2183937d2",
+        "MemPerc": "0.03%",
+        "MemUsage": "21.45MiB / 70.67GiB",
+        "Name": "anp-storage-redis-1",
+        "NetIO": "241MB / 105MB",
+        "PIDs": "6"
+      },
+      {
+        "BlockIO": "166MB / 4.86GB",
+        "CPUPerc": "9.28%",
+        "Container": "anp-storage-clickhouse-1",
+        "ID": "ade57c5cf0de",
+        "MemPerc": "1.29%",
+        "MemUsage": "933.9MiB / 70.67GiB",
+        "Name": "anp-storage-clickhouse-1",
+        "NetIO": "51.4MB / 51.3MB",
+        "PIDs": "419"
+      },
+      {
+        "BlockIO": "8.54MB / 97.1MB",
+        "CPUPerc": "1.04%",
+        "Container": "anp-storage-rustfs-1",
+        "ID": "2ca65e9e06fe",
+        "MemPerc": "1.37%",
+        "MemUsage": "988.5MiB / 70.67GiB",
+        "Name": "anp-storage-rustfs-1",
+        "NetIO": "13MB / 7.4MB",
+        "PIDs": "114"
+      }
+    ]
+  },
+  "client_construction": {
+    "scope": "客户端初始化，不发网络请求；默认客户端与复用已验证证书上下文的工厂比较",
+    "default": {
+      "samples": 50,
+      "median_ms": 7.9562,
+      "total_ms": 473.1662
+    },
+    "cached_trust": {
+      "samples": 50,
+      "median_ms": 0.0198,
+      "total_ms": 8.7954
+    }
+  },
+  "scope": "本机 demo 真实执行链路与客户端初始化；非整片配音 RTF",
+  "python": "3.12.12",
+  "host_platform": "win32",
+  "decision": "图执行与状态查询默认均为 1；只复用校验后的证书上下文，各 HTTP 客户端保持独立",
+  "limitations": [
+    "每组一轮、12 个任务；不是统计显著性结论",
+    "TLS 试验当前只有宿主 API/Worker/CLI 更新，整合 Agent 镜像尚待重建并测量",
+    "三个基准期间旧 anp2 仍在运行；PostgREST 本机构建已结束",
+    "资源只有前后快照，不作为峰值结论"
+  ]
+}

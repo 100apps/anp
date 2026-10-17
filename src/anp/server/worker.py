@@ -4,7 +4,7 @@ from fastapi import FastAPI,Header
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel,Field
 from anp.config import secret,value
-import httpx
+from anp.sdk.http import async_client
 from anp.sdk.tracing import task_attributes
 from anp.errors import BusinessError
 from anp.sdk.objects import Objects
@@ -31,7 +31,7 @@ async def studio_task(app_id:str,body:StudioTaskRequest,authorization: str | Non
     from anp.auth.identity import actor_from_token
     from anp.applications.registry import application,entrypoint
     # Studio 是持有引擎令牌的本机管理员开发入口；身份由 Worker 决定。
-    async with httpx.AsyncClient(timeout=15,trust_env=False) as client:
+    async with async_client(timeout=15,trust_env=False) as client:
         response=await client.post(value('supabase','url')+'/auth/v1/token?grant_type=password',
             headers={'apikey':secret('ANON_KEY')},
             json={'email':secret('ADMIN_EMAIL'),'password':secret('ADMIN_PASSWORD')})

@@ -2,7 +2,7 @@
 import json
 import os
 import time
-import httpx
+from anp.sdk.http import async_client
 from anp import ROOT
 from anp.config import value, secret
 from anp.errors import BusinessError
@@ -24,7 +24,7 @@ def save_session(data):
 
 
 async def login(email, password):
-    async with httpx.AsyncClient(timeout=20, trust_env=False) as client:
+    async with async_client(timeout=20, trust_env=False) as client:
         response = await client.post(value('supabase', 'url') + '/auth/v1/token?grant_type=password',
             headers={'apikey': secret('ANON_KEY')}, json={'email': email, 'password': password})
     if not response.is_success:
@@ -42,7 +42,7 @@ async def current_actor():
         raise BusinessError('请先执行 anp auth login', 401, 'UNAUTHENTICATED')
     data = json.loads(path.read_text(encoding='utf-8'))
     if data['expires_at'] < time.time() + 60:
-        async with httpx.AsyncClient(timeout=20, trust_env=False) as client:
+        async with async_client(timeout=20, trust_env=False) as client:
             response = await client.post(value('supabase', 'url') + '/auth/v1/token?grant_type=refresh_token',
                 headers={'apikey': secret('ANON_KEY')}, json={'refresh_token': data['refresh_token']})
         if not response.is_success:

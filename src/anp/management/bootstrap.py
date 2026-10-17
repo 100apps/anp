@@ -1,6 +1,7 @@
 import asyncio
 import time
 import httpx
+from anp.sdk.http import async_client
 from anp.config import value,secret
 from anp.sdk.objects import Objects
 from anp.errors import BusinessError
@@ -10,7 +11,7 @@ DEFAULT_WORKSPACE='00000000-0000-4000-8000-000000000001'
 
 async def create_user(email,password,role='developer',workspace_id=DEFAULT_WORKSPACE):
     headers={'apikey':secret('SERVICE_ROLE_KEY'),'Authorization':'Bearer '+secret('SERVICE_ROLE_KEY')}
-    async with httpx.AsyncClient(timeout=30,trust_env=False) as client:
+    async with async_client(timeout=30,trust_env=False) as client:
         response=await client.get(value('supabase','url')+'/auth/v1/admin/users',headers=headers,params={'per_page':1000})
         response.raise_for_status()
         user=next((u for u in response.json()['users'] if u['email']==email),None)
@@ -29,7 +30,7 @@ async def seed():
     user=await create_user(secret('ADMIN_EMAIL'),secret('ADMIN_PASSWORD'),'admin')
     await Objects(secret('SERVICE_ROLE_KEY')).upsert('admins',{'user_id':user['id']},'user_id')
     headers={'apikey':secret('SERVICE_ROLE_KEY'),'Authorization':'Bearer '+secret('SERVICE_ROLE_KEY')}
-    async with httpx.AsyncClient(timeout=30,trust_env=False) as client:
+    async with async_client(timeout=30,trust_env=False) as client:
         exists=await client.get(value('supabase','url')+'/storage/v1/bucket/artifacts',headers=headers)
         if exists.status_code==404 or exists.status_code==400:
             r=await client.post(value('supabase','url')+'/storage/v1/bucket',headers=headers,
@@ -44,7 +45,7 @@ async def seed():
 
 async def wait_url(url,timeout=180,headers=None):
     until=time.monotonic()+timeout
-    async with httpx.AsyncClient(timeout=3,trust_env=False) as client:
+    async with async_client(timeout=3,trust_env=False) as client:
         while time.monotonic()<until:
             try:
                 r=await client.get(url,headers=headers)

@@ -4,6 +4,7 @@
 - Python 依赖使用 uv，前端依赖使用 pnpm；提交锁文件。
 - 业务只能放在 apps/<应用ID>；遵守 ui、api、nodes、flow、services 的职责边界。
 - CLI 默认本地执行，HTTP 与 Web 调用同一个业务服务契约；不得绕过用户权限。
+- 异步 HTTP 请求使用 `anp.sdk.http.async_client`，只复用经校验的证书上下文；各客户端的身份、Cookie 与生命周期独立，不缓存授权判断。
 - 数据库和对象文件放在 Docker 命名卷；不使用宿主机 PostgreSQL。
 - 密钥与登录会话不得提交版本库或写入浏览器公开配置。
 

@@ -6,6 +6,7 @@ import sys
 import time
 import typer
 import httpx
+from anp.sdk.http import async_client
 from pydantic import ValidationError
 from anp import ROOT
 from anp.config import value,secret
@@ -175,7 +176,7 @@ async def invoke(ctx,app_id,verb,task_id=None,payload=None,request_key=None,wait
     elif verb in ('run','cancel'): method='POST'; url+=f'/{task_id}/{verb}'
     elif verb=='result': url+=f'/{task_id}/result'
     elif verb=='get': url+='/'+task_id
-    async with httpx.AsyncClient(timeout=30,trust_env=False) as http:
+    async with async_client(timeout=30,trust_env=False) as http:
         response=await http.request(method,url,headers=headers,json=payload)
         if not response.is_success:
             error=response.json().get('error',{})

@@ -1,5 +1,5 @@
 from uuid import uuid5,NAMESPACE_URL
-import httpx
+from anp.sdk.http import async_client
 from anp.config import value,secret
 from anp.sdk.tracing import task_attributes
 
@@ -15,7 +15,7 @@ def engine_client(app_id='demo'):
         if str(value('agent','shared',False)).lower() in ('true','1'):
             endpoint=base
         else:endpoint=urlunsplit((parsed.scheme,f'{parsed.hostname}:{(parsed.port or 8124)+index}',parsed.path,'',''))
-    return httpx.AsyncClient(base_url=endpoint,
+    return async_client(base_url=endpoint,
         headers={'Authorization':'Bearer '+secret('ENGINE_TOKEN')},timeout=20,trust_env=False)
 
 

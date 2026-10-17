@@ -1,12 +1,12 @@
 import json
-import httpx
+from anp.sdk.http import async_client
 from anp import ROOT
 from anp.config import value,secret
 
 
 async def configure_dbx(verify=True):
     configs=json.loads((ROOT/'.local/generated/dbx-connections.private.json').read_text())
-    async with httpx.AsyncClient(base_url=value('dbx','url'),timeout=40,trust_env=False) as client:
+    async with async_client(base_url=value('dbx','url'),timeout=40,trust_env=False) as client:
         response=await client.post('/api/auth/login',json={'password':secret('DBX_PASSWORD')})
         response.raise_for_status()
         # 配置按 ID upsert，不移除用户自行添加的连接。

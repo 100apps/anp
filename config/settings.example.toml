@@ -46,3 +46,4 @@ worker_port = 8281
 api_debug_port = 5680
 worker_debug_port = 5681
 local_profile = true
+coordinator_concurrency = 1

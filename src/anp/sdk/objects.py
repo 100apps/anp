@@ -1,5 +1,5 @@
 """业务数据统一通过 Supabase REST/RPC，保留调用者身份和 RLS。"""
-import httpx
+from anp.sdk.http import async_client
 from anp.config import value, secret
 from anp.errors import BusinessError
 
@@ -15,7 +15,7 @@ class Objects:
         headers = {'apikey': secret('ANON_KEY'), 'Authorization': 'Bearer ' + self.token,
                    'Accept-Profile': self.schema, 'Content-Profile': self.schema}
         headers.update(kwargs.pop('headers', {}))
-        async with httpx.AsyncClient(timeout=30, trust_env=False) as client:
+        async with async_client(timeout=30, trust_env=False) as client:
             response = await client.request(method, value('supabase', 'url') + '/rest/v1/' + resource,
                                             headers=headers, **kwargs)
         if not response.is_success:

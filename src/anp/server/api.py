@@ -8,6 +8,7 @@ from fastapi import FastAPI,Depends
 from fastapi.responses import JSONResponse,RedirectResponse
 from pydantic import BaseModel,Field
 import httpx
+from anp.sdk.http import async_client
 from anp.config import value,secret
 from anp.applications.registry import applications,entrypoint
 from anp.auth.dependencies import get_actor
@@ -16,17 +17,33 @@ from anp.sdk.objects import Objects
 from anp.execution.agent_server import reconcile_remote
 
 logger=logging.getLogger('anp.api')
-SOURCE_REVISION='api-v2'
+SOURCE_REVISION='api-v3'
 
 
-async def coordinator():
+async def reconcile_batch(objects,tasks,concurrency):
+    semaphore=asyncio.Semaphore(concurrency)
+    async def reconcile(task):
+        async with semaphore:
+            try:await reconcile_remote(objects,task)
+            except Exception as error:
+                logger.warning('任务 %s 稍后重试：%s',task['id'],type(error).__name__)
+    await asyncio.gather(*(reconcile(task) for task in tasks))
+
+
+async def reconcile_page(objects,offset,concurrency):
+    tasks=await objects.select('tasks',mode='eq.http',status='eq.running',
+        order='created_at.asc,id.asc',limit=50,offset=offset)
+    await reconcile_batch(objects,tasks,concurrency)
+    # 长任务不应一直占据首批 50 个位置；动态集合可能暂时跳过部分行，下一轮扫描会补查。
+    return offset+len(tasks) if len(tasks)==50 else 0
+
+
+async def coordinator(concurrency):
     objects=Objects(secret('SERVICE_ROLE_KEY'))
+    offset=0
     while True:
         try:
-            tasks=await objects.select('tasks',mode='eq.http',status='eq.running',limit=50)
-            for task in tasks:
-                try: await reconcile_remote(objects,task)
-                except Exception as error: logger.warning('任务 %s 稍后重试：%s',task['id'],type(error).__name__)
+            offset=await reconcile_page(objects,offset,concurrency)
         except Exception as error:
             logger.warning('等待对象服务：%s',type(error).__name__)
         await asyncio.sleep(0.7)
@@ -34,7 +51,9 @@ async def coordinator():
 
 @asynccontextmanager
 async def lifespan(app):
-    job=asyncio.create_task(coordinator())
+    concurrency=int(value('development','coordinator_concurrency',1))
+    if not 1<=concurrency<=16:raise ValueError('任务状态查询并发须为 1–16')
+    job=asyncio.create_task(coordinator(concurrency))
     yield
     job.cancel()
     with suppress(asyncio.CancelledError): await job
@@ -124,7 +143,7 @@ async def connections(actor=Depends(get_actor)):
     async def check(item):
         name,label,url,probe,description=item
         try:
-            async with httpx.AsyncClient(timeout=4,trust_env=False) as client:
+            async with async_client(timeout=4,trust_env=False) as client:
                 headers={'apikey':secret('ANON_KEY')} if name=='supabase' else {}
                 if name=='agent': headers={'Authorization':'Bearer '+secret('ENGINE_TOKEN')}
                 r=await client.get(url+probe,headers=headers)

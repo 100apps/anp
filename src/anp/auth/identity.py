@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import httpx
+from anp.sdk.http import async_client
 from anp.config import value, secret
 from anp.errors import BusinessError
 from anp.sdk.objects import Objects
@@ -25,7 +25,7 @@ class Actor:
 async def actor_from_token(token, workspace_id=None):
     if not token:
         raise BusinessError('请先登录', 401, 'UNAUTHENTICATED')
-    async with httpx.AsyncClient(timeout=10, trust_env=False) as client:
+    async with async_client(timeout=10, trust_env=False) as client:
         response = await client.get(value('supabase', 'url') + '/auth/v1/user',
             headers={'apikey': secret('ANON_KEY'), 'Authorization': 'Bearer ' + token})
     if not response.is_success:

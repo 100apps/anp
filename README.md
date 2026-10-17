@@ -71,6 +71,7 @@ uv run anp demo tasks create --title "我的任务" --text "你好，工作台�
 uv run anp demo tasks run <任务ID>
 uv run anp demo tasks get <任务ID>
 uv run anp demo tasks result <任务ID>
+uv run anp demo tasks summary
 ```
 
 不需要业务 API、Worker 或前端服务，但仍需访问平台存储和登录服务。JSON 输出与非零错误码便于 AI 调用，支持 `create --input input.json`。HTTP 模式加 `--transport http`，命令和功能一致，需要启动业务 API/Worker。

@@ -165,7 +165,7 @@ async def invoke(ctx,app_id,verb,task_id=None,payload=None,request_key=None,wait
     if ctx.obj['transport']=='local':
         service=entrypoint(application(app_id)['services']['entry'])
         if verb=='create': return await service.create(actor,payload,request_key)
-        if verb=='list': return await service.list(actor)
+        if verb in ('list','summary'): return await getattr(service,verb)(actor)
         if verb=='run': return await service.run(actor,task_id,'local')
         return await getattr(service,verb)(actor,task_id)
     base=ctx.obj['endpoint']+f'/api/apps/{app_id}/tasks'
@@ -174,6 +174,7 @@ async def invoke(ctx,app_id,verb,task_id=None,payload=None,request_key=None,wait
     method='GET'; url=base
     if verb=='create': method='POST'
     elif verb in ('run','cancel'): method='POST'; url+=f'/{task_id}/{verb}'
+    elif verb=='summary': url+='/summary'
     elif verb=='result': url+=f'/{task_id}/result'
     elif verb=='get': url+='/'+task_id
     async with async_client(timeout=30,trust_env=False) as http:
@@ -204,6 +205,9 @@ def register_commands(app_id):
 
     @tasks.command('list')
     def list_tasks(ctx:typer.Context): perform(invoke(ctx,app_id,'list'))
+
+    @tasks.command('summary')
+    def task_summary(ctx:typer.Context): perform(invoke(ctx,app_id,'summary'))
 
     @tasks.command('get')
     def get_task(ctx:typer.Context,task_id:str): perform(invoke(ctx,app_id,'get',task_id))

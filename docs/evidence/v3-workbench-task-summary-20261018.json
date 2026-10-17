@@ -28,5 +28,17 @@
   "vite_build_seconds": 2.87,
   "browser_render_verified": false,
   "full_platform_release_verified": false,
-  "implementation": "统计使用 SECURITY INVOKER 的一次 SQL 聚合、当前 JWT 与工作空间；最近任务列表仍保留分页，统计失败不显示零"
+  "implementation": "统计使用 SECURITY INVOKER 的一次 SQL 聚合、当前 JWT 与工作空间；最近任务列表仍保留分页，统计失败不显示零",
+  "cli_parity_check": {
+    "command": "uv run anp demo tasks summary",
+    "default_local_with_api_worker_agent_unreachable": true,
+    "http_cli_with_real_separate_api": true,
+    "same_expected_summary": true,
+    "temporary_api_lifespan_coordinator_disabled": true,
+    "temporary_api_process_stopped": true,
+    "existing_ide_services_restarted_by_test": false,
+    "test_passed": 1,
+    "seconds": 4.33,
+    "cloud_execution_of_extended_cli_test_verified": false
+  }
 }

@@ -1,0 +1,63 @@
+{
+  "scope": "正式平台流水线进度与真实缓存复用；未完成组装、启动和业务验收时不称为发布成功",
+  "run": 39079130050,
+  "source_sha": "42fe0e5bc0c5f2bfb95e9034f7ea5bad69a834c1",
+  "url": "https://github.com/100apps/anp/actions/runs/39079130050",
+  "cache_candidates": [
+    39073495497,
+    39075349826,
+    39076163045,
+    39069178512
+  ],
+  "verified_reuse": [
+    {
+      "component": "auth",
+      "job": 117532543089,
+      "candidate_run": 39069178512,
+      "source_sha": "ce9a8eee0cc042be8c7a42981a7ddae631e41d91",
+      "digest": "sha256:8e1e6904ecd0e3c65fe9c69b06be19290bbf4359b7008052b2cee4e4e90e2bb0",
+      "job_conclusion": "success",
+      "scope": "旧平台流水线制品实际拉取，源码和配方通过 helper 校验"
+    },
+    {
+      "component": "dbx",
+      "job": 117532543096,
+      "candidate_run": 39076163045,
+      "source_sha": "3ebaf047e09eb7a2fbd7b63ffc51a8cce24fca65",
+      "digest": "sha256:5171f6f8064dfd439d7e219c85a1cbecbe17d259a11624aeb6ea5bc554c58a5b",
+      "job_conclusion": "success",
+      "scope": "单组件探针制品实际跨工作流拉取，源码和配方通过 helper 校验"
+    }
+  ],
+  "frontend_ci": {
+    "run": 39079129540,
+    "job": 117532314904,
+    "conclusion": "success",
+    "typescript_and_production_build_passed": true,
+    "vite_build_seconds": 5.99,
+    "unit_tests_passed": 3,
+    "runtime": {
+      "scope": "独立前端真实启动与 HMR，未启动平台或模拟业务 API；不是 IDE 调试验收",
+      "platform": "linux",
+      "startup_seconds": 1.521,
+      "two_ensure_calls_one_process": true,
+      "change_update_path": "/src/app.tsx",
+      "restore_update_path": "/src/app.tsx",
+      "source_restored": true,
+      "source_sha256": "3a80de6841958a700187eba08612c873830bc0ce4ab5b903c33e4f9e10677c92",
+      "all_interfaces_binding": true,
+      "owned_process_stopped": true
+    }
+  },
+  "full_platform_verified": false,
+  "local_ghcr_pull_verified": false,
+  "ide_f5_verified": false,
+  "litellm_candidate_rejected": {
+    "job": 117532543098,
+    "candidate_run": 39069178512,
+    "reason": "上游与候选制品不一致",
+    "cloud_log_verified": true,
+    "new_source_build_required": true
+  },
+  "local_read_packages_authorized": false
+}

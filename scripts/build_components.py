@@ -9,6 +9,7 @@ RECIPES={
     'auth':('supabase-auth','Dockerfile',None),
     'storage':('supabase-storage','Dockerfile',None),
     'meta':('postgres-meta','Dockerfile',None),
+    'postgrest':('postgrest','',None),
     'langfuse-web':('langfuse','web/Dockerfile',None),
     'langfuse-worker':('langfuse','worker/Dockerfile',None),
     'litellm':('litellm','Dockerfile',None),
@@ -19,7 +20,8 @@ RECIPES={
 def build(component):
     repository,filename,target=RECIPES[component]
     source=ROOT/'third_party'/repository
-    dockerfile=(source/filename).read_text(encoding='utf8')
+    dockerfile_path=ROOT/'deploy/build/postgrest.Dockerfile' if component=='postgrest' else source/filename
+    dockerfile=dockerfile_path.read_text(encoding='utf8')
     if component=='studio':
         marker='FROM dev AS build-next\n'
         if dockerfile.count(marker)!=1:
@@ -35,6 +37,12 @@ def build(component):
         if dockerfile.count(marker)!=1:
             raise RuntimeError('DBX Rust 构建阶段已变化，需要适配')
         dockerfile=dockerfile.replace(marker,marker+'ENV CARGO_BUILD_JOBS=4 CMAKE_BUILD_PARALLEL_LEVEL=4\n')
+    if component=='litellm':
+        # 上游当前 Turbopack 出现 conflicting effects 内部错误；同一源码用 Next 官方 Webpack 构建。
+        marker='RUN npm run build\n'
+        if dockerfile.count(marker)!=1:
+            raise RuntimeError('LiteLLM UI 构建阶段已变化，需要适配')
+        dockerfile=dockerfile.replace(marker,'RUN npm run build -- --webpack\n')
     output=ROOT/'.local/build'/f'{component}.Dockerfile'
     output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(dockerfile,encoding='utf8')

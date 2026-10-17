@@ -85,5 +85,24 @@
     "stage": "Collecting build traces",
     "full_build_verified": false,
     "type_validation": "上游默认跳过，不能视为完整类型检查通过"
+  },
+  "studio_terminal_result": {
+    "run": 39073495497,
+    "job": 117515780161,
+    "conclusion": "success",
+    "duration_seconds": 987,
+    "source_commit": "07fb62fea08e1e2a9a14b4366883e4a0bd9f08e9",
+    "upstream_manifest_recorded_at": "2026-10-17T22:04:35.216953+00:00",
+    "updated_to_remote_head": true,
+    "supabase_source_sha": "7425d4930528931400fb3e656e860b1094cb224e",
+    "recipe_fingerprint": "0d257180ccc3d419a1d10f24bb35d25db37947791257ad5e2a0fc7b05235b633",
+    "image": "ghcr.io/100apps/anp-build-studio:run-39073495497",
+    "registry_digest": "sha256:02d3bbc324ef861615084724d01f118d50b3b076f207a79d085b2bc56e864239",
+    "local_build_image_id": "sha256:8c6c109ca4e6c6a36002bc44a9c46250c7e376877c3961577be880bbd8d3966e",
+    "log_sha256": "cd936a4ab75eacb6945c32afbbd77e17834095c5a4db31e32f567a5d76da73b7",
+    "full_platform_verified": false,
+    "local_ghcr_pull_verified": false,
+    "oci_labels_independently_read": false,
+    "limitation": "仅 Studio 中间组件编译并推送成功；正式流水线仍需拉取、比对源码和配方、组装与实启平台"
   }
 }

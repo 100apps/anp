@@ -110,4 +110,6 @@ API/Worker 使用 debugpy 跟踪 Uvicorn 热重载子进程，前端使用 Vite 
 
 RustFS 控制台属于存储层，地址由宿主端口配置。LangSmith Studio 是外部开发工具；按用户选择仅使用本机 Langfuse，保留 LangSmith 云追踪未配置提示。
 
+新版 Lens 使用独立追踪写入 Key，`auto` 已完成合成错误样本的真实诊断；接入地址、限额与验收边界见 [Lens 新版接入](docs/Lens新版接入.md)。
+
 复制业务：`uv run anp app new my_app --from demo`，随后检查权限、迁移与 flow，执行 `uv run anp migrate`。详见 [Agent 与业务开发](docs/Agent与业务开发.md)。

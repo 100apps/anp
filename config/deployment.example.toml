@@ -38,3 +38,8 @@ worker_host_url = "http://127.0.0.1:8281"
 worker_container_url = "http://host.docker.internal:8281"
 ui_host_url = "http://127.0.0.1:5173"
 ui_container_url = "http://host.docker.internal:5173"
+
+[lens]
+# 分析 Key 仍只允许 auto；支持分析器较长的系统提示与连续工具调用。
+analysis_rpm_limit = 20
+analysis_tpm_limit = 100000

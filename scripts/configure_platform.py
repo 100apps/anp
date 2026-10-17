@@ -154,6 +154,11 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
         document=tomllib.loads(Path(deployment).read_text(encoding='utf8'))
         bind(configuration,document,{**s,**os.environ},target)
     expanded=expand(document,{**s,**os.environ})
+    lens=expanded.get('lens',{})
+    limits={'rpm_limit':int(lens.get('analysis_rpm_limit',20)),
+        'tpm_limit':int(lens.get('analysis_tpm_limit',100000))}
+    if any(limit<=0 for limit in limits.values()):raise ValueError('Lens 分析限额必须大于零')
+    configuration['lens_analysis_limits']=limits
     business=expanded.get('business',{})
     api_port,worker_port,ui_port=(8181,8282,5174) if smoke else (8180,8281,5173)
     api=business.get('api_host_url',f'http://127.0.0.1:{api_port}')
@@ -200,6 +205,8 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
 | LangGraph Studio | https://smith.langchain.com/studio/?baseUrl={quote(public+'/agent',safe='')} | 使用已有 LangSmith 账号；连接设置使用上行 Authorization 请求头 |
 
 Lens 的受限分析 Key 为 `{s['LENS_V3_ANALYSIS_KEY']}`，只允许 auto；不要把管理 Token 当作模型网关 Key。
+Lens 专用追踪写入 Key：`{s.get('LENS_V3_INGESTION_KEY','尚未创建；在 Lens 后台创建追踪 Key')}`。写入地址为 `{public}/lens/v1/traces`，不能使用模型网关 Key 代替。
+分析限额：{limits['rpm_limit']} RPM / {limits['tpm_limit']} TPM，可在 deployment.local.toml 的 lens 节调整。
 已有管理员不会被初始化程序重置密码；若曾主动改过密码，请使用改后的密码。
 {end}'''
     text=credentials.read_text(encoding='utf8') if credentials.exists() else '# 本机登录信息\n'

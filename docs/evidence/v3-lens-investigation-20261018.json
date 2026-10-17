@@ -1,0 +1,82 @@
+{
+  "scope": "V3 独立 Lens，显式合成错误追踪，不能冒充真实业务失败",
+  "trace_id": "a939940e7c0446ab8eef7c6d532d266e",
+  "lens_id": "d4824859-63b0-49d9-9236-21dfff2f2114",
+  "job_id": "6b0c5089-7d18-47c0-b68b-da9a0aab4f41",
+  "status": "completed",
+  "model": "auto",
+  "scheduled": false,
+  "created_at": "2026-10-17T18:48:10.066189367Z",
+  "finished_at": "2026-10-17T18:52:31.456897241Z",
+  "reviewed": 1,
+  "coverage": {
+    "candidates": 1,
+    "eligible": 1,
+    "failed_tasks": 0,
+    "grouped_batches": 1,
+    "grouping_batches": 1,
+    "inconclusive": 0,
+    "investigated": 1,
+    "partial": 0,
+    "reusable": 0,
+    "reused": 0,
+    "screened": 1,
+    "selected": 1,
+    "unassessable": 0
+  },
+  "findings": [
+    {
+      "title": "normalize 步骤因 KeyError('task_id') 失败",
+      "description": "合成追踪显示，当输入为 '分析文本' 时，normalize 步骤抛出了 KeyError('task_id')，导致状态被标记为 STATUS_CODE_ERROR，输出消息为 '合成测试错误：KeyError('task_id')，尚未生成报告。' 这表明 normalize 步骤未成功完成，且未生成报告。",
+      "check_id": "expected_behavior",
+      "kind": "issue",
+      "priority": "medium",
+      "suggestion": "",
+      "limitation": "",
+      "brief": {
+        "problem": "normalize 步骤在处理输入时因缺少 task_id 抛出 KeyError 异常，导致流程中断，状态标记为错误，未生成报告。",
+        "test_cases": [
+          {
+            "expected": "normalize 步骤成功完成并生成报告，或至少返回适当的错误提示而非抛出未处理的异常。",
+            "input": "分析文本"
+          }
+        ],
+        "user_goal": "用户期望输入文本后能正常完成 normalize 并生成报告。",
+        "what_happened": "输入 '分析文本' 后，系统抛出 KeyError('task_id')，状态为 STATUS_CODE_ERROR，输出显示尚未生成报告。"
+      },
+      "evidence": [
+        {
+          "execution_id": "WyJ0cmFjZXMiLCAiIiwgImE5Mzk5NDBlN2MwNDQ2YWI4ZWVmN2M2ZDUzMmQyNjZlIiwgIjlCMDZEMkI3Q0I2MTk1NjY4MkFFODU2MTc2M0EyQTNBOTcwMzlFODRBNkQ5ODY2NTc2RThBRjE5NUNFMDk1MEEiXQ==",
+          "quote": "Input: [{\"role\": \"user\", \"content\": \"分析文本\"}]\nOutput: [{\"role\": \"assistant\", \"content\": \"合成测试错误：KeyError('task_id')，尚未生成报告。\"}]\nStatus: STATUS_CODE_ERROR Synthetic KeyError('task_id')",
+          "role": "support",
+          "span_id": "221f191f3aa840eb"
+        }
+      ],
+      "existing_finding_id": null,
+      "check_ids": [
+        "expected_behavior"
+      ],
+      "merged_finding_ids": [],
+      "id": "031c1256-0a92-424d-b66e-59869124fef8",
+      "status": "open",
+      "reason": "",
+      "first_seen": "2026-10-17T18:52:31.456897241Z",
+      "last_seen": "2026-10-17T18:52:31.456897241Z",
+      "occurrences": [
+        "WyJ0cmFjZXMiLCAiIiwgImE5Mzk5NDBlN2MwNDQ2YWI4ZWVmN2M2ZDUzMmQyNjZlIiwgIjlCMDZEMkI3Q0I2MTk1NjY4MkFFODU2MTc2M0EyQTNBOTcwMzlFODRBNkQ5ODY2NTc2RThBRjE5NUNFMDk1MEEiXQ=="
+      ],
+      "revision": 1,
+      "investigation_runs": [
+        "6b0c5089-7d18-47c0-b68b-da9a0aab4f41"
+      ]
+    }
+  ],
+  "assessments_count": 1,
+  "reviews_count": 1,
+  "analysis_key_limits": {
+    "rpm": 20,
+    "tpm": 100000
+  },
+  "known_wait": "首次 20000 TPM 触发网关 429，包含退避等待；并未扣除等待后宣称性能达标",
+  "rate_limit_idempotent_update_verified": true
+}

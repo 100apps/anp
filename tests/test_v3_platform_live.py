@@ -106,6 +106,8 @@ def test_lens_session_auto_catalog_and_restricted_analysis_key():
         response=client.get('/litellm/key/info',params={'key':hashlib.sha256(key.encode()).hexdigest()},
             headers={'Authorization':'Bearer '+secret('LITELLM_KEY')})
         assert response.status_code==200 and response.json()['info']['models']==['auto']
+        for name,limit in configuration.get('lens_analysis_limits',{}).items():
+            assert response.json()['info'][name]==limit
         body={'model':'auto:fast','messages':[{'role':'user','content':'只回复：连接成功'}],'max_tokens':32}
         headers={'Authorization':'Bearer '+key}
         assert client.post('/litellm/v1/chat/completions',headers=headers,json=body).status_code==403

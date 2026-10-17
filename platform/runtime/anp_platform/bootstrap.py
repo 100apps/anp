@@ -82,18 +82,22 @@ def configure_litellm(settings):
     spec=settings['services']['litellm']
     base=spec['health_url'].removesuffix('/health/liveliness')
     key=settings['services']['lens']['environment']['LENS_ANALYSIS_API_KEY']
+    limits=settings.get('lens_analysis_limits',{'rpm_limit':20,'tpm_limit':100000})
     with httpx.Client(base_url=base,headers={'Authorization':'Bearer '+spec['environment']['LITELLM_MASTER_KEY']},
         trust_env=False,timeout=30) as client:
         # 查询使用单向摘要，不把原始 Key 写入 URL 或访问日志。
         response=client.get('/key/info',params={'key':hashlib.sha256(key.encode()).hexdigest()})
         if response.status_code==404:
             client.post('/key/generate',json={'key':key,'key_alias':'anp-v3-lens-auto',
-                'models':['auto'],'rpm_limit':10,'tpm_limit':20000,
+                'models':['auto'],**limits,
                 'metadata':{'purpose':'本机 Lens 手动分析，仅允许 auto'}}).raise_for_status()
         else:
             response.raise_for_status()
             if response.json()['info']['models']!=['auto']:
                 raise ValueError('Lens 分析 Key 模型权限与配置不一致')
+            info=response.json()['info']
+            if any(info.get(name)!=limit for name,limit in limits.items()):
+                client.post('/key/update',json={'key':key,**limits}).raise_for_status()
 
 
 if __name__=='__main__':

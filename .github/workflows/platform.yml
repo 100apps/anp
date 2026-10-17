@@ -1,9 +1,16 @@
 name: 构建与验收单容器平台
 on:
   workflow_dispatch:
+    inputs:
+      component_cache_run:
+        description: 前次平台构建编号；仅在源码 SHA 和配方一致时复用组件
+        required: false
+        default: ''
+        type: string
   push:
     tags: ['v*']
 permissions:
+  actions: read
   contents: read
   packages: write
 concurrency:
@@ -49,13 +56,20 @@ jobs:
           DEPENDENCIES_BASE64: ${{ needs.dependencies.outputs.manifest }}
         run: python -c "import os,base64;from pathlib import Path;p=Path('.local/ci/dependencies.json');p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(base64.b64decode(os.environ['DEPENDENCIES_BASE64']))"
       - run: python scripts/checkout_dependencies.py .local/ci/dependencies.json
-      - name: 从记录的最新源码构建组件
-        run: python scripts/build_components.py --locked --component '${{ matrix.name }}'
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 检查可复用的同源码组件
+        id: reuse
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMPONENT_CACHE_RUN: ${{ inputs.component_cache_run }}
+        run: python scripts/reuse_component.py --component '${{ matrix.name }}' --run "$COMPONENT_CACHE_RUN"
+      - name: 从记录的最新源码构建组件
+        if: steps.reuse.outputs.hit != 'true'
+        run: python scripts/build_components.py --locked --component '${{ matrix.name }}'
       - name: 保存本次构建的中间制品
         run: |
           docker tag anp-build/${{ matrix.name }}:source $REGISTRY/anp-build-${{ matrix.name }}:run-${{ github.run_id }}

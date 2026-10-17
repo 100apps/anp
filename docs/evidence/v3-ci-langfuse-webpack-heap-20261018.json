@@ -25,12 +25,13 @@
     "webpack_memory_optimizations": true,
     "turbo_concurrency": 1,
     "full_logs": true,
-    "core_dump_disabled": true,
+    "core_dump_disabled": false,
     "source_maps_kept": true,
     "existing_webpack_callback_kept": true,
     "type_checks_kept": true,
     "otel_worker_kept": true,
-    "upstream_source_not_modified": true
+    "upstream_source_not_modified": true,
+    "shell_core_limit_requested": true
   },
   "local_verification": {
     "node_script_executed_on_real_package_and_config": true,
@@ -41,5 +42,11 @@
     "default_and_ci_recipes_generated": 10,
     "initial_harness_issue": "Windows Path 字符串分隔符导致测试字典 KeyError，改用 as_posix 后全部校验通过；不是产品构建错误"
   },
-  "limitation": "本地配置适配校验不能代替完整 Langfuse 云端编译、服务启动与业务验收。DBX 和 LiteLLM 活作业未中断。"
+  "limitation": "本地配置适配校验不能代替完整 Langfuse 云端编译、服务启动与业务验收。DBX 和 LiteLLM 活作业未中断。",
+  "later_correction": {
+    "run": 39075349826,
+    "host_core_mode": "pipe",
+    "note": "原记录把构建命令的 ulimit 设置当成转储已被禁用，证据不足；管道 core 接收不执行 RLIMIT_CORE 限额",
+    "source": "https://man7.org/linux/man-pages/man5/core.5.html"
+  }
 }

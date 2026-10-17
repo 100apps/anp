@@ -60,7 +60,15 @@ def configure(distro='Ubuntu',smoke=False,deployment=None):
     environment.update(ANP_PLATFORM_CONFIG=project+'/.local/generated/platform-v3/native.json',
         ANP_COMPONENTS='/opt/anp/components.native.json',ANP_NGINX_BINARY='/opt/anp/bin/nginx',
         ANP_NGINX_MIME_TYPES='/opt/anp/etc/mime.types',ANP_PLATFORM_MIGRATIONS=project+'/migrations')
-    (directory/'native-launch.json').write_text(json.dumps({'distro':distro,'python':python,'environment':environment},indent=2),encoding='utf8')
+    identity=json.loads(subprocess.check_output(['wsl','-d',distro,'-u','root','--exec','cat','/opt/anp/.anp-native-base.json'],text=True))
+    if identity.get('workspace')!=str(ROOT):raise RuntimeError('原生制品属于其他工作区')
+    if document.get('platform',{}).get('image'):
+        image=json.loads(subprocess.check_output(['docker','image','inspect',document['platform']['image']],text=True))[0]['Id']
+        if identity['image']!=image:raise RuntimeError('原生制品与目标平台镜像不一致')
+    subprocess.run(['wsl','-d',distro,'-u','root','--exec','python3',project+'/scripts/native_artifacts.py',
+        'check','--expected',json.dumps(identity)],check=True,stdout=subprocess.DEVNULL)
+    (directory/'native-launch.json').write_text(json.dumps({'distro':distro,'python':python,'environment':environment,
+        'runtime_identity':identity},indent=2),encoding='utf8')
     return {'configuration':str(native),'listen_port':settings['port'],'windows_callbacks':'stdio'}
 
 

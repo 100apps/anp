@@ -53,6 +53,17 @@ class Runtime:
         # Go/Node/Rust 组件的 Python 启动包装器无需调试，也不向第三方 exec 注入调试器。
         return await asyncio.create_subprocess_exec(*arguments,stdout=output,stderr=output,start_new_session=True)
 
+    async def reap_group(self,process):
+        if process.returncode is None:
+            try:os.killpg(process.pid,signal.SIGTERM)
+            except ProcessLookupError:pass
+            try:await asyncio.wait_for(process.wait(),20)
+            except asyncio.TimeoutError:pass
+        # 父进程退出并不代表 Prisma 等同组子进程退出；异常退出同样需要清理。
+        try:os.killpg(process.pid,signal.SIGKILL)
+        except ProcessLookupError:pass
+        await process.wait()
+
     async def service(self,name,spec):
         state=self.states[name]
         if name not in self.metadata['components']:
@@ -84,14 +95,8 @@ class Runtime:
                 state['pid']=process.pid
                 while process.returncode is None and not self.stopping:
                     await asyncio.sleep(.5)
-                if self.stopping:
-                    try:os.killpg(process.pid,signal.SIGTERM)
-                    except ProcessLookupError:pass
-                    try:await asyncio.wait_for(process.wait(),20)
-                    except asyncio.TimeoutError:
-                        os.killpg(process.pid,signal.SIGKILL)
-                        await process.wait()
-                    return
+                await self.reap_group(process)
+                if self.stopping:return
                 state['pid']=None
                 if process.returncode!=0:
                     state['status']='initialization_failed'
@@ -123,14 +128,8 @@ class Runtime:
                         state['status']='ready' if healthy else 'starting'
                     else:state['status']='ready' if time.monotonic()-started>2 else 'starting'
                     await asyncio.sleep(1)
-                if self.stopping:
-                    try:os.killpg(process.pid,signal.SIGTERM)
-                    except ProcessLookupError:pass
-                    try:await asyncio.wait_for(process.wait(),20)
-                    except asyncio.TimeoutError:
-                        os.killpg(process.pid,signal.SIGKILL)
-                        await process.wait()
-                    break
+                await self.reap_group(process)
+                if self.stopping:break
             state.update(status='failed',pid=None)
             state['restarts']+=1
             if state['restarts']>5:

@@ -13,6 +13,10 @@ if __name__=='__main__':
     parser.add_argument('--reload',action='store_true')
     args=parser.parse_args()
     configuration=json.loads((ROOT/'.local/generated/platform-v3/native-launch.json').read_text(encoding='utf8'))
+    identity=configuration.get('runtime_identity')
+    if not identity or identity.get('workspace')!=str(ROOT):raise RuntimeError('请重新执行 prepare --mode native')
+    subprocess.run(['wsl','-d',configuration['distro'],'-u','root','--exec','python3',
+        configuration['environment']['ANP_ROOT']+'/scripts/native_artifacts.py','check','--expected',json.dumps(identity)],check=True)
     command=['wsl','-d',configuration['distro'],'-u','root','--exec','env',
         *(key+'='+value for key,value in configuration['environment'].items()),configuration['python'],'-m','anp_platform.native']
     if args.debug_port:command+=['--debug-port',str(args.debug_port)]

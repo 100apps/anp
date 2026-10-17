@@ -76,3 +76,17 @@ def test_stop_interrupts_long_restart_backoff():
         runtime.stop()
         await asyncio.wait_for(waiting,timeout=.2)
     asyncio.run(scenario())
+
+
+def test_exited_parent_still_reaps_its_process_group(monkeypatch):
+    import signal
+    from anp_platform import supervisor
+    calls=[]
+    class Process:
+        pid=12345
+        returncode=0
+        async def wait(self):calls.append('wait');return self.returncode
+    monkeypatch.setattr(supervisor.signal,'SIGKILL',9,raising=False)
+    monkeypatch.setattr(supervisor.os,'killpg',lambda pid,sig:calls.append((pid,sig)),raising=False)
+    asyncio.run(Runtime({'services':{}},{'components':{}}).reap_group(Process()))
+    assert calls==[(12345,signal.SIGKILL),'wait']

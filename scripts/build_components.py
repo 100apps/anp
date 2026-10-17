@@ -59,7 +59,11 @@ def recipe(component):
     profile=os.environ.get('ANP_BUILD_PROFILE','default')
     if profile not in ('default','ci'):raise ValueError('未知构建资源配置')
     if profile=='ci':
-        if component=='studio':dockerfile=dockerfile.replace('--max-old-space-size=6144','--max-old-space-size=3072')
+        if component=='studio':
+            dockerfile=dockerfile.replace('--max-old-space-size=6144','--max-old-space-size=3072')
+            marker='RUN pnpm --filter studio exec next build\n'
+            if dockerfile.count(marker)!=1:raise RuntimeError('Studio 构建命令已变化，需要适配')
+            dockerfile=dockerfile.replace(marker,'RUN pnpm --filter studio exec next build --webpack\n')
         if component=='langfuse-web':
             marker="NODE_OPTIONS='--max-old-space-size-percentage=75'"
             if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse 构建内存配置发生变化，需要适配')

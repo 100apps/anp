@@ -128,7 +128,7 @@ jobs:
           ANP_V3_BUSINESS_SMOKE: '1'
           ANP_SKIP_LIVE_LLM: '1'
         run: >-
-          uv run pytest tests/test_v3_runtime.py tests/test_v3_handoff.py tests/test_v3_bridge.py
+          uv run pytest tests/test_v3_runtime.py tests/test_v3_handoff.py tests/test_v3_native_artifacts.py tests/test_v3_bridge.py
           tests/test_v3_agent_contract.py tests/test_v3_coordinator.py tests/test_v3_http_client.py
           tests/test_v3_bindings.py tests/test_v3_platform_live.py
           tests/test_v3_business_live.py tests/test_01_local_cli.py tests/test_02_http_acl.py

@@ -1,0 +1,288 @@
+{
+  "scope": "原生制品更新与进程清理；新镜像和最终原生回归仍待验证",
+  "clean_extraction": {
+    "dbx": {
+      ".anp-preservation-probe": "fbef7fcae5b5b7c64d21a79f5a2b7d84ee21499198c11bd0909163f935358e34",
+      "dbx/dbx.db-shm": "ff508e25a3a4f774f1045bd69e1c83d478e3940f41f1f2e04873ce7ce9043fde",
+      "dbx/dbx.db": "d405fbc2df562fce249630e4ce77beebfb8bfd930b23db6660d919028115b515",
+      "dbx/dbx.db-wal": "7aa2a9c1b07b61012dd8108c160966e6dd57bb88e1b7668780f51396b43bdbe0",
+      "dbx/database-backups/worker.lock": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "dbx/database-backups/state.db": "c12941bc884184a885975464dc94e92d441929c6879549c04a750e4838ab8d3c",
+      "dbx/.dbx/secret.key": "3a56fbc700c9a412e1836a5323e5cd0b01f3c996e741fa6eb9916213d0bafa48"
+    },
+    "agent": {
+      ".snapshot-last": "4db4f37c4060dea4a7a324002508335e0e341c1899bd42b0cc2de7728f2fd8c5",
+      ".langgraph_api/store.vectors.pckl": "ad2598304a8af697d0c335a50a3e5a1ba06c82d9b63ef5f9d3e730b54cf9148a",
+      ".langgraph_api/.langgraph_checkpoint.1.pckl": "c7ee0523c721edd831c31ffa8b81dea8a2a5215d5f4c968f757b43dcd13aaa79",
+      ".langgraph_api/.langgraph_retry_counter.pckl": "e35d215ae33a78a446198a3e14bf1056ae1b4c11d36ed542ea676bed1fa37577",
+      ".langgraph_api/.langgraph_ops.pckl": "171afee3b04f1cd270d0ff3381161f30455fef15446be28245af8e06682b1083",
+      ".langgraph_api/.langgraph_checkpoint.2.pckl": "2cfa1e6e87bd82551e30b871ca2769f270dfce69b8d3533fd1e8d2246ab4b236",
+      ".langgraph_api/.langgraph_checkpoint.3.pckl": "7ce1eb10084a95a9222ee4cd1daeedda34c4fb923b6ebc20034765f3fcc54313",
+      ".langgraph_api/store.pckl": "ad2598304a8af697d0c335a50a3e5a1ba06c82d9b63ef5f9d3e730b54cf9148a",
+      ".backups/05f1889892054b01bcf987e36b571474/store.vectors.pckl": "ad2598304a8af697d0c335a50a3e5a1ba06c82d9b63ef5f9d3e730b54cf9148a",
+      ".backups/05f1889892054b01bcf987e36b571474/.langgraph_checkpoint.1.pckl": "83d8c407ab3d882dffc9dab1f084c77c7d5fc1c362ac4f3d3eb97008c1f4a52e",
+      ".backups/05f1889892054b01bcf987e36b571474/.langgraph_retry_counter.pckl": "ad2598304a8af697d0c335a50a3e5a1ba06c82d9b63ef5f9d3e730b54cf9148a",
+      ".backups/05f1889892054b01bcf987e36b571474/.langgraph_ops.pckl": "e3ece15a66bacd52b273cd6623166d88f34553a95daff8fa34c4b64657bb03c4",
+      ".backups/05f1889892054b01bcf987e36b571474/.langgraph_checkpoint.2.pckl": "8c38b8b13d97defb782d6b312447757a5f333044140a6f9b99fab3b144a86591",
+      ".backups/05f1889892054b01bcf987e36b571474/.langgraph_checkpoint.3.pckl": "30476d4737780bd5eace243dfb640f2d997248f473f13da1c120fcf3de458cfa",
+      ".backups/05f1889892054b01bcf987e36b571474/store.pckl": "ad2598304a8af697d0c335a50a3e5a1ba06c82d9b63ef5f9d3e730b54cf9148a"
+    },
+    "obsolete_source_exists": false,
+    "obsolete_asset_exists": false,
+    "marker": {
+      "workspace": "E:\\anp",
+      "image": "sha256:a367927b050b5ffa6ce5f69cd01ea29d23a20edaf6fc3956b01d513a58243e7e",
+      "layout": 2
+    },
+    "pending_exists": false,
+    "backups": [
+      "state/dbx-backups/18fc2cb97c2545669b46b466d00d8d11"
+    ],
+    "old_launch_configuration_refused": true
+  },
+  "legacy_owned_prisma_engines_reclaimed": 2,
+  "linux_process_group_probe": {
+    "synthetic_exited_parent_reaped": true,
+    "child_ignores_sigterm": true,
+    "remaining_running_children": 0
+  },
+  "preflight": {
+    "passed": 21,
+    "seconds": 0.93
+  },
+  "studio_ci": {
+    "run": 39064673639,
+    "job": 117491212947,
+    "exit_code": 143,
+    "build_stage": "Next.js 16.3.6 Turbopack production build",
+    "telemetry": [
+      {
+        "timestamp": "2026-10-17T20:07:34.9343091Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "7137880 kB",
+          "SwapFree": "3145724 kB"
+        },
+        "disk_free_gb": 30.28
+      },
+      {
+        "timestamp": "2026-10-17T20:08:04.9348028Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "6977528 kB",
+          "SwapFree": "3145692 kB"
+        },
+        "disk_free_gb": 28.84
+      },
+      {
+        "timestamp": "2026-10-17T20:08:34.9353107Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "5819608 kB",
+          "SwapFree": "3145664 kB"
+        },
+        "disk_free_gb": 27.12
+      },
+      {
+        "timestamp": "2026-10-17T20:09:04.9358218Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "5596844 kB",
+          "SwapFree": "3145644 kB"
+        },
+        "disk_free_gb": 25.09
+      },
+      {
+        "timestamp": "2026-10-17T20:09:34.9362789Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "5083056 kB",
+          "SwapFree": "3145644 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:10:04.9367510Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "3493788 kB",
+          "SwapFree": "3145644 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:10:34.9372436Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "2767744 kB",
+          "SwapFree": "3145644 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:11:04.9377807Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "2437200 kB",
+          "SwapFree": "3145644 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:11:34.9382711Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "1880792 kB",
+          "SwapFree": "3145644 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:12:04.9393562Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "1628628 kB",
+          "SwapFree": "3009120 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:12:34.9392924Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "1263012 kB",
+          "SwapFree": "3004156 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:13:04.9400898Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "850748 kB",
+          "SwapFree": "3039332 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:13:34.9406473Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "612736 kB",
+          "SwapFree": "2732908 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:14:04.9410503Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "635588 kB",
+          "SwapFree": "2241132 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:14:34.9415703Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "651024 kB",
+          "SwapFree": "1626488 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:15:04.9430445Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "604852 kB",
+          "SwapFree": "1190960 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:15:34.9446985Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "413152 kB",
+          "SwapFree": "845140 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:16:04.9459345Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "454452 kB",
+          "SwapFree": "622472 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:16:34.9459075Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "457628 kB",
+          "SwapFree": "691848 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:17:04.9488708Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "427888 kB",
+          "SwapFree": "478444 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:17:36.1080178Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "16256 kB",
+          "SwapFree": "176 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:20:49.6629714Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "18388 kB",
+          "SwapFree": "248 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:21:48.1721351Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "51664 kB",
+          "SwapFree": "0 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:22:18.1754811Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "175036 kB",
+          "SwapFree": "275288 kB"
+        },
+        "disk_free_gb": 24.97
+      },
+      {
+        "timestamp": "2026-10-17T20:22:48.2189458Z",
+        "memory": {
+          "MemTotal": "8128876 kB",
+          "MemAvailable": "18300 kB",
+          "SwapFree": "144 kB"
+        },
+        "disk_free_gb": 24.97
+      }
+    ],
+    "interpretation": "严重内存与交换空间压力；未取得内核 OOM 记录，不认定退出机制",
+    "next_recipe": "仅 CI Studio 改为同源码 Webpack，完整云端构建尚待验证"
+  }
+}

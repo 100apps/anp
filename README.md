@@ -4,6 +4,8 @@
 
 代码仓库：[100apps/anp](https://github.com/100apps/anp)（私有）。新增 `third_party/` 保存真正的 Git submodule，`deploy/storage/` 定义四种存储，`config/deployment.example.toml` 定义本机/容器/云地址边界。
 
+V3 的九组件单容器集成已实启，四个前端子路径和 DBX 六连接通过隔离验证；详细命令、运行结构和未完成项见[单容器平台集成开发](docs/单容器平台集成开发.md)。`deploy/platform/compose.yaml` 定义单个常驻平台容器；默认 GHCR 标签尚未发布，当前只可显式选择本机构建的开发镜像，不应直接当作正式版启动。
+
 ```powershell
 git clone --recurse-submodules https://github.com/100apps/anp.git
 # 更新上游并记录真实 SHA（发布构建默认执行，不使用旧 SHA 冒充最新）

@@ -1,0 +1,26 @@
+# 平台只有一个常驻容器；四存储由 deploy/storage/compose.yaml 独立管理。
+name: anp-platform
+services:
+  platform:
+    image: ${ANP_PLATFORM_IMAGE:-ghcr.io/100apps/anp-platform:latest}
+    restart: unless-stopped
+    ports: ['127.0.0.1:${ANP_PLATFORM_PORT:-8080}:8080']
+    volumes:
+      - ../../.local/generated/platform-v3/config.json:/run/anp/config.json:ro
+      - ../../.local/generated/platform-v3/litellm.yaml:/run/anp/litellm.yaml:ro
+      - platform_state:/opt/anp/roots/dbx/state
+    networks: [resources]
+    stop_grace_period: 30s
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/_platform/health',timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      start_period: 90s
+      retries: 12
+networks:
+  resources:
+    external: true
+    name: ${ANP_STORAGE_NETWORK:-anp-storage_default}
+volumes:
+  platform_state:
+    name: ${ANP_PLATFORM_STATE_VOLUME:-anp_v3_platform_state}

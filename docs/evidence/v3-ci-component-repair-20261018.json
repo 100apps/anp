@@ -59,5 +59,15 @@
     "log_sha256": "01513e8e4963433c54e437f5502e72b95d5494361d1980f97ad857ff4d002b59",
     "change": "额外清理固定列表的 Go/Ruby/Java/Miniconda/PowerShell/vcpkg 宿主机 SDK；保留 Python 和 Actions Node，空间仍不足则拒绝编译",
     "unit_tests_passed": 14
+  },
+  "langfuse_disk_probe_followup": {
+    "run": 39073790097,
+    "job": 117516654657,
+    "conclusion": "failure",
+    "free_gib": 40.97,
+    "required_gib": 43,
+    "build_started": false,
+    "next_change": "继续清理固定列表中不用的 Azure/AWS/Google Cloud CLI 和 PowerShell 宿主机工具；不降低磁盘阈值",
+    "log_sha256": "a51abb6cd3381ba3e1ea9090d883523b820ab94dae6b3b55446e47c00553af7b"
   }
 }

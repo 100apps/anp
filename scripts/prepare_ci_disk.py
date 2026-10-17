@@ -11,7 +11,9 @@ TARGETS=('/usr/local/lib/android','/usr/share/dotnet','/opt/ghc','/usr/lib/jvm',
     # 编译发生在 Docker 内；宿主机这些 SDK 不参与 Python 编排和 Actions Node 运行时。
     '/opt/hostedtoolcache/go','/opt/hostedtoolcache/Ruby',
     '/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk','/usr/share/miniconda',
-    '/usr/local/share/powershell','/usr/local/share/vcpkg')
+    '/usr/local/share/powershell','/usr/local/share/vcpkg',
+    '/opt/az','/usr/local/aws-cli','/usr/local/aws-sam-cli',
+    '/opt/microsoft/powershell','/usr/lib/google-cloud-sdk')
 
 
 def add_swap(gib):

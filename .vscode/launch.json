@@ -71,11 +71,13 @@
       "type": "pwa-msedge",
       "request": "launch",
       "url": "${config:anp.platformUrl}/workbench/",
-      "webRoot": "${workspaceFolder}",
+      "webRoot": "${workspaceFolder}/console",
       "sourceMaps": true,
       "sourceMapPathOverrides": {
-        "*/workbench/src/*": "${workspaceFolder}/console/src/*",
-        "*/workbench/@fs/*": "*"
+        "http://?:*/workbench/src/*": "${workspaceFolder}/console/src/*",
+        "http://?:*/workbench/@fs/*": "*",
+        "/workbench/src/*": "${workspaceFolder}/console/src/*",
+        "/workbench/@fs/*": "*"
       },
       "userDataDir": "${workspaceFolder}/.local/edge-v3-debug-profile",
       "preLaunchTask": "anp:v3:frontend-ready",

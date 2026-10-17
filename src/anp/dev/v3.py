@@ -140,7 +140,7 @@ def environment():
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action',choices=['init','prepare','api','worker','web','wait','native','stop-native'])
+    parser.add_argument('action',choices=['init','prepare','api','worker','web','frontend-ready','wait','native','stop-native'])
     parser.add_argument('--mode',choices=['docker','native'],default='docker')
     args=parser.parse_args()
     if args.action=='init':initialize();return
@@ -161,6 +161,9 @@ def main():
         from anp.dev.frontend import main as frontend
         frontend()
     else:
+        if args.action=='frontend-ready':
+            from anp.dev.frontend import ensure
+            ensure()
         for key in ('api','worker'):
             wait_health('http://127.0.0.1:'+str(value('development',key+'_port'))+'/health')
         wait_health(value('workbench','web_url'))

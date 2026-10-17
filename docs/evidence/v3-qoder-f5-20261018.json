@@ -1,0 +1,48 @@
+{
+  "scope": "真实 Qoder IDE F5 分项验收；完整平台目标尚未通过",
+  "ide": "Qoder CN IDE 1.34.0",
+  "security_settings_changed": false,
+  "docker_business_f5": {
+    "api_breakpoint": {
+      "source": "src/anp/tasks/service.py",
+      "line": 23,
+      "observed": true
+    },
+    "frontend_breakpoint": {
+      "source": "console/src/app.tsx",
+      "line": 22,
+      "observed": true
+    },
+    "task_id": "c6d55c2b-df44-4696-a6af-287b7deac93b",
+    "task_status": "succeeded",
+    "nodes": [
+      "normalize",
+      "analyze",
+      "save"
+    ],
+    "artifact_matches_database": true
+  },
+  "source_map_repair": {
+    "webRoot": "${workspaceFolder}/console",
+    "url_prefix": "http://?:*/workbench/src/*",
+    "note": "URL 前缀为非捕获通配符，末尾只捕获源码路径"
+  },
+  "prelaunch_repair": {
+    "unit_tests_passed": 17,
+    "real_vite_reused_twice": true,
+    "pid_before": 14728,
+    "pid_after": 14728,
+    "full_ide_repeat_f5_verified": false
+  },
+  "preservation": {
+    "existing_thread_states_unchanged": 281,
+    "protected_storage_and_legacy_container_ids_unchanged": 21
+  },
+  "unfinished": [
+    "前后端热更新后再次命中断点",
+    "修复前置任务后的完整 IDE 重复 F5",
+    "WSL 平台与业务组合真实 F5"
+  ],
+  "current_ui_blocker": "Qoder 重复实例提示无法被自动化工具定位为独立目标窗口，已请求用户点击取消；未确认其关闭",
+  "private_proof_sha256": "7330b438672935ab5a8f480f3fa03b318af279a9203c7b5a10358c51789f702c"
+}

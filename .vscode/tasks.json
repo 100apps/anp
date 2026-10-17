@@ -151,12 +151,12 @@
     },
     {
       "label": "anp:v3:frontend-ready",
-      "dependsOrder": "sequence",
-      "dependsOn": [
-        "anp:v3:web",
-        "anp:v3:wait"
-      ],
-      "problemMatcher": []
+      "type": "process",
+      "command": "uv",
+      "args": ["run", "python", "-m", "anp.dev.v3", "frontend-ready"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": [],
+      "presentation": {"reveal": "always", "panel": "dedicated"}
     }
   ]
 }

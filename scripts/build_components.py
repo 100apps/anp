@@ -68,10 +68,36 @@ def recipe(component):
                 'ENV CARGO_BUILD_JOBS=2 CMAKE_BUILD_PARALLEL_LEVEL=2 '
                 'CARGO_PROFILE_RELEASE_LTO=thin CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16\n')
         if component=='studio':
-            dockerfile=dockerfile.replace('--max-old-space-size=6144','--max-old-space-size=3072')
+            dockerfile=dockerfile.replace('--max-old-space-size=6144','--max-old-space-size=5120')
             marker='RUN pnpm --filter studio exec next build\n'
             if dockerfile.count(marker)!=1:raise RuntimeError('Studio 构建命令已变化，需要适配')
-            dockerfile=dockerfile.replace(marker,'RUN pnpm --filter studio exec next build --webpack\n')
+            # 上游只配置了 Turbopack 的文本加载规则；Webpack 也必须保留原始文本。
+            webpack='''  webpack(config) {
+    const rawText = /(?:\\.md|(?:^|[\\\\/])(?:edge-runtime|lib\\.deno)\\.d\\.ts)$/;
+    const excludeRaw = (rules: any[]) => {
+      for (const rule of rules) {
+        if (!rule || typeof rule !== "object") continue;
+        if (Array.isArray(rule.oneOf)) excludeRaw(rule.oneOf);
+        if (Array.isArray(rule.rules)) excludeRaw(rule.rules);
+        if (!rule.oneOf && !rule.rules) rule.exclude = rule.exclude ? [rule.exclude, rawText] : rawText;
+      }
+    };
+    excludeRaw(config.module.rules);
+    config.module.rules.push({ test: rawText, type: "asset/source" });
+    return config;
+  },
+'''
+            experimental='  experimental: {\n'
+            insertion='  onDemandEntries: {\n'
+            patch_script=('const fs=require("fs");const p="./apps/studio/next.config.ts";'
+                'let s=fs.readFileSync(p,"utf8");'
+                'const a='+json.dumps(experimental)+';const b='+json.dumps(insertion)+';'
+                'if(s.split(a).length!==2||s.split(b).length!==2||/\\bwebpack\\s*[:(]/.test(s))'
+                'throw new Error("Studio Next config changed");'
+                's=s.replace(a,a+"    cpus: 1,\\n    webpackBuildWorker: true,\\n    webpackMemoryOptimizations: true,\\n");'
+                's=s.replace(b,'+json.dumps(webpack)+'+b);fs.writeFileSync(p,s);')
+            dockerfile=dockerfile.replace(marker,"RUN node -e '"+patch_script+"'\n"+
+                'RUN pnpm --filter studio exec next build --webpack\n')
         if component=='langfuse-web':
             marker="NODE_OPTIONS='--max-old-space-size-percentage=75'"
             if dockerfile.count(marker)!=1:raise RuntimeError('Langfuse 构建内存配置发生变化，需要适配')

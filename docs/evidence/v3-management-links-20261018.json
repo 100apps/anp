@@ -36,5 +36,36 @@
     "new_session": 71520,
     "reason": "生成的环境变量已改变，重启自己的 API 控制器使新配置生效；源码热更新继续保留"
   },
-  "local_runtime_image_update": "待将最新 SDK 打包并复验；API 当前由本机源码运行"
+  "local_runtime_image_update": {
+    "checked_at_utc": "2026-10-17T21:25:29.423607+00:00",
+    "image_id": "sha256:cdb9f2eee4c9545c535061f5d91595d1c12c64b1a43862db87f5168ec46ffb2d",
+    "revision": "866af66ceee57161a2090df5dfcc3e1ff583126a",
+    "source_dirty": false,
+    "sdk_api_sha256": "25dd018734a8ca0aa7bd1196b3e2909d0780b599dea012d96e0446d01fd795a3",
+    "all_threads_count": 275,
+    "all_thread_values_hashes_preserved": true,
+    "all_thread_ids_preserved": true,
+    "services": {
+      "auth": "ready",
+      "storage": "ready",
+      "postgrest": "ready",
+      "meta": "ready",
+      "studio": "ready",
+      "dbx": "ready",
+      "langfuse-web": "ready",
+      "langfuse-worker": "ready",
+      "lens": "ready",
+      "litellm": "ready",
+      "agent": "ready"
+    },
+    "thread_snapshot_private": ".local/v3-management-threads-before.json",
+    "thread_snapshot_sha256": "b7e9083b0df9ede67e79ea93867532afb070adc1ff5f6e71ca908aa59cd1046c"
+  },
+  "full_regression": {
+    "passed": 58,
+    "skipped": 9,
+    "seconds": 56.35,
+    "log_sha256": "1aa3dfa900c5af59329525d03aa2bfeaf97f43a5159c5f2c474489a91882ea88",
+    "skipped_scope": "8 项旧 V2 测试和 1 项需显式开启的存储实测；不计为通过"
+  }
 }

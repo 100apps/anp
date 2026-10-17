@@ -9,6 +9,8 @@ from anp import ROOT
 @lru_cache
 def settings():
     load_dotenv(ROOT / 'config/secrets.local.env', override=False)
+    if os.environ.get('ANP_STACK')!='legacy':
+        load_dotenv(ROOT/'.local/generated/platform-v3/business.env',override=False)
     file = ROOT / 'config/settings.local.toml'
     if not file.exists():
         file = ROOT / 'config/settings.example.toml'

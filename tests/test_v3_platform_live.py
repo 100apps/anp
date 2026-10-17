@@ -109,6 +109,7 @@ def test_lens_session_auto_catalog_and_restricted_analysis_key():
         body={'model':'auto:fast','messages':[{'role':'user','content':'只回复：连接成功'}],'max_tokens':32}
         headers={'Authorization':'Bearer '+key}
         assert client.post('/litellm/v1/chat/completions',headers=headers,json=body).status_code==403
+        if os.environ.get('ANP_SKIP_LIVE_LLM')=='1':return  # CI 无私人上游密钥，仅跳过最后的真实付费模型调用。
         body['model']='auto'
         response=client.post('/litellm/v1/chat/completions',headers=headers,json=body)
         assert response.status_code==200

@@ -8,10 +8,12 @@ services:
     volumes:
       - ../../.local/generated/platform-v3/config.json:/run/anp/config.json:ro
       - ../../.local/generated/platform-v3/litellm.yaml:/run/anp/litellm.yaml:ro
+      - ../../.local/generated/platform-v3/handoff:/run/anp/handoff
       - platform_state:/opt/anp/roots/dbx/state
       - agent_state:/state/agent
       - ${ANP_APPLICATIONS_DIR:-../../apps}:/opt/anp/extensions/apps:ro
     networks: [resources]
+    extra_hosts: ['host.docker.internal:host-gateway']
     stop_grace_period: 30s
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/_platform/health',timeout=2)"]

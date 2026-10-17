@@ -37,7 +37,7 @@ def databases(settings):
 
 def schema(settings):
     with psycopg.connect(settings['storage']['postgres_url']) as connection:
-        for path in sorted(Path('/opt/anp/migrations').glob('*.sql')):
+        for path in sorted(Path(os.environ.get('ANP_PLATFORM_MIGRATIONS','/opt/anp/migrations')).glob('*.sql')):
             connection.execute(path.read_text(encoding='utf8'))
     provision_identity(settings)
 

@@ -30,7 +30,7 @@ def envfile(path, data):
     path.write_text(''.join(f'{k}={v}\n' for k, v in data.items()), encoding='utf-8')
 
 
-def generate():
+def ensure_secrets():
     G.mkdir(parents=True, exist_ok=True)
     config = ROOT / 'config'
     config.mkdir(exist_ok=True)
@@ -51,6 +51,12 @@ def generate():
         s.setdefault(name, jwt.encode({'role':role,'iss':'supabase','iat':int(time.time()),
             'exp':int(time.time())+315360000}, s['JWT_SECRET'], algorithm='HS256'))
     envfile(secret_file, s)
+    return s
+
+
+def generate():
+    s=ensure_secrets()
+    config=ROOT/'config'
     local = config / 'settings.local.toml'
     if not local.exists():
         shutil.copy(config / 'settings.example.toml', local)

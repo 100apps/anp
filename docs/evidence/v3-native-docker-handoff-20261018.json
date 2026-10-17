@@ -1,0 +1,85 @@
+{
+  "scope": "跨模式状态交接与重新打包的 Docker 平台；IDE F5 仍未验收",
+  "image": "sha256:f384dc57d4e21495f7a75f1a2d23d94dd03708fb8477a3bcadcdade837a5901d",
+  "runtime": {
+    "ready": true,
+    "services": {
+      "auth": {
+        "status": "ready",
+        "pid": 12,
+        "restarts": 0
+      },
+      "storage": {
+        "status": "ready",
+        "pid": 369,
+        "restarts": 0
+      },
+      "postgrest": {
+        "status": "ready",
+        "pid": 408,
+        "restarts": 0
+      },
+      "meta": {
+        "status": "ready",
+        "pid": 13,
+        "restarts": 0
+      },
+      "studio": {
+        "status": "ready",
+        "pid": 370,
+        "restarts": 0
+      },
+      "dbx": {
+        "status": "ready",
+        "pid": 14,
+        "restarts": 0
+      },
+      "langfuse-web": {
+        "status": "ready",
+        "pid": 372,
+        "restarts": 0
+      },
+      "langfuse-worker": {
+        "status": "ready",
+        "pid": 547,
+        "restarts": 0
+      },
+      "lens": {
+        "status": "ready",
+        "pid": 16,
+        "restarts": 0
+      },
+      "litellm": {
+        "status": "ready",
+        "pid": 371,
+        "restarts": 0
+      },
+      "agent": {
+        "status": "ready",
+        "pid": 519,
+        "restarts": 0
+      }
+    }
+  },
+  "threads_restored_with_equal_values": {
+    "01a14b27-1496-7b63-85c9-8d0959407678": "f65fdf5e3e8ddf5f04d9a0a5c18668c6c0856c5fe5f620d5aa2fe36769de4143",
+    "01a14ae8-ec54-7922-ad05-3bbcb218ed92": "943072313b3968a9aaeb5dd0606f072b6fb15f4aa6bb6024bfd5ed3f3382a3e3"
+  },
+  "supervisor_source_sha256": "dac93ad9473edeea812cfff1c9767e51c394a01aa8181b99c325f2736597e4d9",
+  "native_health_fresh_connection_ms": {
+    "localhost": {
+      "samples": 10,
+      "median_ms": 10.044,
+      "max_ms": 64.288
+    },
+    "127.0.0.1": {
+      "samples": 10,
+      "median_ms": 10.478,
+      "max_ms": 32.58
+    }
+  },
+  "docker_follow_up_tests": {
+    "passed": 28,
+    "seconds": 66.93
+  }
+}

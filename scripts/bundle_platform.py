@@ -61,6 +61,9 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=90s --retries=12 CMD pyth
 ENTRYPOINT ["/usr/bin/tini","-g","--","python","-m","anp_platform.supervisor"]
 '''
     path=destination/'Dockerfile'
+    revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+    dirty=bool(subprocess.check_output(['git','status','--porcelain'],cwd=ROOT,text=True).strip())
+    dockerfile+=f'\nLABEL org.opencontainers.image.source="https://github.com/100apps/anp" org.opencontainers.image.revision="{revision}" dev.anp.source_dirty="{str(dirty).lower()}"\n'
     path.write_text(dockerfile,encoding='utf8')
     # 平台上下文白名单：业务源码、私有配置和整个 third_party 不进入最终组装上下文。
     (destination/'Dockerfile.dockerignore').write_text('**\n!pyproject.toml\n!uv.lock\n!src/\n!src/**\n!platform/\n!platform/runtime/\n!platform/runtime/**\n!config/\n!config/settings.example.toml\n!migrations/\n!migrations/**\n**/__pycache__/\n',encoding='utf8')

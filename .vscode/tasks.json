@@ -1,11 +1,153 @@
 {
-  "version":"2.0.0",
-  "tasks":[
-    {"label":"anp:prepare","type":"process","command":"uv","args":["run","python","-m","anp.dev.prepare"],"options":{"cwd":"${workspaceFolder}"},"problemMatcher":[],"presentation":{"reveal":"always","panel":"dedicated"}},
-    {"label":"anp:web","type":"process","command":"uv","args":["run","python","-m","anp.dev.frontend"],"options":{"cwd":"${workspaceFolder}"},"isBackground":true,
-      "problemMatcher":{"owner":"anp-vite","pattern":{"regexp":"^(__ANP_NEVER_MATCH__)$","message":1},"background":{"activeOnStart":true,"beginsPattern":".*VITE.*","endsPattern":".*Local:.*5173.*"}},
-      "presentation":{"reveal":"always","panel":"dedicated"}},
-    {"label":"anp:dev","dependsOrder":"sequence","dependsOn":["anp:prepare","anp:web"],"problemMatcher":[]},
-    {"label":"anp:check","type":"process","command":"uv","args":["run","pytest","tests","-q"],"options":{"cwd":"${workspaceFolder}"},"problemMatcher":[]}
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "anp:v3:prepare-docker",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "anp.dev.v3",
+        "prepare",
+        "--mode",
+        "docker"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "anp:v3:prepare-native",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "anp.dev.v3",
+        "prepare",
+        "--mode",
+        "native"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "anp:v3:native-runtime",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "anp.dev.v3",
+        "native"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "anp:v3:native-runtime",
+        "pattern": {
+          "regexp": "^(__ANP_NEVER_MATCH__)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "ANP_NATIVE_DEBUG_READY"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "anp:v3:stop-native",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "anp.dev.v3",
+        "stop-native"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "anp:v3:web",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "anp.dev.v3",
+        "web"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "anp:v3:web",
+        "pattern": {
+          "regexp": "^(__ANP_NEVER_MATCH__)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": ".*Local:.*"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "anp:v3:wait",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "anp.dev.v3",
+        "wait"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
   ]
 }

@@ -140,6 +140,7 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
         'LANGSMITH_TRACING':'false'},'/agent/ok',dependencies=['postgrest'])
     services['agent']['execution']='builtin'
     configuration={'port':8080,'public_url':public,'storage':storage,'services':services,'routes':routes,
+        'agent_state_archive':'/run/anp/handoff/agent.tar','agent_state_directory':'/state/agent',
         'application_schemas':['app_'+app_id for app_id in applications()],
         'dbx_connections':dbx_connections,
         'bootstrap_admin':{'email':s['ADMIN_EMAIL'],'password':s['ADMIN_PASSWORD'],'service_key':s['SERVICE_ROLE_KEY']},
@@ -164,6 +165,7 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
         {'path':'/workbench/','target':business.get('ui_container_url',f'http://host.docker.internal:{ui_port}').removeprefix('http://')}])
     configuration['application_routes']=[{'path':f'/{app_id}/','redirect':f'/workbench/apps/{app_id}'} for app_id in applications()]
     output=ROOT/'.local/generated/platform-v3';output.mkdir(parents=True,exist_ok=True)
+    (output/'handoff').mkdir(exist_ok=True)
     host_pg=expanded.get('storage',{}).get('postgres_host_url') or dsn('postgres','supabase_admin',s['POSTGRES_PASSWORD']).replace('postgres:5432',f'127.0.0.1:{54323 if smoke else 54322}')
     agent_dsn=expanded.get('postgres',{}).get('urls',{}).get('agent') or relocate(dsn('agent_local','agent',s['AGENT_DB_PASSWORD']),host_pg)
     environment={'ANP_PROFILE':'v3','ANP_SUPABASE_URL':public+'/supabase','ANP_AGENT_URL':public+'/agent',

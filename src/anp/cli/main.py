@@ -83,50 +83,41 @@ def logout():
 
 @app.command('init')
 def init():
-    from anp.management.platform import generate
-    output(generate())
+    from anp.dev.v3 import initialize
+    config=initialize()
+    output({'initialized':True,'platform_url':config['platform']['url'],'configuration':'config/deployment.local.toml'})
 
 
 @platform_app.command('up')
-def platform_up(admin:bool=typer.Option(False,'--admin',help='同时启动管理后台和 DBX'),
-                llm:bool=typer.Option(False,'--llm',help='同时启动 LiteLLM 模型网关')):
-    from anp.management.platform import generate,compose,migrate
-    from anp.management.bootstrap import wait_url,seed
-    from anp.management.dbx import configure_dbx
-    generate()
-    profiles=[]
-    if admin: profiles.extend(['--profile','admin'])
-    if llm: profiles.extend(['--profile','llm'])
-    compose(*profiles,'up','-d','--build')
-    async def prepare():
-        await wait_url(value('supabase','url')+'/auth/v1/health',headers={'apikey':secret('ANON_KEY')})
-        await wait_url(value('supabase','url')+'/storage/v1/status')
-        migrate()
-        await asyncio.sleep(2)
-        await seed()
-        if admin:
-            await wait_url(value('dbx','url')+'/api/auth/check')
-            return await configure_dbx()
-        return {'started':True,'admin':False,'llm':llm}
-    perform(prepare())
+def platform_up(admin:bool=typer.Option(False,'--admin',help='兼容旧命令；V3 总是包含管理后台和 DBX'),
+                llm:bool=typer.Option(False,'--llm',help='兼容旧命令；V3 总是包含模型网关')):
+    from contextlib import redirect_stdout
+    from anp.dev.v3 import prepare,environment
+    from anp.management.applications import migrate_applications
+    with redirect_stdout(sys.stderr):prepare('docker')
+    environment();migrate_applications()
+    output({'started':True,'topology':'四存储 + 单平台','platform_url':value('workbench','api_url')})
 
 
 @platform_app.command('down')
 def platform_down():
-    from anp.management.platform import compose
-    compose('--profile','*','down')
+    from anp.dev.v3 import compose,stop_native,document
+    stop_native();compose('platform','stop')
+    services=document()['storage'].get('local',[])
+    if services:compose('storage','--profile','local','stop',*services)
     output({'stopped':True,'volumes_preserved':True})
 
 
 @platform_app.command('check')
 def platform_check():
-    from anp.management.dbx import configure_dbx
-    perform(configure_dbx())
+    response=httpx.get(value('workbench','api_url')+'/_platform/health',trust_env=False,timeout=10)
+    output(response.json())
+    if response.status_code!=200:raise typer.Exit(1)
 
 
 @app.command('migrate')
 def migrate():
-    from anp.management.platform import migrate as run
+    from anp.management.applications import migrate_applications as run
     output(run())
 
 

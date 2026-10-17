@@ -39,6 +39,20 @@ class Runtime:
             with urlopen(url,timeout=2) as response:return response.status==200
         except Exception:return False
 
+    async def launch(self,name,output,initializing=False):
+        component=self.settings['services'][name]
+        image=self.metadata['components'][name]
+        if component.get('execution')=='builtin' and not initializing:
+            # 直接启动 Python 引擎，避免 launcher 再 exec Python 造成 debugpy 重复附加。
+            environment=dict(item.split('=',1) for item in image['environment'] if '=' in item)
+            environment.update({key:str(value) for key,value in component.get('environment',{}).items()})
+            return await asyncio.create_subprocess_exec(*component.get('command',image['command']),
+                env=environment,cwd=image['working_dir'],stdout=output,stderr=output,start_new_session=True)
+        arguments=['/usr/bin/env',sys.executable,'-m','anp_platform.child',name]
+        if initializing:arguments.append('initialize')
+        # Go/Node/Rust 组件的 Python 启动包装器无需调试，也不向第三方 exec 注入调试器。
+        return await asyncio.create_subprocess_exec(*arguments,stdout=output,stderr=output,start_new_session=True)
+
     async def service(self,name,spec):
         state=self.states[name]
         if name not in self.metadata['components']:
@@ -65,8 +79,7 @@ class Runtime:
             logs=Path('/var/log/anp');logs.mkdir(parents=True,exist_ok=True)
             state['status']='initializing'
             with (logs/(name+'.log')).open('ab',buffering=0) as output:
-                process=await asyncio.create_subprocess_exec(sys.executable,'-m','anp_platform.child',name,'initialize',
-                    stdout=output,stderr=output,start_new_session=True)
+                process=await self.launch(name,output,initializing=True)
                 self.processes[name]=process
                 state['pid']=process.pid
                 while process.returncode is None and not self.stopping:
@@ -87,8 +100,7 @@ class Runtime:
             log.info('启动平台组件 %s',name)
             logs=Path('/var/log/anp');logs.mkdir(parents=True,exist_ok=True)
             with (logs/(name+'.log')).open('ab',buffering=0) as output:
-                process=await asyncio.create_subprocess_exec(sys.executable,'-m','anp_platform.child',name,
-                    stdout=output,stderr=output,start_new_session=True)
+                process=await self.launch(name,output)
                 self.processes[name]=process
                 state.update(status='starting',pid=process.pid)
                 started=time.monotonic()
@@ -132,7 +144,10 @@ class Runtime:
         server=HTTPServer(('127.0.0.1',12000),handler(self))
         import threading
         threading.Thread(target=server.serve_forever,daemon=True).start()
-        gateway=await asyncio.create_subprocess_exec('nginx','-c',write(self.settings),'-g','daemon off;')
+        from .bridges import Bridges
+        bridges=Bridges()
+        await bridges.start(self.settings.get('host_bridges',[]))
+        gateway=await asyncio.create_subprocess_exec(os.environ.get('ANP_NGINX_BINARY','nginx'),'-c',write(self.settings),'-g','daemon off;')
         tasks=[asyncio.create_task(self.service(name,spec)) for name,spec in self.settings['services'].items()]
         try:
             while not self.stopping:
@@ -145,6 +160,7 @@ class Runtime:
             if gateway.returncode is None:
                 gateway.terminate()
                 await gateway.wait()
+            await bridges.close()
             server.shutdown()
 
     def stop(self):
@@ -185,7 +201,8 @@ def prepare_roots(metadata):
 def main():
     logging.basicConfig(level=logging.INFO)
     settings=json.loads(Path(os.environ.get('ANP_PLATFORM_CONFIG','/run/anp/config.json')).read_text())
-    metadata=json.loads(Path('/opt/anp/components.json').read_text())
+    metadata=json.loads(Path(os.environ.get('ANP_COMPONENTS','/opt/anp/components.json')).read_text())
+    Path('/run/anp').mkdir(parents=True,exist_ok=True)
     from .bootstrap import databases
     databases(settings)
     prepare_roots(metadata)
@@ -201,7 +218,13 @@ def main():
     if credentials:
         digest=base64.b64encode(hashlib.sha1(credentials['password'].encode()).digest()).decode()
         Path('/run/anp/studio.htpasswd').write_text(credentials['username']+':{SHA}'+digest+'\n')
-    asyncio.run(Runtime(settings,metadata).run())
+    from .handoff import restore,snapshot
+    archive=settings.get('agent_state_archive')
+    directory=settings.get('agent_state_directory','/state/agent')
+    if archive:restore(directory,archive)
+    try:asyncio.run(Runtime(settings,metadata).run())
+    finally:
+        if archive:snapshot(directory,archive)
 
 
 if __name__=='__main__':main()

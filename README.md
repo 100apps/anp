@@ -1,140 +1,113 @@
-# ANP 本地 AI 原生工作台
+# ANP：AI 原生应用工作台
 
-> **V3 正在重构，尚未完成迁移。** 目标是“四个官方存储依赖 + 单容器平台 + 本机业务 F5”。[完整目标与验收账本](docs/重构实施与验收.md)记录已完成项与未完成项；下文仍包含当前可运行 V2 的入口，不能据此认为单容器平台已经交付。
+默认用本地 CLI 直接运行业务代码，Web、HTTP CLI 与本地 CLI 共用业务服务、Supabase 身份和权限。
 
-代码仓库：[100apps/anp](https://github.com/100apps/anp)（私有）。新增 `third_party/` 保存真正的 Git submodule，`deploy/storage/` 定义四种存储，`config/deployment.example.toml` 定义本机/容器/云地址边界。
+**V3 仍在验收。** 四存储、单容器平台、真实任务与 WSL 原生运行已经通过集成检查。两种 F5 配置已实现，实际 IDE 验收仍受工作区信任限制；GHCR 流水线尚未完成发布、拉取与启动验证。deep_dub、整片 RTF≤0.5 和 B 站发布仍待完成。[完整验收账本](docs/重构实施与验收.md)保留全部目标。
 
-V3 已在一个容器内运行十个第三方组件与 Agent 引擎，统一入口通过了本地 CLI、HTTP CLI、Studio SSE 与 Web 的真实任务验证。业务源码不进入镜像，通过独立只读目录提供图定义，节点仍在本机 Worker 运行。见[Agent 与业务开发](docs/Agent与业务开发.md)和[单容器平台集成开发](docs/单容器平台集成开发.md)。默认 GHCR 镜像尚未发布，两种 V3 F5 也尚未验收；当前 `.vscode` 仍是旧版配置，不能据此认为新拓扑已经交付。
+仓库：[100apps/anp](https://github.com/100apps/anp)（私有）。旧 anp2 服务与数据保留，[V2 操作说明](docs/旧版V2操作说明.md)仅用于旧环境。
+
+## 架构与目录
+
+Docker 运行四类存储各一个实例，加一个平台容器。存储也可替换为云 URL/密钥。原生平台调试时只有存储运行在 Docker；业务代码始终留在宿主机，图定义通过只读 apps 目录提供给平台，节点在本机 Worker 执行。
+
+```text
+anp/
+├─ apps/<id>/                 一个目录就是一个业务模块
+│  ├─ app.toml                菜单、权限、服务和图入口
+│  ├─ ui/                     shadcn/ui 页面
+│  ├─ api/                    HTTP 路由
+│  ├─ services/               CLI / HTTP / Web 共用的业务服务
+│  ├─ nodes/                  各阶段的实际业务逻辑
+│  ├─ flow/                   LangGraph 图与部署入口
+│  └─ migrations/             业务关系、约束和 RLS
+├─ console/                   登录、导航、连接管理与工作台外壳
+├─ src/anp/                   CLI、身份、任务、执行适配和业务宿主
+│  └─ dev/v3.py               两种 F5 和默认平台命令共用的编排
+├─ platform/runtime/          平台进程管理、网关、Agent 和状态交接
+├─ deploy/
+│  ├─ storage/                PostgreSQL / Redis / ClickHouse / RustFS
+│  ├─ platform/               一个常驻平台服务、一个发布端口
+│  └─ build/                  上游源码构建适配
+├─ third_party/               十项真实 Git submodule
+├─ config/                    连接模板；本机配置与凭据不提交
+├─ scripts/                   上游同步、构建、镜像组装、原生制品准备
+├─ .github/workflows/         最新依赖构建、验收与 GHCR 发布
+├─ .vscode/                   两种 F5、CLI 调试与后台任务
+├─ migrations/                平台权限和任务模型
+├─ tests/                     契约与真实服务验收
+└─ docs/evidence/             可复核的运行证据
+```
+
+PG 按服务划分数据库与账号，ClickHouse 按库和授权隔离，Redis 按前缀/逻辑库使用，RustFS 按桶使用。Supabase 使用其官方 PostgreSQL 镜像中的扩展，不使用 Windows PostgreSQL。构建中间镜像不会成为额外常驻服务。
+
+## 初始化和启动
+
+需要 Docker Desktop Linux containers、uv/Python 3.12、Node.js 22+、pnpm；Windows 原生平台模式另需 WSL Ubuntu。
 
 ```powershell
 git clone --recurse-submodules https://github.com/100apps/anp.git
-# 更新上游并记录真实 SHA（发布构建默认执行，不使用旧 SHA 冒充最新）
-uv run python scripts/sync_upstreams.py
+cd anp
+uv sync --frozen
+pnpm install --frozen-lockfile
+uv run anp init
 ```
 
-V3 存储独立验证使用新卷 `anp_v3_*`，不会复用或删除现有 `anp_v2_*`。当前端口仍被 V2 使用时，不应直接启动同端口的 V3；迁移必须先完成备份和切换验证。
+编辑 `config/deployment.local.toml`，配置平台镜像/URL、本地存储选择、云资源、业务端口和卷前缀。宿主 URL 给 CLI/F5 使用，容器 URL 给平台使用；不能把容器 localhost 当作宿主地址。
 
-默认入口是本机 CLI，业务服务无需启动。Web、HTTP CLI 和本地 CLI 共用业务服务、输入校验、身份和权限。平台依赖全部运行在 Docker，不使用 Windows PostgreSQL。
-
-## 开始使用
-
-本机需要 Docker Desktop（Linux containers）、uv、Node.js 22+、pnpm 11。首次安装：
+**默认 GHCR 镜像尚未发布。** 本机已有测试镜像；新机器必须先构建。构建先运行 `uv run python scripts/sync_upstreams.py`，按 `scripts/build_components.py --help` 构建十项源码组件，再运行 `uv run python scripts/bundle_platform.py --tag anp/platform:v3`，将配置中的 `platform.image` 改成实际标签。
 
 ```powershell
-cd E:\anp
-.\scripts\bootstrap.ps1
+uv run anp platform up
+uv run anp platform check
 ```
 
-本机已安装 pnpm 11.25.0；新终端可直接使用。如果新机器尚未安装：`npm install --global pnpm@11.25.0`。
+GitHub Actions 支持手动运行和 `v*` 标签触发：拉取最新上游、记录 SHA，各作业复现同一清单，组装并验收后发布。流水线尚未实跑成功。CI 不持有私人模型密钥，仅跳过最后一项真实上游模型调用，本机另行验证。
 
-管理员凭据在 [本机登录信息](config/local-credentials.md)，不要提交到版本库。默认管理员邮箱 `admin@anp.local`，密码随机生成且重启不会变化。
+## 默认本地 CLI
 
 ```powershell
 uv run anp auth login --email admin@anp.local
-uv run anp demo tasks create --title "我的任务" --text "Hello AI。你好，工作台。"
+uv run anp demo tasks create --title "我的任务" --text "你好，工作台。"
 uv run anp demo tasks run <任务ID>
 uv run anp demo tasks get <任务ID>
 uv run anp demo tasks result <任务ID>
 ```
 
-这些命令默认直接执行本机业务代码，只需要 Docker 平台。CLI 统一输出 JSON，错误返回非零退出码，适合 AI Agent 调用；输入也可使用 `create --input input.json`。
+不需要业务 API、Worker 或前端服务，但仍需访问平台存储和登录服务。JSON 输出与非零错误码便于 AI 调用，支持 `create --input input.json`。HTTP 模式加 `--transport http`，命令和功能一致，需要启动业务 API/Worker。
 
-HTTP 模式使用完全相同的命令：
-
-```powershell
-uv run anp --transport http demo tasks create --text "通过 HTTP 创建"
-uv run anp --transport http demo tasks run <任务ID>
-```
-
-HTTP 执行由 Agent Server 编排、Worker 执行节点，`run` 默认等待完成；`--no-wait` 立即返回，再用 `get` 查询。HTTP 模式和 Web 需要 F5 启动业务进程。
+`uv run anp migrate` 只迁移业务模块；平台内部表由平台初始化。CLI 自动读取私有 `.local/generated/platform-v3/business.env`，显式环境变量优先。本机登录信息在 `config/local-credentials.md`。
 
 ## F5 开发
 
-使用 Qoder CN IDE / VS Code 打开 **[anp.code-workspace](anp.code-workspace)**，选择 `ANP: F5 完整开发（热更新 + 调试）` 后按 F5。
+VS Code 或兼容 Qoder 打开 `E:\anp` 或 `anp.code-workspace`，选择：
 
-它准备 Compose 平台、迁移数据库，启动 Vite，然后同时调试 API、Worker、Docker 内的 Agent 图和 Edge 前端。默认不启动管理后台、DBX 和 LiteLLM，也不等待 DBX。前端 Fast Refresh；Python 修改自动重启子进程，调试器自动跟踪。源码断点可设在 `apps/demo/nodes/analyze.py`、`src/anp/server/api.py`、`apps/demo/flow/graph.py` 和 `.tsx` 页面中。停止组合调试不会删除 Docker 数据。
+- **ANP V3: F5 业务（Docker 平台）**：Docker 四存储和单平台，本机 API、Worker、Vite。
+- **ANP V3: F5 业务 + 平台（WSL 源码）**：Docker 四存储，WSL 运行平台源码，本机业务。
 
-## 管理入口
+API/Worker 使用 debugpy 跟踪 Uvicorn 热重载子进程，前端使用 Vite HMR 与 Edge 调试；平台 Python 源码改动后优雅退出、保存 Agent 状态并重启，调试器追踪子进程。第三方编译制品修改后需要重新构建。
 
-| 服务 | 地址 | 登录 |
-|---|---|---|
-| 应用工作台 | http://localhost:5173 | Supabase 业务账号 |
-| 业务 API | http://localhost:8180/docs | Bearer 用户会话 |
-| DBX | http://localhost:4224 | 本机凭据文件中的 DBX 密码 |
-| Supabase Studio | http://localhost:8000 | 本机凭据文件中的 Studio 账号 |
-| RustFS | http://localhost:9001 | 本机凭据文件中的 RustFS 账号 |
-| Langfuse | http://localhost:3000 | 管理员邮箱及初始密码 |
-| LiteLLM | http://localhost:4000/ui | 管理密钥见私有 env 的 LITELLM_KEY |
-| Agent Server | http://localhost:8124/docs | 私有 ENGINE_TOKEN |
+平台 URL 与 `.vscode/settings.json` 的 `anp.platformUrl` 要一致，WSL 路径映射 `/mnt/e/anp` 对应当前工作区。本机隔离环境使用 `http://localhost:8089`，业务端口 8181/8282/5174；具体由私有绑定决定。5684 是本机开发调试端口，不增加 Docker 发布端口。
 
-工作台“平台连接”提供上述入口和官方 Studio 链接。Studio 是连接本地图的外部开发工具，账号独立；核心 CLI、Web、追踪不依赖 Studio 登录。
+首次原生运行从已构建镜像提取制品到受管理的 WSL `/opt/anp`；停止的临时导出容器随后删除，不运行嵌套 Docker。模式切换时先停止另一平台，再通过私有 Agent 归档交接，保留旧快照。
 
-Studio 首次连接还需要在 Custom Headers 中配置本机引擎的 `Authorization`。完整值见本机登录信息的 Studio 小节，操作步骤见 [Studio 连接说明](docs/studio.md)。
+**验收边界：** 原生实跑 27 项检查通过，源码重载后既有线程保持一致；实际 IDE F5/断点尚未验收。VS Code 当前为 Restricted Mode，需要用户自行信任工作区。
 
-## 项目结构
+## 单端口管理入口
 
-```text
-E:\anp\
-├─ apps/demo/                一个完整可复制业务
-│  ├─ app.toml               注册、菜单、版本、权限和入口声明
-│  ├─ ui/index.tsx           工作台页面
-│  ├─ api/router.py          HTTP 路由
-│  ├─ services/tasks.py      本地 CLI / API 共用业务服务
-│  ├─ nodes/                 normalize / analyze / save
-│  ├─ flow/                  state / graph / deployment
-│  └─ migrations/            业务结果表与 RLS
-├─ console/                  React + Vite + shadcn/ui 工作台外壳
-├─ src/anp/
-│  ├─ cli/                   本地 / HTTP CLI
-│  ├─ auth/                  Supabase 身份、会话和 ACL
-│  ├─ applications/          模块发现、复制与注册生成
-│  ├─ tasks/                 任务管理服务和公共路由
-│  ├─ execution/             本地/平台执行适配、幂等与协调
-│  ├─ runtime/               图节点到 Worker 的 API 适配
-│  ├─ sdk/                   对象、文件、追踪连接
-│  ├─ server/                API 和 Worker 宿主
-│  ├─ management/            Compose、初始化、迁移、DBX 配置
-│  └─ dev/                   F5 准备和热重载入口
-├─ platform/
-│  ├─ compose.yaml           一个 Compose 启动入口
-│  ├─ compose.generated.yaml 由配置生成，含密钥，不提交
-│  ├─ compose.debug.yaml     开发挂载和 Agent 调试端口
-│  ├─ images.lock.json       外部镜像 digest 锁定
-│  ├─ upstream.lock.toml     上游配置来源
-│  ├─ config/                Supabase / Langfuse / LiteLLM / DBX / Agent
-│  ├─ docker/                公共图运行镜像构建文件
-│  └─ init/                  对象存储初始化
-├─ config/                   连接配置模板及本机私有配置
-├─ migrations/               平台权限和任务表
-├─ scripts/                  安装、启动、停止
-├─ tests/                    真实服务集成验收
-├─ docs/                     开发说明、架构、验收和截图
-├─ .vscode/                  F5、任务和推荐扩展
-├─ pyproject.toml + uv.lock
-└─ package.json + pnpm-lock.yaml
-```
+以下路径相对于 `platform.url`：
 
-## 日常运维
+| 路径 | 用途 |
+| --- | --- |
+| `/workbench/`、`/demo/` | 登录、管理工作台和示例模块 |
+| `/api/` | 业务 API |
+| `/agent/` | 图执行与 Studio 连接 |
+| `/supabase/` | Studio、Auth、REST、Storage |
+| `/dbx/` | 已预配置 PG 各库、Redis、ClickHouse 连接 |
+| `/langfuse/` | 观测、user/session 与阶段评分 |
+| `/litellm/ui/`、`/litellm/v1` | 网关后台与模型 API |
+| `/lens/ui/` | Agent 追踪与 auto 模型分析 |
+| `/_platform/health` | 全部必要组件就绪后返回 200 |
 
-```powershell
-uv run anp platform up       # 构建、启动业务与追踪依赖、迁移、初始化
-uv run anp platform up --admin # 额外启动 Studio、meta、DBX，并预配置 DBX
-uv run anp platform up --llm # 额外启动 LiteLLM；可与 --admin 合用
-uv run anp platform check    # 启动管理工具后验证六个 DBX 连接
-uv run anp platform down     # 停容器，保留全部数据卷
-```
+RustFS 控制台属于存储层，地址由宿主端口配置。LangSmith Studio 是外部开发工具；按用户选择仅使用本机 Langfuse，保留 LangSmith 云追踪未配置提示。
 
-管理工具属于 Compose 的 `admin` profile，LiteLLM 属于 `llm` profile，两组均关闭自动重启。默认启动和 F5 不会主动启动它们；已经手动启动的可选服务会继续运行，直到显式停止。在 `platform` 目录可单独操作：
-
-```powershell
-docker compose --profile admin up -d studio meta dbx
-docker compose --profile llm up -d litellm
-docker compose --profile admin stop studio meta dbx
-docker compose --profile llm stop litellm
-```
-
-停止容器不会删除数据。完整集成验收 `scripts/check.ps1` 会显式启动管理工具和 LiteLLM。
-
-也可在 `platform` 目录运行 `docker compose up -d`；首次业务账号/表初始化使用 `anp platform up`。业务模块或依赖变化时重新构建图镜像。第三方服务使用锁定的镜像和必要配置，不依赖 submodule。
-
-详见 [架构与数据库](docs/architecture.md)、[新增业务](docs/new-business.md)、[云资源绑定](docs/cloud-resources.md)、[验收记录](docs/acceptance.md)。
+复制业务：`uv run anp app new my_app --from demo`，随后检查权限、迁移与 flow，执行 `uv run anp migrate`。详见 [Agent 与业务开发](docs/Agent与业务开发.md)。

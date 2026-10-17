@@ -1,10 +1,17 @@
 """生成支持 WebSocket/SSE 的单端口 Nginx 网关。"""
 from pathlib import Path
 import re
+import os
+import ipaddress
 
 
 def render(settings):
     port=int(settings.get('port',8080))
+    listens=[]
+    for address in settings.get('listen_addresses',['0.0.0.0']):
+        parsed=ipaddress.ip_address(address)
+        host='['+str(parsed)+']' if parsed.version==6 else str(parsed)
+        listens.append(f'listen {host}:{port};')
     routes=settings['routes']
     upstreams=[]
     locations=[]
@@ -25,12 +32,14 @@ def render(settings):
             raise ValueError('无效业务入口')
         locations.append(f'location = {path.rstrip("/")} {{ return 308 {target}$is_args$args; }}\n'
             f'location ^~ {path} {{ return 308 {target}$is_args$args; }}')
+    mime=os.environ.get('ANP_NGINX_MIME_TYPES','/etc/nginx/mime.types')
+    if not re.fullmatch(r'/[a-zA-Z0-9_./-]+',mime) or '..' in mime:raise ValueError('无效 MIME 配置路径')
     return '''worker_processes 2;
 pid /tmp/anp-nginx.pid;
 error_log /dev/stderr warn;
 events { worker_connections 4096; }
 http {
-  include /etc/nginx/mime.types;
+  include '''+mime+''';
   default_type application/octet-stream;
   map $http_upgrade $connection_upgrade { default upgrade; '' ''; }
   access_log /dev/stdout;
@@ -38,6 +47,11 @@ http {
   tcp_nopush on;
   keepalive_timeout 65;
   client_max_body_size 0;
+  client_body_temp_path /run/anp/client-body;
+  proxy_temp_path /run/anp/proxy;
+  fastcgi_temp_path /run/anp/fastcgi;
+  uwsgi_temp_path /run/anp/uwsgi;
+  scgi_temp_path /run/anp/scgi;
   proxy_http_version 1.1;
   proxy_buffering off;
   proxy_request_buffering off;
@@ -53,7 +67,7 @@ http {
   gzip_types text/css application/javascript application/json;
 '''+'\n'.join(upstreams)+f'''
   server {{
-    listen {port};
+    {' '.join(listens)}
     server_name _;
     absolute_redirect off;
     location = /_platform/health {{ proxy_pass http://127.0.0.1:12000/health; }}

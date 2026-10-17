@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       component_cache_run:
-        description: 前次平台构建编号；仅在源码 SHA 和配方一致时复用组件
+        description: 候选平台或组件构建编号，逗号分隔最多四个；仅复用同源码和配方制品
         required: false
         default: ''
         type: string
@@ -130,7 +130,7 @@ jobs:
         run: >-
           uv run pytest tests/test_v3_runtime.py tests/test_v3_handoff.py tests/test_v3_native_artifacts.py tests/test_v3_bridge.py
           tests/test_v3_agent_contract.py tests/test_v3_coordinator.py tests/test_v3_http_client.py
-          tests/test_v3_bindings.py tests/test_v3_platform_live.py
+          tests/test_v3_bindings.py tests/test_v3_component_reuse.py tests/test_v3_platform_live.py
           tests/test_v3_business_live.py tests/test_01_local_cli.py tests/test_02_http_acl.py
           tests/test_05_observability.py tests/test_06_studio.py -q --tb=short
       - name: 验收后发布平台镜像

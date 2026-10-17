@@ -127,3 +127,14 @@ RustFS 控制台属于存储层，地址由宿主端口配置。LangSmith Studio
 本次验证保留所有权和 ACL，但依赖当前实例已有角色；不代表跨库原子备份或四种存储的完整灾难恢复。后续新写入不在该快照内，正式升级前需要按当时数据重新备份。实际范围见 [备份与还原证据](docs/evidence/v3-postgres-backup-restore-20261018.json)。
 
 工作台“平台连接”的管理地址来自当前部署配置。RustFS 默认使用 API 端口加一的控制台端口和 `/rustfs/console/` 路径；也可设置 `storage.s3_console_url`、`storage.s3_health_url`。改用云对象存储时，控制台和健康地址需显式提供；未提供健康接口时显示“外部工具”，不会探测旧本机实例。生成配置后重新启动 F5/API，使新的环境变量生效。
+
+## 单组件构建验证
+
+修复某个上游组件时，可单独执行 GitHub 的“验证单组件源码构建”，使用与正式流水线相同的 CI 配方和磁盘门槛：
+
+```powershell
+gh workflow run component.yml -f component=studio
+gh workflow run component.yml -f component=langfuse-web
+```
+
+该入口先更新上游并记录 SHA，只推送 `anp-build-组件:run-编号` 中间制品。正式平台流水线的 `component_cache_run` 支持按顺序提供最多四个候选构建编号（逗号分隔）；只有仓库内批准的工作流、实际源码 SHA 和配方摘要都一致才会复用。单组件成功后，仍需正式流水线完成十组件组装、服务启动、业务和权限检查，才发布平台镜像。

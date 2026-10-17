@@ -16,7 +16,7 @@ BASE='http://127.0.0.1:8089'
 
 @pytest.fixture(scope='module',autouse=True)
 def wait_for_integrated_components():
-    expected={'auth','storage','postgrest','meta','studio','dbx','langfuse-web','langfuse-worker','litellm','lens'}
+    expected={'auth','storage','postgrest','meta','studio','dbx','langfuse-web','langfuse-worker','litellm','lens','agent'}
     deadline=time.monotonic()+120
     with httpx.Client(base_url=BASE,trust_env=False,timeout=5) as client:
         while True:
@@ -40,9 +40,8 @@ class Assets(HTMLParser):
 def test_source_components_and_gateway_assets():
     with httpx.Client(base_url=BASE,trust_env=False,timeout=20) as client:
         states=client.get('/_platform/services').json()['services']
-        # 当前版本的部分集成必须诚实地保持全平台未就绪。
-        if any(spec['status']=='missing_artifact' for spec in states.values()):
-            assert client.get('/_platform/health').status_code==503
+        assert all(spec['status']=='ready' for spec in states.values())
+        assert client.get('/_platform/health').status_code==200
         for prefix,path in [('/supabase','/supabase/project/default'),('/dbx','/dbx/'),
             ('/langfuse','/langfuse/auth/sign-in'),('/litellm','/litellm/ui/'),('/lens','/lens/ui/')]:
             auth=('supabase',secret('DASHBOARD_PASSWORD')) if prefix=='/supabase' else None

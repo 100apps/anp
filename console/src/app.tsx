@@ -23,5 +23,5 @@ export default function App(){
   if(loading)return <div className="h-screen flex items-center justify-center gap-3 text-muted-foreground"><Loader2 className="animate-spin" size={20}/>正在连接工作空间…</div>
   if(error)return <div className="h-screen flex flex-col items-center justify-center gap-4"><h1 className="font-semibold text-xl">暂时无法进入工作台</h1><p role="alert" className="text-muted-foreground">{error}</p><button className="text-primary underline" onClick={logout}>退出并重新登录</button></div>
   if(!session)return <Login/>
-  return <BrowserRouter><Routes><Route element={<AdminLayout/>}><Route index element={<Overview/>}/><Route path="/apps/:appId" element={<Application/>}/><Route path="/connections" element={<Connections/>}/><Route path="/members" element={<Members/>}/><Route path="/profile" element={<Profile/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Route></Routes></BrowserRouter>
+  return <BrowserRouter basename={import.meta.env.BASE_URL}><Routes><Route element={<AdminLayout/>}><Route index element={<Overview/>}/><Route path="/apps/:appId" element={<Application/>}/><Route path="/connections" element={<Connections/>}/><Route path="/members" element={<Members/>}/><Route path="/profile" element={<Profile/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Route></Routes></BrowserRouter>
 }

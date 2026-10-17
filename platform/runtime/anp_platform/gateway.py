@@ -19,6 +19,12 @@ def render(settings):
         redirects=f'proxy_redirect ~^(/.*)$ {path.rstrip("/")}$1;' if route.get('rewrite_relative_redirects') else ''
         locations.append(f'location = {path.rstrip("/")} {{ return 308 {path}; }}\n'
             f'location ^~ {path} {{ {auth} {redirects} proxy_pass http://service_{index}{slash}; }}')
+    for alias in settings.get('application_routes',[]):
+        path,target=alias['path'],alias['redirect']
+        if not re.fullmatch(r'/[a-z][a-z0-9_]*/',path) or not re.fullmatch(r'/workbench/apps/[a-z][a-z0-9_]*',target):
+            raise ValueError('无效业务入口')
+        locations.append(f'location = {path.rstrip("/")} {{ return 308 {target}$is_args$args; }}\n'
+            f'location ^~ {path} {{ return 308 {target}$is_args$args; }}')
     return '''worker_processes 2;
 pid /tmp/anp-nginx.pid;
 error_log /dev/stderr warn;

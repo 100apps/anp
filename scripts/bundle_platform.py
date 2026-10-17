@@ -30,6 +30,11 @@ def prepare(components,partial=False):
             'working_dir':config.get('WorkingDir') or '/'}
         stages.append(f'FROM {tag} AS component_{index}')
         copies.append(f'COPY --from=component_{index} / /opt/anp/roots/{name}/')
+    graph_revision=subprocess.check_output(['git','-C',str(ROOT/'third_party/langgraph'),'rev-parse','HEAD'],text=True).strip()
+    metadata['components']['agent']={'image':'platform-python-runtime','revision':graph_revision,'rootfs':False,
+        'environment':['PATH=/opt/anp/.venv/bin:/usr/local/bin:/usr/bin:/bin','ANP_ROOT=/opt/anp',
+            'PYTHONPATH=/opt/anp/extensions:/opt/anp/src:/opt/anp'],
+        'user':'','working_dir':'/state/agent','command':['/opt/anp/.venv/bin/python','-m','anp_platform.agent']}
     validate_release(metadata,partial)
     destination=ROOT/'.local/build/platform'
     destination.mkdir(parents=True,exist_ok=True)
@@ -42,6 +47,8 @@ WORKDIR /opt/anp
 COPY pyproject.toml uv.lock ./
 COPY src ./src
 RUN uv sync --frozen --no-dev
+COPY --from=graph_source / /tmp/anp-langgraph/
+RUN uv pip install --python /opt/anp/.venv/bin/python --no-deps /tmp/anp-langgraph && uv pip check --python /opt/anp/.venv/bin/python && rm -rf /tmp/anp-langgraph && mkdir -p /state/agent
 ENV PATH="/opt/anp/.venv/bin:$PATH" PYTHONPATH=/opt/anp:/opt/anp/src ANP_ROOT=/opt/anp
 COPY platform/runtime/anp_platform ./anp_platform
 COPY platform/runtime/www ./www
@@ -71,4 +78,5 @@ if __name__=='__main__':
     if args.partial and (args.tag.endswith(':latest') or args.tag.endswith(':v3')):parser.error('部分构建不能使用正式标签')
     file=prepare(selected,args.partial)
     subprocess.run(['docker','build','--progress','plain','--build-context',
-        'platform_manifest='+str(file.parent),'-f',str(file),'-t',args.tag,str(ROOT)],check=True)
+        'platform_manifest='+str(file.parent),'--build-context',
+        'graph_source='+str(ROOT/'third_party/langgraph/libs/langgraph'),'-f',str(file),'-t',args.tag,str(ROOT)],check=True)

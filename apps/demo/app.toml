@@ -21,6 +21,8 @@ entry = "apps.demo.evaluators:score_node"
 [flow]
 entry = "apps.demo.flow.graph:build_graph"
 deployment = "demo-local"
+studio_entry_node = "normalize"
+studio_payload_fields = ["text", "title"]
 
 [services]
 entry = "apps.demo.services.tasks:service"

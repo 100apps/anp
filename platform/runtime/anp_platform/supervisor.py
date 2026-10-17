@@ -169,6 +169,7 @@ def handler(runtime):
 
 def prepare_roots(metadata):
     for name in metadata['components']:
+        if not metadata['components'][name].get('rootfs',True):continue
         root=Path('/opt/anp/roots')/name
         (root/'dev').mkdir(exist_ok=True)
         for node,minor in [('null',3),('zero',5),('random',8),('urandom',9)]:

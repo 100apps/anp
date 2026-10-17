@@ -3,6 +3,8 @@ from functools import lru_cache
 from importlib import import_module
 import re
 import tomllib
+import os
+from pathlib import Path
 from anp import ROOT
 
 
@@ -14,7 +16,8 @@ def entrypoint(path):
 @lru_cache
 def applications():
     result = {}
-    for file in sorted((ROOT / 'apps').glob('*/app.toml')):
+    directory=Path(os.environ.get('ANP_APPLICATIONS_ROOT',ROOT/'apps'))
+    for file in sorted(directory.glob('*/app.toml')):
         manifest = tomllib.loads(file.read_text(encoding='utf-8'))
         app_id = manifest['id']
         if not re.fullmatch(r'[a-z][a-z0-9_]*', app_id) or app_id != file.parent.name:

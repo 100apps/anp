@@ -2,8 +2,6 @@ from uuid import uuid4,UUID
 from pydantic import BaseModel,Field,field_validator
 from anp.errors import BusinessError
 from anp.applications.registry import application
-from anp.execution.local import run_local
-from anp.execution.agent_server import start_remote
 
 
 class TaskInput(BaseModel):
@@ -58,8 +56,12 @@ class TaskService:
         claim=await actor.objects.rpc('begin_task',p_task=task_id,p_mode=mode)
         task=claim['task']
         if not claim['acquired']: return task
-        if mode=='local': return await run_local(actor,task)
-        try: await start_remote(actor.objects,task)
+        if mode=='local':
+            from anp.execution.local import run_local
+            return await run_local(actor,task)
+        try:
+            from anp.execution.agent_server import start_remote
+            await start_remote(actor.objects,task)
         except Exception:
             # 保留派发意图；API 协调器会重试，不因网络故障丢失任务。
             pass

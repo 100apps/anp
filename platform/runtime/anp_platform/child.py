@@ -31,7 +31,9 @@ def main():
     environment=dict(item.split('=',1) for item in image['environment'] if '=' in item)
     environment.update({k:str(v) for k,v in component.get('environment',{}).items()})
     command=component['initialization_command'] if initializing else component.get('command') or image['command']
-    if component.get('execution')=='native' and not initializing:
+    if component.get('execution')=='builtin':
+        os.chdir(image['working_dir'])
+    elif component.get('execution')=='native' and not initializing:
         # Node 等可重定位运行时直接读取当前容器的 /proc；不添加 SYS_ADMIN。
         home=root/'tmp/anp-home'
         home.mkdir(parents=True,exist_ok=True)

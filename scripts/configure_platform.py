@@ -6,8 +6,9 @@ from pathlib import Path
 import secrets
 import tomllib
 import os
-from urllib.parse import quote
-from platform_bindings import bind
+from urllib.parse import quote,urlsplit
+from platform_bindings import bind,expand,relocate
+from anp.applications.registry import applications
 import yaml
 from dotenv import dotenv_values
 from anp import ROOT
@@ -22,6 +23,7 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
     s.setdefault('LENS_V3_ANALYSIS_KEY','sk-anp-lens-'+secrets.token_hex(24))
     envfile(private,s)
     host='postgres'
+    schemas='public,platform'+''.join(',app_'+app_id for app_id in applications())
     pg_port,ch_port,s3_port,redis_port=5432,8123,9000,6379
     def dsn(db,user,password):return f'postgresql://{quote(user,safe="")}:{quote(password,safe="")}@{host}:{pg_port}/{db}'
     storage={'postgres_url':dsn('postgres','supabase_admin',s['POSTGRES_PASSWORD']),
@@ -52,7 +54,7 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
         '/status',dependencies=['auth'],strip=True)
     add('postgrest',13002,'/supabase/rest/v1/',{
         'PGRST_DB_URI':dsn('postgres','authenticator',s['POSTGRES_PASSWORD']),
-        'PGRST_DB_SCHEMAS':'public,platform','PGRST_DB_ANON_ROLE':'anon','PGRST_JWT_SECRET':s['JWT_SECRET'],
+        'PGRST_DB_SCHEMAS':schemas,'PGRST_DB_ANON_ROLE':'anon','PGRST_JWT_SECRET':s['JWT_SECRET'],
         'PGRST_SERVER_PORT':'13002','PGRST_SERVER_HOST':'127.0.0.1','PGRST_ADMIN_SERVER_PORT':'13003',
         'PGRST_DB_POOL':'12','PGRST_DB_POOL_ACQUISITION_TIMEOUT':'10'},'/',dependencies=['storage'],strip=True)
     services['postgrest']['health_url']='http://127.0.0.1:13003/ready'
@@ -129,9 +131,16 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
         '/health/liveliness',dependencies=['lens'],strip=False,
         command=['litellm','--config','/app/config.yaml','--host','127.0.0.1','--port','14000'])
     services['litellm']['configure']='litellm'
-    # Agent 接入完成前，即使十个第三方组件都可用，也不能给出全平台就绪。
-    services['agent']={'required':True,'environment':{},'health_url':'http://127.0.0.1:18124/ok'}
+    add('agent',18124,'/agent/',{
+        'ANP_ROOT':'/opt/anp','ANP_APPLICATIONS_ROOT':'/opt/anp/extensions/apps',
+        'ANP_WORKBENCH_WORKER_URL':'http://host.docker.internal:8282' if smoke else 'http://host.docker.internal:8281',
+        'ANP_LANGFUSE_URL':'http://127.0.0.1:13001/langfuse','LANGFUSE_BASE_URL':'http://127.0.0.1:13001/langfuse',
+        'LANGFUSE_PUBLIC_KEY':s['LANGFUSE_PUBLIC_KEY'],'LANGFUSE_SECRET_KEY':s['LANGFUSE_SECRET_KEY'],
+        'ENGINE_TOKEN':s['ENGINE_TOKEN'],'WORKER_TOKEN':s['WORKER_TOKEN'],
+        'LANGSMITH_TRACING':'false'},'/agent/ok',dependencies=['postgrest'])
+    services['agent']['execution']='builtin'
     configuration={'port':8080,'public_url':public,'storage':storage,'services':services,'routes':routes,
+        'application_schemas':['app_'+app_id for app_id in applications()],
         'dbx_connections':dbx_connections,
         'bootstrap_admin':{'email':s['ADMIN_EMAIL'],'password':s['ADMIN_PASSWORD'],'service_key':s['SERVICE_ROLE_KEY']},
         'studio_basic_auth':{'username':'supabase','password':s['DASHBOARD_PASSWORD']},
@@ -139,10 +148,33 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
         'databases':{name:{'role':role,'password':s[key]} for name,role,key in [
             ('langfuse','langfuse','LANGFUSE_DB_PASSWORD'),('litellm','litellm','LITELLM_DB_PASSWORD'),
             ('agent_local','agent','AGENT_DB_PASSWORD')]}}
+    document={}
     if deployment:
         document=tomllib.loads(Path(deployment).read_text(encoding='utf8'))
         bind(configuration,document,{**s,**os.environ},target)
+    expanded=expand(document,{**s,**os.environ})
+    business=expanded.get('business',{})
+    api_port,worker_port,ui_port=(8181,8282,5174) if smoke else (8180,8281,5173)
+    api=business.get('api_host_url',f'http://127.0.0.1:{api_port}')
+    worker=business.get('worker_host_url',f'http://127.0.0.1:{worker_port}')
+    ui=business.get('ui_host_url',f'http://127.0.0.1:{ui_port}')
+    api_port,worker_port,ui_port=[urlsplit(url).port or (443 if urlsplit(url).scheme=='https' else 80) for url in [api,worker,ui]]
+    services['agent']['environment']['ANP_WORKBENCH_WORKER_URL']=business.get('worker_container_url',f'http://host.docker.internal:{worker_port}')
+    routes.extend([{'path':'/api/','target':business.get('api_container_url',f'http://host.docker.internal:{api_port}').removeprefix('http://')},
+        {'path':'/workbench/','target':business.get('ui_container_url',f'http://host.docker.internal:{ui_port}').removeprefix('http://')}])
+    configuration['application_routes']=[{'path':f'/{app_id}/','redirect':f'/workbench/apps/{app_id}'} for app_id in applications()]
     output=ROOT/'.local/generated/platform-v3';output.mkdir(parents=True,exist_ok=True)
+    host_pg=expanded.get('storage',{}).get('postgres_host_url') or dsn('postgres','supabase_admin',s['POSTGRES_PASSWORD']).replace('postgres:5432',f'127.0.0.1:{54323 if smoke else 54322}')
+    agent_dsn=expanded.get('postgres',{}).get('urls',{}).get('agent') or relocate(dsn('agent_local','agent',s['AGENT_DB_PASSWORD']),host_pg)
+    environment={'ANP_PROFILE':'v3','ANP_SUPABASE_URL':public+'/supabase','ANP_AGENT_URL':public+'/agent',
+        'ANP_AGENT_SHARED':'true','ANP_LANGFUSE_URL':public+'/langfuse','ANP_LITELLM_URL':public+'/litellm/v1',
+        'ANP_DBX_URL':public+'/dbx','ANP_WORKBENCH_API_URL':public,'ANP_WORKBENCH_WORKER_URL':worker,
+        'ANP_WORKBENCH_WEB_URL':public+'/workbench/','ANP_DEVELOPMENT_API_PORT':str(api_port),
+        'ANP_DEVELOPMENT_WORKER_PORT':str(worker_port),'ANP_UI_PORT':str(ui_port),'ANP_API_TARGET':api,
+        'VITE_BASE_PATH':'/workbench/','VITE_PUBLIC_PORT':str(urlsplit(public).port or (443 if urlsplit(public).scheme=='https' else 80)),
+        'ANP_POSTGRES_AGENT_DSN_ENV':'ANP_V3_AGENT_DSN','ANP_V3_AGENT_DSN':agent_dsn,
+        'ANP_POSTGRES_MIGRATION_DSN_ENV':'ANP_V3_MIGRATION_DSN','ANP_V3_MIGRATION_DSN':host_pg}
+    envfile(output/'business.env',environment)
     (output/'config.json').write_text(json.dumps(configuration,ensure_ascii=False,indent=2),encoding='utf8')
     model_config=yaml.safe_load((ROOT/'platform/config/litellm/models.yaml').read_text(encoding='utf8'))
     model_config['general_settings']['tracing']={'store':{'type':'lens'}}
@@ -152,7 +184,7 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
     block=f'''{start}
 ## V3 单容器集成（开发验证）
 
-平台入口：{public}。Agent 尚未接入，当前不是完整交付版。
+平台入口：{public}。当前仍需完成整体任务、F5 与发布验收。
 
 | 系统 | 入口 | 本机登录信息 |
 | --- | --- | --- |
@@ -162,6 +194,8 @@ def generate(public='http://localhost:8080',smoke=False,deployment=None,target='
 | LiteLLM | {public}/litellm/ui/ | 用户名 `admin`，密码 `{s['LITELLM_KEY']}` |
 | DBX | {public}/dbx/ | 密码 `{s['DBX_PASSWORD']}` |
 | Lens 独立后台 | {public}/lens/ui/ | Admin Token `{s['LENS_ADMIN_TOKEN']}` |
+| Agent API | {public}/agent/ | 请求头 `Authorization: Bearer {s['ENGINE_TOKEN']}` |
+| LangGraph Studio | https://smith.langchain.com/studio/?baseUrl={quote(public+'/agent',safe='')} | 使用已有 LangSmith 账号；连接设置使用上行 Authorization 请求头 |
 
 Lens 的受限分析 Key 为 `{s['LENS_V3_ANALYSIS_KEY']}`，只允许 auto；不要把管理 Token 当作模型网关 Key。
 已有管理员不会被初始化程序重置密码；若曾主动改过密码，请使用改后的密码。

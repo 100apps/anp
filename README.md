@@ -4,7 +4,7 @@
 
 代码仓库：[100apps/anp](https://github.com/100apps/anp)（私有）。新增 `third_party/` 保存真正的 Git submodule，`deploy/storage/` 定义四种存储，`config/deployment.example.toml` 定义本机/容器/云地址边界。
 
-V3 的十组件单容器集成已实启，五个前端子路径、DBX 六连接、Supabase 登录/ACL 和 Lens 受限 auto 调用通过隔离验证；详细命令、运行结构和未完成项见[单容器平台集成开发](docs/单容器平台集成开发.md)。`deploy/platform/compose.yaml` 定义单个常驻平台容器；Agent 仍未接入，默认 GHCR 标签尚未发布，当前只可显式选择本机构建的开发镜像，不应直接当作正式版启动。
+V3 已在一个容器内运行十个第三方组件与 Agent 引擎，统一入口通过了本地 CLI、HTTP CLI、Studio SSE 与 Web 的真实任务验证。业务源码不进入镜像，通过独立只读目录提供图定义，节点仍在本机 Worker 运行。见[Agent 与业务开发](docs/Agent与业务开发.md)和[单容器平台集成开发](docs/单容器平台集成开发.md)。默认 GHCR 镜像尚未发布，两种 V3 F5 也尚未验收；当前 `.vscode` 仍是旧版配置，不能据此认为新拓扑已经交付。
 
 ```powershell
 git clone --recurse-submodules https://github.com/100apps/anp.git

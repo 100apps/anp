@@ -1,6 +1,7 @@
 """平台内部初始化任务，不借用第五个存储镜像或额外初始化容器。"""
 import json
 import hashlib
+import re
 import os
 from pathlib import Path
 import psycopg
@@ -21,6 +22,10 @@ def databases(settings):
                 connection.execute(sql.SQL('CREATE DATABASE {} OWNER {}').format(sql.Identifier(name),sql.Identifier(role)))
         connection.execute('CREATE SCHEMA IF NOT EXISTS platform')
         connection.execute('GRANT USAGE ON SCHEMA platform TO anon,authenticated,service_role')
+        # 仅预建 REST 暴露的命名空间；业务表及业务迁移仍由业务项目管理。
+        for name in settings.get('application_schemas',[]):
+            if not re.fullmatch(r'app_[a-z][a-z0-9_]*',name):raise ValueError('无效业务命名空间')
+            connection.execute(sql.SQL('CREATE SCHEMA IF NOT EXISTS {}').format(sql.Identifier(name)))
     if not settings.get('initialize_buckets',True):return
     s3=boto3.client('s3',endpoint_url=storage['s3_url'],region_name=storage.get('s3_region','us-east-1'),
         aws_access_key_id=storage['s3_access_key'],aws_secret_access_key=storage['s3_secret_key'],

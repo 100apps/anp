@@ -40,9 +40,10 @@ def perform(coro):
     async def operation():
         try: return await coro
         finally:
-            from anp.sdk.tracing import get_client
-            if get_client.cache_info().currsize:
-                await asyncio.to_thread(get_client().flush)
+            # 查询、登录等命令不创建追踪，避免为 flush 引入整个观测 SDK。
+            tracing=sys.modules.get('anp.sdk.tracing')
+            if tracing and tracing.get_client.cache_info().currsize:
+                await asyncio.to_thread(tracing.get_client().flush)
     try:
         data=asyncio.run(operation())
         output(data)

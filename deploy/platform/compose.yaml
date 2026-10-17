@@ -9,6 +9,8 @@ services:
       - ../../.local/generated/platform-v3/config.json:/run/anp/config.json:ro
       - ../../.local/generated/platform-v3/litellm.yaml:/run/anp/litellm.yaml:ro
       - platform_state:/opt/anp/roots/dbx/state
+      - agent_state:/state/agent
+      - ${ANP_APPLICATIONS_DIR:-../../apps}:/opt/anp/extensions/apps:ro
     networks: [resources]
     stop_grace_period: 30s
     healthcheck:
@@ -24,3 +26,5 @@ networks:
 volumes:
   platform_state:
     name: ${ANP_PLATFORM_STATE_VOLUME:-anp_v3_platform_state}
+  agent_state:
+    name: ${ANP_AGENT_STATE_VOLUME:-anp_v3_agent_state}

@@ -12,7 +12,9 @@ def engine_client(app_id='demo'):
     index=list(applications()).index(app_id)
     endpoint=value('agent',app_id+'_url')
     if not endpoint:
-        endpoint=urlunsplit((parsed.scheme,f'{parsed.hostname}:{(parsed.port or 8124)+index}',parsed.path,'',''))
+        if str(value('agent','shared',False)).lower() in ('true','1'):
+            endpoint=base
+        else:endpoint=urlunsplit((parsed.scheme,f'{parsed.hostname}:{(parsed.port or 8124)+index}',parsed.path,'',''))
     return httpx.AsyncClient(base_url=endpoint,
         headers={'Authorization':'Bearer '+secret('ENGINE_TOKEN')},timeout=20,trust_env=False)
 

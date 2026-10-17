@@ -5,7 +5,7 @@ from anp import ROOT
 from anp.applications.registry import applications,application
 
 
-def sync():
+def sync(generate_legacy_platform=False):
     applications.cache_clear()
     lines=['// 此文件由 anp app sync 生成。','import type { ComponentType } from "react";']
     entries=[]
@@ -16,9 +16,12 @@ def sync():
     file=ROOT/'console/src/generated/applications.ts'
     file.parent.mkdir(parents=True,exist_ok=True)
     file.write_text('\n'.join(lines)+'\n',encoding='utf-8')
-    from anp.management.platform import generate
-    generate()
-    return {'applications':list(applications()),'generated':['console/src/generated/applications.ts','platform/compose.generated.yaml']}
+    generated=['console/src/generated/applications.ts']
+    if generate_legacy_platform:
+        from anp.management.platform import generate
+        generate()
+        generated.append('platform/compose.generated.yaml')
+    return {'applications':list(applications()),'generated':generated}
 
 
 def create(name,source='demo'):

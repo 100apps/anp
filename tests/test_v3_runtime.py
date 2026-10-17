@@ -55,14 +55,16 @@ def test_schema_failure_is_visible_without_exposing_connection_details(monkeypat
     assert 'private-password' not in caplog.text
 
 
-def test_platform_compose_has_one_container_one_port_and_no_business_mount():
+def test_platform_compose_has_one_container_one_port_and_readonly_flow_deployment():
     root=Path(__file__).resolve().parents[1]
     document=yaml.safe_load((root/'deploy/platform/compose.yaml').read_text(encoding='utf8'))
     assert set(document['services'])=={'platform'}
     service=document['services']['platform']
     assert len(service['ports'])==1
     assert not service.get('privileged') and not service.get('cap_add')
-    assert all('apps/' not in volume and 'docker.sock' not in volume for volume in service['volumes'])
+    assert all('docker.sock' not in volume for volume in service['volumes'])
+    deployment=next(volume for volume in service['volumes'] if 'ANP_APPLICATIONS_DIR' in volume)
+    assert deployment.endswith(':/opt/anp/extensions/apps:ro')
     assert service['stop_grace_period']=='30s'
 
 

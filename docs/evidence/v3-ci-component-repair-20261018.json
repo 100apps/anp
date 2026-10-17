@@ -48,5 +48,16 @@
     "all_other_langfuse_config_preserved": true,
     "windows_ci_resource_command_rejected": true,
     "full_cloud_build": false
+  },
+  "langfuse_disk_probe": {
+    "run": 39073497894,
+    "job": 117515788594,
+    "conclusion": "failure",
+    "stage": "磁盘准备，尚未启动编译",
+    "free_gib": 37.39,
+    "required_gib": 43,
+    "log_sha256": "01513e8e4963433c54e437f5502e72b95d5494361d1980f97ad857ff4d002b59",
+    "change": "额外清理固定列表的 Go/Ruby/Java/Miniconda/PowerShell/vcpkg 宿主机 SDK；保留 Python 和 Actions Node，空间仍不足则拒绝编译",
+    "unit_tests_passed": 14
   }
 }

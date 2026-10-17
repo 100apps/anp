@@ -7,7 +7,11 @@ import sys
 import subprocess
 
 TARGETS=('/usr/local/lib/android','/usr/share/dotnet','/opt/ghc','/usr/lib/jvm',
-    '/opt/hostedtoolcache/CodeQL','/usr/share/swift','/usr/local/.ghcup')
+    '/opt/hostedtoolcache/CodeQL','/usr/share/swift','/usr/local/.ghcup',
+    # 编译发生在 Docker 内；宿主机这些 SDK 不参与 Python 编排和 Actions Node 运行时。
+    '/opt/hostedtoolcache/go','/opt/hostedtoolcache/Ruby',
+    '/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk','/usr/share/miniconda',
+    '/usr/local/share/powershell','/usr/local/share/vcpkg')
 
 
 def add_swap(gib):

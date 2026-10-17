@@ -9,9 +9,18 @@ from native_artifacts import LAYOUT
 ROOT=Path(__file__).resolve().parents[1]
 
 
+def image_identity(image):
+    command=['docker','image','inspect',image]
+    result=subprocess.run(command,capture_output=True,text=True)
+    if result.returncode:
+        subprocess.run(['docker','pull',image],check=True)
+        result=subprocess.run(command,capture_output=True,text=True,check=True)
+    return json.loads(result.stdout)[0]['Id']
+
+
 def prepare(image='ghcr.io/100apps/anp-platform:latest',distro='Ubuntu'):
     wsl=['wsl','-d',distro,'-u','root','--exec']
-    identity=json.loads(subprocess.check_output(['docker','image','inspect',image],text=True))[0]['Id']
+    identity=image_identity(image)
     marker={'workspace':str(ROOT),'image':identity,'layout':LAYOUT}
     helper=subprocess.check_output([*wsl,'wslpath','-u',str(ROOT/'scripts/native_artifacts.py')],text=True).strip()
     result=json.loads(subprocess.check_output([*wsl,'python3',helper,'begin','--expected',json.dumps(marker)],text=True))

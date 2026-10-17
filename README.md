@@ -92,7 +92,9 @@ API/Worker 使用 debugpy 跟踪 Uvicorn 热重载子进程，前端使用 Vite 
 
 原生制品更新采用干净提取，避免旧模块残留；Agent 状态保留，DBX 本地配置先备份再恢复，备份保存在 `/opt/anp/state/dbx-backups`。提取未完成或镜像身份不符时，启动器会拒绝启动；重新执行原生准备可恢复中断的提取。
 
-**验收边界：** 最新 SDK 在原生模式通过 48 项检查，切回 Docker 后八条既有及原生新建线程状态一致，真实业务回归通过；实际 IDE F5/断点尚未验收。VS Code 当前为 Restricted Mode，需要用户自行信任工作区。[往返交接证据](docs/evidence/v3-latest-native-handoff-20261018.json)
+本地没有目标镜像时，原生准备会先执行拉取；已有镜像可以离线复用。私有 GHCR 首次拉取仍需要有效登录，拉取失败会停止准备，保留现有数据。
+
+**验收边界：** 最新原生更新流程通过 54 项检查，返回 Docker 后综合 56 项通过；十二条线程在热重载和模式交接后状态一致，原生托管进程退出清理通过。底层调试协议通过五会话重新附加检查，实际 IDE F5/断点尚未验收。VS Code 当前为 Restricted Mode，需要用户自行信任工作区。[最新更新与交接证据](docs/evidence/v3-native-artifacts-update-20261018.json)
 
 ## 单端口管理入口
 

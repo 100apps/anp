@@ -82,3 +82,29 @@ def test_wrong_image_and_incomplete_copy_cannot_be_started(runtime):
     extracted(root);artifacts.finish(root,expected)
     with pytest.raises(RuntimeError,match='镜像身份不符'):
         artifacts.validate(root,{**expected,'image':'sha256:'+'c'*64})
+
+
+def test_native_cold_start_pulls_missing_image_before_inspection(monkeypatch):
+    import subprocess
+    import prepare_native
+    calls=[]
+    def run(command,**kwargs):
+        calls.append(command)
+        if len(calls)==1:return subprocess.CompletedProcess(command,1,'')
+        return subprocess.CompletedProcess(command,0,json.dumps([{'Id':'sha256:'+'b'*64}]))
+    monkeypatch.setattr(prepare_native.subprocess,'run',run)
+    assert prepare_native.image_identity('ghcr.io/example/platform:latest')=='sha256:'+'b'*64
+    assert calls==[['docker','image','inspect','ghcr.io/example/platform:latest'],
+        ['docker','pull','ghcr.io/example/platform:latest'],['docker','image','inspect','ghcr.io/example/platform:latest']]
+
+
+def test_existing_native_image_does_not_require_registry_access(monkeypatch):
+    import subprocess
+    import prepare_native
+    calls=[]
+    def run(command,**kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command,0,json.dumps([{'Id':'sha256:'+'b'*64}]))
+    monkeypatch.setattr(prepare_native.subprocess,'run',run)
+    assert prepare_native.image_identity('local/platform:dev')=='sha256:'+'b'*64
+    assert len(calls)==1 and calls[0][:3]==['docker','image','inspect']

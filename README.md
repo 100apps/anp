@@ -2,7 +2,7 @@
 
 默认用本地 CLI 直接运行业务代码，Web、HTTP CLI 与本地 CLI 共用业务服务、Supabase 身份和权限。
 
-**V3 仍在验收。** 四存储、单容器平台、真实任务与 WSL 原生运行已经通过集成检查。Qoder 的 Docker 平台业务 F5 已实际命中前后端断点；热更新后再次命中也已通过，重复启动与 WSL 组合尚待补齐。GHCR 流水线尚未完成发布、拉取与启动验证。deep_dub、整片 RTF≤0.5 和 B 站发布仍待完成。[完整验收账本](docs/重构实施与验收.md)保留全部目标。
+**V3 仍在验收。** 四存储、单容器平台、真实任务与 WSL 原生运行已经通过集成检查。Qoder 的 Docker 平台业务 F5 已实际命中前后端断点；热更新后再次命中也已通过，结束旧会话后的重复 F5 也已通过，WSL 组合尚待补齐。GHCR 流水线尚未完成发布、拉取与启动验证。deep_dub、整片 RTF≤0.5 和 B 站发布仍待完成。[完整验收账本](docs/重构实施与验收.md)保留全部目标。
 
 仓库：[100apps/anp](https://github.com/100apps/anp)（私有）。旧 anp2 服务与数据保留，[V2 操作说明](docs/旧版V2操作说明.md)仅用于旧环境。
 
@@ -87,6 +87,8 @@ VS Code 或兼容 Qoder 打开 `E:\anp` 或 `anp.code-workspace`，选择：
 
 API/Worker 使用 debugpy 跟踪 Uvicorn 热重载子进程，前端使用 Vite HMR 与 Edge 调试；平台 Python 源码改动后优雅退出、保存 Agent 状态并重启，调试器追踪子进程。第三方编译制品修改后需要重新构建。
 
+WSL 调试前置任务在宿主机确认回环监听后，才发出独立就绪标记；检查只读监听表，不建立额外调试连接。原生调试日志仅保存在 Git 忽略的 `.local/logs/native-debugpy/`。真实 Qoder 已取得平台源码第 175 行断点堆栈，完整组合仍待继续验收，见 [WSL IDE 分项证据](docs/evidence/v3-native-ide-readiness-20261018.json)。
+
 前端前置任务先验证 Vite 源码映射指向本工作区，再复用已有服务或启动新进程，并等待 API/Worker 就绪。不依赖 IDE 再次接收到旧后台任务的启动日志；启动日志在私有 `.local/v3-vite-f5.log`。单独启动前端仍可用 `uv run python -m anp.dev.v3 web`。
 
 平台 URL 与 `.vscode/settings.json` 的 `anp.platformUrl` 要一致，WSL 路径映射 `/mnt/e/anp` 对应当前工作区。本机隔离环境使用 `http://127.0.0.1:8089`，业务端口 8181/8282/5174；具体由私有绑定决定。5684 是本机开发调试端口，不增加 Docker 发布端口。
@@ -97,7 +99,7 @@ API/Worker 使用 debugpy 跟踪 Uvicorn 热重载子进程，前端使用 Vite 
 
 本地没有目标镜像时，原生准备会先执行拉取；已有镜像可以离线复用。私有 GHCR 首次拉取仍需要有效登录，拉取失败会停止准备，保留现有数据。
 
-**验收边界：** 最新原生更新流程通过 54 项检查，返回 Docker 后综合 56 项通过；十条既有线程在热重载后不变，含原生新建任务的十二条线程在切回 Docker 后状态一致，托管进程退出清理通过。底层调试协议通过五会话重新附加检查。[最新更新与交接证据](docs/evidence/v3-native-artifacts-update-20261018.json)。随后已在 Qoder 实际命中 `service.py:23` 与 `app.tsx:22`，创建的任务三个节点完成、对象报告与数据库一致；随后实际修改前后端源码触发热更新，均再次命中同一断点，新 HTTP 任务三阶段完成且保存结果一致，临时源码逐字恢复；完整重复 F5 与 WSL 组合仍待验证。[Qoder 分项证据](docs/evidence/v3-qoder-f5-20261018.json)。VS Code 自身仍为 Restricted Mode，信任设置由用户操作。
+**验收边界：** 最新原生更新流程通过 54 项检查，返回 Docker 后综合 56 项通过；十条既有线程在热重载后不变，含原生新建任务的十二条线程在切回 Docker 后状态一致，托管进程退出清理通过。底层调试协议通过五会话重新附加检查。[最新更新与交接证据](docs/evidence/v3-native-artifacts-update-20261018.json)。随后已在 Qoder 实际命中 `service.py:23` 与 `app.tsx:22`，创建的任务三个节点完成、对象报告与数据库一致；随后实际修改前后端源码触发热更新，均再次命中同一断点，新 HTTP 任务三阶段完成且保存结果一致，临时源码逐字恢复；结束旧会话后完整重复 F5 已再次启动三个调试会话，新任务命中断点并执行成功；WSL 组合仍待验证。[Qoder 分项证据](docs/evidence/v3-qoder-f5-20261018.json)。VS Code 自身仍为 Restricted Mode，信任设置由用户操作。
 
 ## 单端口管理入口
 

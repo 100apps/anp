@@ -1,0 +1,47 @@
+{
+  "scope": "由真实 Qoder F5 启动并附加的 WSL 平台分项检查，不是自建 DAP 客户端模拟，也不是完整 WSL 组合通过",
+  "checked_at_utc": "2026-10-18T00:32:01.703820+00:00",
+  "ide": "Qoder CN IDE 1.34.0",
+  "configuration": "ANP V3: F5 业务 + 平台（WSL 源码）",
+  "security_settings_changed": false,
+  "first_failure": {
+    "at": "2026-10-18T00:21:18.965Z",
+    "error": "connect ECONNREFUSED 127.0.0.1:5684",
+    "configuration": "ANP V3: F5 业务 + 平台（WSL 源码）"
+  },
+  "readiness_repair": {
+    "host_loopback_listener_checked": true,
+    "active_tcp_probe_removed": true,
+    "read_only_windows_listener_table": true,
+    "distinct_task_ready_marker": "ANP_NATIVE_HOST_DEBUG_READY",
+    "stdout_debug_marker_exact_match": true,
+    "private_debug_log_directory": ".local/logs/native-debugpy",
+    "windows_checks": {
+      "passed": 12,
+      "seconds": 4.19
+    },
+    "linux_real_delayed_listener_probe_passed": true,
+    "probe_consumes_debug_client_connection": false
+  },
+  "actual_ide_attachment": {
+    "ide_client_process_observed": {
+      "pid": 20960,
+      "name": "Qoder CN IDE"
+    },
+    "configuration_done_received": true,
+    "mapped_source_breakpoint_verified": true,
+    "breakpoint_stopped_event_observed": true,
+    "ide_requested_stack_frame": {
+      "name": "do_GET",
+      "line": 175,
+      "path": "E:/anp/platform/runtime/anp_platform/supervisor.py"
+    },
+    "private_adapter_log_sha256": "c2e02d105f2a5899b073b2f26ede4140d414d69723e6dd594fe38f86994abf99"
+  },
+  "current_limitation": "Qoder 窗口被最小化，Computer Use 两次恢复提示用户操作；停止继续发送桌面输入，平台断点继续执行及组合剩余检查未完成",
+  "full_native_f5_verified": false,
+  "frontend_native_hmr_verified": false,
+  "native_business_task_verified": false,
+  "platform_all_services_ready_verified": false,
+  "cloud_execution_of_new_readiness_test_verified": false
+}

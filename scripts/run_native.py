@@ -17,10 +17,15 @@ if __name__=='__main__':
     if not identity or identity.get('workspace')!=str(ROOT):raise RuntimeError('请重新执行 prepare --mode native')
     subprocess.run(['wsl','-d',configuration['distro'],'-u','root','--exec','python3',
         configuration['environment']['ANP_ROOT']+'/scripts/native_artifacts.py','check','--expected',json.dumps(identity)],check=True)
+    if args.debug_port:
+        configuration['environment']['DEBUGPY_LOG_DIR']=configuration['environment']['ANP_ROOT']+'/.local/logs/native-debugpy'
     command=['wsl','-d',configuration['distro'],'-u','root','--exec','env',
         *(key+'='+value for key,value in configuration['environment'].items()),configuration['python'],'-m','anp_platform.native']
     if args.debug_port:command+=['--debug-port',str(args.debug_port)]
     if args.wait_for_client:command+=['--wait-for-client']
     if args.check:command+=['--check']
     if args.reload:command+=['--reload']
+    if args.debug_port:
+        from anp.dev.native_debug import relay
+        raise SystemExit(relay(command,args.debug_port))
     raise SystemExit(subprocess.call(command))

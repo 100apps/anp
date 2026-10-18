@@ -66,6 +66,39 @@
           "sha256": "c101a3d95ba0226ae6c2220d07090b9d3805d2d30cd9d3d9b8d105e527805b58"
         }
       }
+    },
+    "repeat_f5": {
+      "observed_at_utc": "2026-10-18T00:15:56.994Z",
+      "method": "结束旧调试会话后，在 IDE 当前 Docker 业务组合按 F5，前置任务自动准备依赖并启动三个根调试会话",
+      "sessions": [
+        "\t\t\t\t\t\t\t\t\t\t\t\t\t1314 行 (selectable) 会话 Subprocess 32556 正在运行 ID: list_id_8_3",
+        "\t\t\t\t\t\t\t\t\t\t\t\t\t1157 行 (selectable) 会话 ANP V3: API 热重载调试 正在运行 ID: list_id_8_4",
+        "\t\t\t\t\t\t\t\t\t\t\t\t\t1324 行 (selectable) 会话 Subprocess 13292 正在运行 ID: list_id_8_7",
+        "\t\t\t\t\t\t\t\t\t\t\t\t\t1155 行 (selectable) 会话 127.0.0.1:8089/workbench/ « ANP V3: 前端热更新调试 正在运行 ID: list_id_8_8",
+        "\t\t\t\t\t\t\t\t\t\t\t\t\t\t1786 行 (selectable) 会话 ANP V3: Worker 热重载调试 正在运行 ID: list_id_8_0"
+      ],
+      "duplicate_instance_dialog_visible": false,
+      "vite_pid_before": 14728,
+      "vite_pid_after": 14728,
+      "api_rehit": [
+        "\t\t\t\t\t\t\t\t\t\t\t\t\t2332 行 (selectable) 会话 Subprocess 13292 因 breakpoint 已暂停 ID: list_id_8_7",
+        "\t\t\t\t\t\t\t\t\t\t\t\t\t2469 行 (selectable) 堆栈帧 create，行 23，service.py ID: list_id_8_8",
+        "\t\t\t\t\t\t\t\t\t\t\t\t\t2472 行 (selectable) 堆栈帧 create，行 14，router.py ID: list_id_8_9",
+        "\t\t\t\t\t\t\t\t\t\t\t\t\t2397 文本 await actor.require(self.app_id+'.task.create')，调试已暂停 , reason breakpoint，service.py: 23"
+      ],
+      "task": {
+        "task_id": "13c68ea1-095d-487c-b4f6-216f13a1639e",
+        "status": "succeeded",
+        "mode": "http",
+        "nodes": [
+          "normalize",
+          "analyze",
+          "save"
+        ],
+        "artifact_matches_database": true
+      },
+      "original_thread_states_preserved": 284,
+      "protected_container_ids_including_stopped_unchanged": 27
     }
   },
   "source_map_repair": {
@@ -78,7 +111,7 @@
     "real_vite_reused_twice": true,
     "pid_before": 14728,
     "pid_after": 14728,
-    "full_ide_repeat_f5_verified": false,
+    "full_ide_repeat_f5_verified": true,
     "isolated_real_launch": {
       "actual_spawn": true,
       "ready": true,
@@ -95,10 +128,9 @@
     "protected_storage_and_legacy_container_ids_unchanged": 21
   },
   "unfinished": [
-    "修复前置任务后的完整 IDE 重复 F5",
     "WSL 平台与业务组合真实 F5"
   ],
-  "current_ui_blocker": null,
+  "current_ui_blocker": "Qoder 窗口被最小化，Computer Use 两次恢复提示用户操作；停止继续发送桌面输入，平台断点继续执行及组合剩余检查未完成",
   "private_proof_sha256": "7330b438672935ab5a8f480f3fa03b318af279a9203c7b5a10358c51789f702c",
   "popup_recovery": {
     "closed": true,
@@ -110,5 +142,10 @@
     "reason": "用户按物理 Escape 停止 Computer Use",
     "remaining_checks_not_run": true
   },
-  "updated_at_utc": "2026-10-18T00:09:47.202867+00:00"
+  "updated_at_utc": "2026-10-18T00:09:47.202867+00:00",
+  "native_business_f5": {
+    "full_verified": false,
+    "actual_ide_platform_breakpoint_observed": true,
+    "evidence": "docs/evidence/v3-native-ide-readiness-20261018.json"
+  }
 }

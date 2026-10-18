@@ -68,7 +68,7 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": ".*",
-          "endsPattern": "ANP_NATIVE_DEBUG_READY"
+          "endsPattern": "^ANP_NATIVE_HOST_DEBUG_READY$"
         }
       },
       "presentation": {

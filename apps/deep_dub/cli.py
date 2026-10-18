@@ -49,6 +49,12 @@ app.add_typer(run_commands,name='runs')
 app.add_typer(media_commands,name='media')
 
 
+@app.command('close-lost-attempt')
+def close_lost_attempt(ctx:typer.Context,attempt_id:str,lease_ids:list[str]=typer.Option(...,'--lease-id')):
+    body={'lease_ids':lease_ids}
+    perform(invoke(ctx,'POST',f'/attempts/{attempt_id}/close-lost',lambda actor:execution.close_lost_attempt(actor,attempt_id,lease_ids),body))
+
+
 @run_commands.command('review-source-audio')
 def source_auditory_review(ctx:typer.Context,run_id:str,source_id:str,timeout_seconds:int=3600,request_key:str=''):
     body={'source_id':source_id,'timeout_seconds':timeout_seconds}

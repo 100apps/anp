@@ -16,8 +16,9 @@ from apps.deep_dub.services.local_pool import LocalCpuPool
 
 
 @pytest.mark.parametrize('mode',['success','missing_audio','cancel'])
+@pytest.mark.parametrize('family',['voxtral','qwen2_5_omni'])
 @pytest.mark.skipif(sys.platform!='win32',reason='本机GPU执行器当前核验Windows监听PID')
-def test_owned_listener_authentication_capability_and_real_process_exit(tmp_path,monkeypatch,mode):
+def test_owned_listener_authentication_capability_and_real_process_exit(tmp_path,monkeypatch,mode,family):
     with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
     wav=tmp_path/'audio.wav'
     with wave.open(str(wav),'wb') as f:
@@ -48,7 +49,7 @@ HTTPServer(('127.0.0.1',int(sys.argv[1])),Handler).serve_forever()
 ''',encoding='utf-8')
     config=AudioJudgeConfig(executable=sys.executable,executable_sha256='a'*64,working_directory=str(tmp_path),weights=str(tmp_path/'weights'),weights_sha256='b'*64,
         source_revision='c'*40,gpu_uuid='GPU-fixture',gpu_index=0,port=port,model_id='fixture-judge',coordination_locks=[str(tmp_path/'lock')],
-        mmproj=str(tmp_path/'mmproj'),mmproj_sha256='d'*64,runtime_files={'fixture.dll':'e'*64})
+        mmproj=str(tmp_path/'mmproj'),mmproj_sha256='d'*64,runtime_files={'fixture.dll':'e'*64},family=family)
     original=subprocess.Popen;processes=[]
     def launch(command,**kwargs):
         assert command[command.index('--host')+1]=='127.0.0.1'

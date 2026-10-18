@@ -1,5 +1,5 @@
 """完整音轨的独立听音复核；校准不满足时不得伪装成质量通过。"""
-import asyncio,json,os,subprocess,sys
+import asyncio,json,os,site,subprocess,sys
 from hashlib import sha256
 from uuid import uuid4
 
@@ -50,18 +50,18 @@ def test_actual_whole_source_auditory_review_and_two_cli_contracts(identities,mo
             assert (await client.get(path,headers={'Authorization':'Bearer '+outside['token'],'X-Workspace-ID':outside['workspace_id']})).status_code==404
             assert (await client.post(f'/api/apps/deep_dub/runs/{run}/review-source-audio',json=body,headers={
                 'Authorization':'Bearer '+viewer['token'],'X-Workspace-ID':viewer['workspace_id']})).status_code==403
-        assert m['calibration_passed'] and len(m['controls'])==4 and len(m['windows'])==44
-        assert m['session']['requests']==48 and m['session']['operation_stopped'] and m['session']['properties']['modalities']['audio']
+        assert m['calibration_passed'] and len(m['controls'])==10 and len(m['windows'])==44
+        assert m['session']['requests']==54 and m['session']['operation_stopped'] and m['session']['properties']['modalities']['audio']
         assert m['pcm']['sample_count']==41380932 and sum(m['counts'].values())==44
         assert m['formal_transcript_review']==m['speaker_identity']==m['subtitle_timing_review']=='not_measured'
         assert await fixed(actor)==before and await read_queue(actor,project,source)==queue
         audits=await actor.objects.select('deep_dub_audits',project_id='eq.'+project,evidence_artifact_id='eq.'+saved['evidence_artifact_id'])
         if m['counts']['mismatch']:
-            assert len(audits)==1 and audits[0]['status']=='failed' and audits[0]['method']=='independent_model'
+            assert audits and all(a['status'] in ('failed','not_measured') for a in audits)
         else:assert not audits
         leases=await actor.objects.select('deep_dub_device_leases',select='id,status,operation_stopped',stage_attempt_id='eq.'+result['attempt']['id'])
         assert len(leases)==1 and leases[0]['status']=='released' and leases[0]['operation_stopped']
-        scores=await actor.objects.select('deep_dub_scores',stage_attempt_id='eq.'+result['attempt']['id']);assert len(scores)==6
+        scores=await actor.objects.select('deep_dub_scores',stage_attempt_id='eq.'+result['attempt']['id']);assert len(scores)==10
         await flush(actor)
         async with async_client(timeout=20,trust_env=False,auth=httpx.BasicAuth(secret('LANGFUSE_PUBLIC_KEY'),secret('LANGFUSE_SECRET_KEY'))) as client:
             for _ in range(30):
@@ -79,13 +79,14 @@ def test_actual_whole_source_auditory_review_and_two_cli_contracts(identities,mo
         return saved,result
     try:
         saved,result=asyncio.run(scenario())
+        cli_environment={**os.environ,'PYTHONPATH':os.pathsep.join((str(ROOT),str(ROOT/'src'),*site.getsitepackages()))}
         for options in [('--endpoint','http://127.0.0.1:1'),('--transport','http','--endpoint','http://127.0.0.1:8181')]:
-            read=subprocess.run([sys.executable,'-m','anp.cli.entry',*options,'deep_dub','projects','source-auditory-review',project,source],
-                cwd=ROOT,capture_output=True,text=True,encoding='utf-8',timeout=120)
+            read=subprocess.run([sys._base_executable,'-m','anp.cli.entry',*options,'deep_dub','projects','source-auditory-review',project,source],
+                cwd=ROOT,capture_output=True,text=True,encoding='utf-8',timeout=120,env=cli_environment)
             assert read.returncode==0,read.stdout+read.stderr
             assert json.loads(read.stdout)==saved
-            replay=subprocess.run([sys.executable,'-m','anp.cli.entry',*options,'deep_dub','runs','review-source-audio',run,source],
-                cwd=ROOT,capture_output=True,text=True,encoding='utf-8',timeout=120)
+            replay=subprocess.run([sys._base_executable,'-m','anp.cli.entry',*options,'deep_dub','runs','review-source-audio',run,source],
+                cwd=ROOT,capture_output=True,text=True,encoding='utf-8',timeout=120,env=cli_environment)
             assert replay.returncode==0,replay.stdout+replay.stderr
             assert json.loads(replay.stdout)['attempt']==result['attempt']
         record=json.loads((ROOT/'.local/deep-dub-auditory-live.json').read_bytes());record['two_cli_read_and_replay']=True

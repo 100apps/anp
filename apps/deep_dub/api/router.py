@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from anp.auth.dependencies import get_actor
 from apps.deep_dub.services.projects import ProjectInput, service
 from apps.deep_dub.services.versions import AuditInput, QualityProfileInput, SelectionInput, TimelineInput, service as versions
-from apps.deep_dub.services.execution import RunInput, StageInput, StageReceipt, ScoreInput, service as execution
+from apps.deep_dub.services.execution import RunInput, StageInput, StageReceipt, ScoreInput, LostAttemptInput, service as execution
 from typing import Literal
 from anp.errors import BusinessError
 from apps.deep_dub.services.artifacts import service as artifacts, ArtifactMetadata
@@ -38,6 +38,11 @@ from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,Transl
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 router.include_router(media_router)
+
+
+@router.post('/attempts/{attempt_id}/close-lost')
+async def close_lost_attempt(attempt_id:str,body:LostAttemptInput,actor=Depends(get_actor)):
+    return await execution.close_lost_attempt(actor,attempt_id,body.lease_ids)
 
 
 @router.post('/runs/{run_id}/review-source-audio')

@@ -18,10 +18,11 @@ from anp.errors import BusinessError
 from anp.sdk.http import async_client
 from apps.deep_dub.services.blocking import await_blocking,file_identity
 from apps.deep_dub.services.model_pool import ModelConfig,OwnedModelServer
+from apps.deep_dub.services.native_guard import NativeGuard
 
 
 class AudioJudgeConfig(ModelConfig):
-    family:Literal['voxtral']='voxtral'
+    family:Literal['voxtral','qwen2_5_omni']='voxtral'
     mmproj:str
     mmproj_sha256:str=Field(pattern=r'^[0-9a-f]{64}$')
     runtime_files:dict[str,str]=Field(min_length=1,max_length=100)
@@ -50,7 +51,7 @@ def configuration():
 
 class OwnedAudioJudge(OwnedModelServer):
     def __init__(self,*args):
-        super().__init__(*args);self.api_key=token_urlsafe(40)
+        super().__init__(*args);self.api_key=token_urlsafe(40);self.guard=None;self.assigned=False
 
     def start(self):
         c=self.config
@@ -62,15 +63,47 @@ class OwnedAudioJudge(OwnedModelServer):
             '--host','127.0.0.1','--port',str(c.port),'--n-gpu-layers','99','--main-gpu','0',
             '--ctx-size',str(c.context_size),'--parallel','1','--threads','4','--no-webui','--api-key-file',str(key_file)]
         self.pool.starting(command)
+        self.guard=NativeGuard()
         try:
             env={k:v for k,v in os.environ.items() if not k.startswith('LLAMA_')}
             env.update(PATH=c.working_directory+os.pathsep+os.environ.get('PATH',''),CUDA_VISIBLE_DEVICES=c.gpu_uuid)
             self.process=subprocess.Popen(command,cwd=c.working_directory,env=env,
                 stdin=subprocess.DEVNULL,stdout=self.logs,stderr=subprocess.STDOUT,
-                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform=='win32' else 0)
+                creationflags=subprocess.CREATE_NO_WINDOW|0x4)  # 原生主线程保持暂停，归入 Job 后才恢复。
+            self.guard.assign(self.process);self.assigned=True
+            self.pool.started(self.process.pid)
+            self.guard.resume(self.process)
         except BaseException:
-            self.pool.spawn_failed();self.logs.close();raise
-        self.pool.started(self.process.pid)
+            if self.process is None:self.pool.spawn_failed()
+            else:
+                if self.assigned:self.guard.terminate()
+                if self.process.poll() is None:self.process.kill()
+                self.process.wait(timeout=10)
+                deadline=time.monotonic()+10
+                while self.assigned and self.guard.accounting()['active_processes']:
+                    if time.monotonic()>deadline:raise BusinessError('启动失败后的听音树尚未停止',409,'OPERATION_NOT_STOPPED')
+                    time.sleep(.02)
+                if any(j['pid']==self.process.pid and j['exit_code'] is None for j in self.pool.data['jobs']):
+                    self.pool.ended(self.process.pid,self.process.returncode)
+                else:self.pool.spawn_failed()
+                self.process=None
+            self.guard.close();self.guard=None;self.logs.close();self.logs=None;raise
+
+    def stop(self):
+        try:
+            if self.process is not None:
+                if self.assigned:self.guard.terminate()
+                elif self.process.poll() is None:self.process.terminate()
+                self.process.wait(timeout=10)
+                deadline=time.monotonic()+10
+                while self.assigned and self.guard.accounting()['active_processes']:
+                    if time.monotonic()>deadline:raise BusinessError('听音模型进程树尚未停止',409,'OPERATION_NOT_STOPPED')
+                    time.sleep(.02)
+                self.exit_code=self.process.returncode
+                self.pool.ended(self.process.pid,self.exit_code);self.process=None
+        finally:
+            if self.guard is not None:self.guard.close();self.guard=None
+            if self.logs is not None:self.logs.close();self.logs=None
 
 
 class AudioJudgeSession:

@@ -64,7 +64,17 @@ class ScoreInput(Contract):
         return self
 
 
+class LostAttemptInput(Contract):
+    lease_ids:list[UUID]=Field(min_length=1,max_length=100)
+
+
 class ExecutionService:
+    async def close_lost_attempt(self,actor,attempt_id,lease_ids):
+        await actor.require('deep_dub.device.manage');await actor.require('deep_dub.task.run')
+        body=LostAttemptInput.model_validate({'lease_ids':lease_ids})
+        return await actor.objects.rpc('deep_dub_close_lost_attempt',p_workspace=actor.workspace_id,
+            p_attempt=identifier(attempt_id),p_lease_ids=[str(lease) for lease in body.lease_ids])
+
     async def queue(self, actor, project_id, payload, request_key=None):
         await actor.require('deep_dub.task.create')
         await actor.require('deep_dub.task.run')

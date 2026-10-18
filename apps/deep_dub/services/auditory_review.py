@@ -9,7 +9,8 @@ from uuid import UUID
 from pydantic import Field
 
 from anp.errors import BusinessError
-from apps.deep_dub.nodes.auditory_review import RULE,analyze,verify
+from apps.deep_dub.nodes.auditory_review import RULE,CONTROLS,analyze,verify
+from apps.deep_dub.nodes.auditory_consistency import summarize as consistency, RULE as CONSISTENCY_RULE
 from apps.deep_dub.nodes.source_review import canonical
 from apps.deep_dub.services import source_recognition
 from apps.deep_dub.services.artifacts import service as artifacts
@@ -52,21 +53,28 @@ async def generate(actor,run_id,payload,request_key=None):
                 raw=canonical(proof)
                 if len(raw)>16*1024**2:raise BusinessError('听音复核证据超过16MiB',422,'AUDIO_JUDGE_RESPONSE_LIMIT')
                 file=Path(folder)/'review.json';file.write_bytes(raw);saved=await artifacts.upload(current,attempt_id,file,'application/json')
-                return StageResult(outputs=[saved['id']]+[control_assets[str(i)]['id'] for i in range(4)])
+                return StageResult(outputs=[saved['id']]+[control_assets[str(i)]['id'] for i in range(len(CONTROLS))])
     result=await run_gpu_stage(actor,run_id,sha256(canonical(inputs)).hexdigest(),handler,config,partition=str(body.source_id),
         request_key=operation_key(request_key),node='source_content_review')
     if result['status']=='succeeded':await scores(actor,result['attempt'])
     return result
 
 
-async def checked(actor,attempt):
-    if len(attempt['outputs'])!=5 or len(set(attempt['outputs']))!=5:raise BusinessError('听音复核需要JSON与四份校准原音',409,'AUDIO_JUDGE_EVIDENCE_INVALID')
-    assets=await actor.objects.select('deep_dub_artifacts',workspace_id='eq.'+actor.workspace_id,id='in.('+','.join(attempt['outputs'])+')')
+def evidence_assets(attempt,assets):
+    count=len(CONTROLS)+1
+    if len(attempt['outputs'])!=count or len(set(attempt['outputs']))!=count:raise BusinessError('听音复核需要JSON与完整校准原音',409,'AUDIO_JUDGE_EVIDENCE_INVALID')
     by_id={a['id']:a for a in assets}
-    if len(assets)!=5 or any(a['stage_attempt_id']!=attempt['id'] or a['project_id']!=attempt['project_id'] for a in assets):
+    if len(assets)!=count or set(by_id)!=set(attempt['outputs']) or any(a['stage_attempt_id']!=attempt['id'] or a['project_id']!=attempt['project_id'] for a in assets):
         raise BusinessError('听音证据归属不一致',409,'AUDIO_JUDGE_EVIDENCE_INVALID')
-    note=by_id[attempt['outputs'][0]]
-    if note['media_type']!='application/json' or note['bytes']>16*1024**2:raise BusinessError('听音证据类型或大小无效',409,'AUDIO_JUDGE_EVIDENCE_INVALID')
+    notes=[a for a in assets if a['media_type']=='application/json']
+    if len(notes)!=1 or notes[0]['bytes']>16*1024**2 or any(a['media_type'] not in ('application/json','audio/wav') for a in assets):
+        raise BusinessError('听音证据类型或大小无效',409,'AUDIO_JUDGE_EVIDENCE_INVALID')
+    return by_id,notes[0]
+
+
+async def checked(actor,attempt):
+    assets=await actor.objects.select('deep_dub_artifacts',workspace_id='eq.'+actor.workspace_id,id='in.('+','.join(attempt['outputs'])+')')
+    by_id,note=evidence_assets(attempt,assets)
     with TemporaryDirectory(prefix='anp-auditory-proof-') as folder:
         file=Path(folder)/'proof.json';await artifacts.download(actor,note['id'],file)
         try:
@@ -79,14 +87,14 @@ async def checked(actor,attempt):
             assert stages[0]['node']=='source_content_review' and stages[0]['partition_key']==inputs['source_id'] and stages[0]['input_hash']==sha256(canonical(inputs)).hexdigest()
             assert all(m['model'][key]==inputs[key] for key in ('family','model_id','weights_sha256','mmproj_sha256','runtime_sha256','runtime_dependencies_sha256','source_revision'))
             assert await await_blocking(verify,m,primary['recognition'])==m['counts']
-            assert set(proof['control_artifact_ids'])=={'0','1','2','3'}
-            assert set(proof['control_artifact_ids'].values())==set(attempt['outputs'][1:])
+            assert set(proof['control_artifact_ids'])=={str(i) for i in range(len(CONTROLS))}
+            assert set(proof['control_artifact_ids'].values())==set(attempt['outputs'])-{note['id']}
             for row in m['controls']:
                 asset=by_id[proof['control_artifact_ids'][str(row['control_index'])]]
                 assert asset['media_type']=='audio/wav' and asset['sha256']==row['result']['audio']['sha256'] and asset['bytes']==row['result']['audio']['bytes']
         except (KeyError,TypeError,ValueError,AssertionError,IndexError):
             raise BusinessError('听音复核与来源、候选、模型或校准原音不一致',409,'AUDIO_JUDGE_EVIDENCE_INVALID') from None
-    return proof
+    return proof,note['id']
 
 
 async def read_latest(actor,project_id,source_id):
@@ -97,19 +105,31 @@ async def read_latest(actor,project_id,source_id):
     if not stages:return None
     attempts=await actor.objects.select('deep_dub_stage_attempts',workspace_id='eq.'+actor.workspace_id,stage_id='in.('+','.join(s['id'] for s in stages)+')',status='eq.succeeded',order='finished_at.desc,id.desc',limit=1)
     if not attempts:return None
-    return {'stage_attempt_id':attempts[0]['id'],'evidence_artifact_id':attempts[0]['outputs'][0],'proof':await checked(actor,attempts[0])}
+    proof,note_id=await checked(actor,attempts[0])
+    return {'stage_attempt_id':attempts[0]['id'],'evidence_artifact_id':note_id,'proof':proof,'consistency':consistency(proof['measurement'])}
 
 
 async def scores(actor,attempt):
-    proof=await checked(actor,attempt);m=proof['measurement']
+    proof,evidence=await checked(actor,attempt);m=proof['measurement'];grounding=consistency(m)
     metrics={**{'source_auditory_'+key+'_windows':value for key,value in m['counts'].items()},
-             'source_auditory_calibration_passed':1,'source_auditory_formal_transcript':None,'source_auditory_speaker_identity':None}
+             'source_auditory_calibration_passed':1,'source_auditory_calibration_taxonomy_ratio':m['calibration_summary']['taxonomy_ratio'],
+             'source_auditory_calibration_critical_excerpts':m['calibration_summary']['critical_excerpt_correct'],
+             'source_auditory_formal_transcript':None,'source_auditory_speaker_identity':None}
     for name,value in metrics.items():
         await execution.record_score(actor,attempt['id'],{'metric':name,'rule_revision':RULE,'measurement_status':'not_measured' if value is None else 'measured',
-            'value':value,'evidence_artifact_id':attempt['outputs'][0] if value is not None else None,'details':{'scope':m['scope']}},name+':'+attempt['id'])
+            'value':value,'evidence_artifact_id':evidence if value is not None else None,
+            'details':{'scope':'仅合成金标准校准，不代表来源正文准确率' if name.startswith('source_auditory_calibration_') else m['scope']}},name+':'+attempt['id'])
+    for name,value in {'source_auditory_identical_excerpt_issues':grounding['identical_excerpt_issues'],
+        'source_auditory_unsubstantiated_windows':grounding['unsubstantiated_window_count']}.items():
+        await execution.record_score(actor,attempt['id'],{'metric':name,'rule_revision':CONSISTENCY_RULE,
+            'measurement_status':'measured','value':value,'evidence_artifact_id':evidence,'details':{'scope':grounding['scope']}},name+':'+attempt['id'])
     if m['counts']['mismatch']:
         stage=(await actor.objects.select('deep_dub_stages',workspace_id='eq.'+actor.workspace_id,id='eq.'+attempt['stage_id']))[0]
         run=(await actor.objects.select('deep_dub_runs',workspace_id='eq.'+actor.workspace_id,id='eq.'+stage['run_id']))[0]
+        unsubstantiated=grounding['identical_excerpt_issues']>0
         await versions.record_audit(actor,attempt['project_id'],{'kind':'source','subject_id':proof['input']['source_id'],'quality_profile_id':run['quality_profile_id'],
-            'rule_key':'transcript_coverage','rule_revision':RULE,'status':'failed','method':'independent_model','evidence_artifact_id':attempt['outputs'][0],
-            'details':{'asr_evidence_artifact_id':proof['input']['asr_evidence_artifact_id'],'counts':m['counts'],'scope':'原ASR候选的直接听音缺陷；不改稿，不签发正式转录通过'}},'source-auditory:'+attempt['id'])
+            'rule_key':'transcript_coverage','rule_revision':CONSISTENCY_RULE if unsubstantiated else RULE,
+            'status':'not_measured' if unsubstantiated else 'failed','method':'technical' if unsubstantiated else 'independent_model','evidence_artifact_id':evidence,
+            'details':{'asr_evidence_artifact_id':proof['input']['asr_evidence_artifact_id'],'counts':m['counts'],'grounding':grounding,
+                'scope':'原模型意见不改写；一致引文不能作为正文差异裁决。旧失败审核保留，当前来源不通过'}},
+            ('source-auditory-grounding:' if unsubstantiated else 'source-auditory:')+attempt['id'])

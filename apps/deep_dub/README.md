@@ -1,5 +1,9 @@
 # deep_dub 译配业务
 
+## 第二套整轨识别
+
+`uv run anp deep_dub runs recognize-source-independent <运行UUID> <来源UUID> --request-key <稳定键>` 以不同家族和权重的 Nemotron 对原始完整 PCM 盲识别；`projects source-independent-recognition <项目UUID> <来源UUID>` 读取冻结证据。配置用途为 `[deep_dub].independent_asr_config`，默认留空，须核实执行器/权重摘要、物理 GPU 和原跨应用协调锁。API、两 CLI 与 Web 共用服务和权限，仍禁止自动改稿、登记正式分段或解除待审。87 块真实执行、日志替换失败保留/恢复与验证见 [第二套整轨识别](../../docs/deep_dub第二套整轨识别.md)。
+
 ## 来源接缝返修
 
 `uv run anp deep_dub runs recheck-source-boundaries <运行UUID> <来源UUID> --request-key <稳定键>` 在本轮待审来源上改窗重识别全部 ASR 块接缝；`--boundary 18` 可指定接缝。`projects source-boundary-recheck <项目UUID> <来源UUID>` 读取冻结证据。默认本地、HTTP CLI 与 Web 共用权限和服务，不改稿或解除待审门禁。真实 43 窗口、停止回执、评分、三入口和失败保留见 [接缝返修](../../docs/deep_dub来源接缝返修.md)。

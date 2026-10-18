@@ -48,6 +48,7 @@ translation_model = "auto"
 # 本机受控TTS配置文件路径；留空时不加载模型。也支持环境变量 ANP_DEEP_DUB_TTS_CONFIG。
 tts_config = ""
 asr_config = ""
+independent_asr_config = ""
 aligner_config = ""
 source_fetch_config = ""
 

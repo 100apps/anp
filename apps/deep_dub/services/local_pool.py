@@ -13,6 +13,7 @@ from uuid import uuid4
 
 from anp import ROOT
 from anp.errors import BusinessError
+from apps.deep_dub.services.atomic_journal import write_json
 
 process_observer=ContextVar('deep_dub_process_observer',default=None)
 
@@ -45,10 +46,7 @@ class LocalCpuPool:
         self.history_name=uuid4().hex+'.json'
 
     def save(self):
-        temporary=self.path.with_suffix('.tmp')
-        with temporary.open('w',encoding='utf8',newline='\n') as output:
-            json.dump(self.data,output,ensure_ascii=False,indent=2);output.flush();os.fsync(output.fileno())
-        os.replace(temporary,self.path)
+        write_json(self.path,self.data)
 
     def __enter__(self):
         self.directory.mkdir(parents=True,exist_ok=True)

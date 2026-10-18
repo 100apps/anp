@@ -41,11 +41,12 @@ def test_edit_distance_empty_transcript_and_unicode_width():
 
 
 @pytest.mark.parametrize('mode',['success','empty','upstream_error','invalid','cancel','changed'])
-def test_actual_asr_http_lifecycle_and_no_expected_text_prompt(tmp_path,monkeypatch,mode):
+@pytest.mark.parametrize('family',['qwen3_asr','nemotron_asr'])
+def test_actual_asr_http_lifecycle_and_no_expected_text_prompt(tmp_path,monkeypatch,mode,family):
     with socket.socket() as port:port.bind(('127.0.0.1',0));number=port.getsockname()[1]
     config=ModelConfig(executable=sys.executable,executable_sha256='a'*64,working_directory=str(tmp_path),
         weights=str(tmp_path/'weights'),weights_sha256='b'*64,source_revision='c'*40,gpu_uuid='GPU-fixture',gpu_index=0,
-        family='qwen3_asr',model_id='fixture-asr',port=number,coordination_locks=[str(tmp_path/'lock')])
+        family=family,model_id='fixture-asr',port=number,coordination_locks=[str(tmp_path/'lock')])
     source=tmp_path/'source.wav'
     with wave.open(str(source),'wb') as stream:
         stream.setnchannels(1);stream.setsampwidth(2);stream.setframerate(24000);stream.writeframes(array('h',[1000,-1000]*1200).tobytes())
@@ -61,6 +62,8 @@ class Handler(BaseHTTPRequestHandler):
  def do_POST(self):
   body=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
   assert set(body['request'])=={'audio','text','language','max_tokens'} and body['request']['text']==''
+  assert body['request']['language']==('zh-CN' if sys.argv[5]=='nemotron_asr' else 'Chinese')
+  assert body['request']['max_tokens']==(0 if sys.argv[5]=='nemotron_asr' else 512)
   with wave.open(body['request']['audio'],'rb') as f:assert f.getframerate()==16000 and f.getnchannels()==1
   Path(sys.argv[3]).write_text('requested')
   if sys.argv[2]=='cancel':time.sleep(60)
@@ -71,7 +74,7 @@ HTTPServer(('127.0.0.1',int(sys.argv[1])),Handler).serve_forever()
     original=subprocess.Popen
     def launch(command,**kwargs):
         if len(command)>2 and command[0]==sys.executable and command[1]=='--config':
-            return original([sys.executable,str(script),str(number),mode,str(marker),str(source)],**kwargs)
+            return original([sys.executable,str(script),str(number),mode,str(marker),str(source),family],**kwargs)
         return original(command,**kwargs)
     monkeypatch.setattr(models.subprocess,'Popen',launch)
     monkeypatch.setattr(models.OwnedModelServer,'owns_listener',lambda self:self.process.poll() is None)
@@ -93,5 +96,7 @@ HTTPServer(('127.0.0.1',int(sys.argv[1])),Handler).serve_forever()
                 assert data['text']==('' if mode=='empty' else '识别文本')
                 assert data['context_prompt']=='' and data['normalized_samples']==1600 and data['operation_stopped'] is True
                 assert data['semantic_review']=='not_measured'
+                assert data['family']==family
+                assert data['rule_revision']==('nemotron-asr-owned-unprompted-v1' if family=='nemotron_asr' else 'qwen3-asr-owned-unprompted-v1')
             assert pool.stopped() and len(pool.data['jobs'])>=3 and all(j['exit_code'] is not None for j in pool.data['jobs'])
     asyncio.run(run())

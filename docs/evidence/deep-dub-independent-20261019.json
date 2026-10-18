@@ -1,0 +1,289 @@
+{
+  "checked_at_utc": "2026-10-18T20:13:12.443704+00:00",
+  "scope": "同一来源完整PCM的第二声学模型识别，不是新整片生产或独立内容验收通过",
+  "project_id": "4f9b0466-356f-4288-be67-4980f676399b",
+  "source_id": "279b2007-7aa4-46b0-add4-facd219757e9",
+  "run_id": "a067cfa8-41ed-4ee6-a4c5-69996512736d",
+  "attempt_id": "fd8b8139-4211-44db-942f-e79f380cdf01",
+  "attempt_no": 2,
+  "evidence_artifact_id": "05d4a343-2fa6-4231-8c94-adb6c9fea608",
+  "input": {
+    "asr_evidence_artifact_id": "facdcf23-e669-4f41-a19f-10e60208e28f",
+    "asr_evidence_sha256": "0f35be49a4d2875e2d2e06bc093e2e9a226e70ce0c7946a0f3ee82f98507224d",
+    "family": "nemotron_asr",
+    "model_id": "anp-nemotron-3-5-asr-q8",
+    "pcm_artifact_id": "ba4e59a2-c609-439f-b30c-647e6a31f583",
+    "reference_evidence_artifact_id": "deb5b846-4c4b-4fce-ace2-c5e83c73bccc",
+    "rule_revision": "source-secondary-nemotron-contiguous-v1",
+    "runtime_sha256": "be820dd89b644b7179614a0444b0be5ad123e81c7794add19619e4cf6a95c81d",
+    "source_id": "279b2007-7aa4-46b0-add4-facd219757e9",
+    "source_revision": "f16f23abf9732b1904fed1f15bddbe9909d21146",
+    "timeout_seconds": 3600,
+    "weights_sha256": "c58b62c1bdd6c5d7b14b08126c5bd16c1289fee6e0d6ac0761dbd3aa6d714935"
+  },
+  "measurement": {
+    "pcm": {
+      "pcm_sha256": "dd37708c36e42a9ec1076b8ed8ef9130136b9aa1aef36faf9658e00294986383",
+      "sample_count": 41380932,
+      "sample_rate": 16000
+    },
+    "model": {
+      "family": "nemotron_asr",
+      "model_id": "anp-nemotron-3-5-asr-q8",
+      "runtime_sha256": "be820dd89b644b7179614a0444b0be5ad123e81c7794add19619e4cf6a95c81d",
+      "source_revision": "f16f23abf9732b1904fed1f15bddbe9909d21146",
+      "weights_sha256": "c58b62c1bdd6c5d7b14b08126c5bd16c1289fee6e0d6ac0761dbd3aa6d714935"
+    },
+    "session": {
+      "initially_unloaded": true,
+      "operation_stopped": true,
+      "owned_server_exit_code": 1,
+      "process_lifecycle_seconds": 23.968000000000757,
+      "requests": 87,
+      "scope": "同一阶段租约内的批量模型进程；不是跨作业后台常驻服务",
+      "session_id": "95139756834e4892be7cb5dad9d46378",
+      "startup_seconds": 0.5309999999990396,
+      "warm_cache_checks": 86
+    },
+    "summary": {
+      "chunk_count": 87,
+      "empty_chunks": 0,
+      "primary_difference_count": 247,
+      "sample_coverage": 1.0,
+      "scope": "不同声学模型在相同连续PCM上的无正文提示识别与差异候选，不证明正文、角色或字幕通过"
+    },
+    "elapsed_seconds": 24.014999999999418,
+    "reference_difference_count": 276,
+    "independent_recognizer": true,
+    "independent_review": false,
+    "source_text_modified": false,
+    "semantic_review": "not_measured",
+    "speaker_review": "not_measured",
+    "subtitle_timing_review": "not_measured"
+  },
+  "model_provenance": {
+    "repo": "audio-cpp/audio.cpp-gguf",
+    "revision": "661a224e9d9adbd49c01626f85e426f5f425d771",
+    "file": "Nemotron-3.5-ASR-Streaming-0.6B-GGUF/nemotron-3.5-asr-streaming-0.6b-q8_0.gguf",
+    "sha256": "c58b62c1bdd6c5d7b14b08126c5bd16c1289fee6e0d6ac0761dbd3aa6d714935",
+    "bytes": 930625888,
+    "download_seconds": 7.375,
+    "verified": true
+  },
+  "gpu": {
+    "gpu_uuid": "GPU-bcd59026-ec5e-1907-e440-f0d5579c1279",
+    "gpu_index": 0,
+    "free_mib": 13814,
+    "allowed_desktop_processes": 21,
+    "external_model_processes": 0,
+    "scope": "物理UUID、完整进程路径白名单及旧路由锁；允许桌面图形进程共用，不代表整卡独占"
+  },
+  "resources": {
+    "lease": {
+      "id": "84dd9a5d-2987-4a57-a239-1cdea10c0044",
+      "status": "released",
+      "operation_stopped": true
+    },
+    "owned_operations": 175,
+    "all_exit_codes_recorded": true,
+    "web_replay_no_extra_process": true
+  },
+  "identity": {
+    "trace_task_user_id": "0e51df86-7d4c-4bc5-8958-34219cc921d4",
+    "attempt_actor_user_id": "fa6c4462-98a4-413c-9018-34aa8dce1395",
+    "session_id": "a067cfa8-41ed-4ee6-a4c5-69996512736d",
+    "langfuse_verified": true,
+    "score_ids": [
+      "04b7f03f-b980-4703-903a-eeb055d6cbb5",
+      "92a69508-51fe-4a86-9b54-6e0cd98dd8c1",
+      "0f6fff73-1c09-41e8-9d00-a82027a4b1db",
+      "e0ae4a0e-b2b4-4c5e-901f-51c9cf4e205e",
+      "b65960c9-cb22-4b50-a291-7b84b24e9392",
+      "b3225444-e088-4fd1-8b51-3aea7c1ff725"
+    ]
+  },
+  "checks": {
+    "two_cli_replay_and_read": true,
+    "source_run_queue_unchanged": true,
+    "no_source_audit_or_segments": true
+  },
+  "retained_failure": {
+    "attempt_id": "0475833c-dac1-4952-854c-677e38d08a4e",
+    "attempt_status": "failed",
+    "test_seconds": 26.4,
+    "completed_chunks": 44,
+    "reason": "第45块FFmpeg启动前原子替换日志WinError5；原占用句柄所属进程未定位",
+    "confirmed_exited_operations": 90,
+    "source_log_sha256": "5e188963ecab820526212dd0e6f7c50492f00dedf5eafe7af6812ebaeec895a7",
+    "old_journal_sha256": "24b3808dff365aae78ec172b765eb4cdfa9064cea52f5ea10feb4f7513d4742c",
+    "operator_user_id": "655a02be-94ea-43a2-a11e-90b36c59d45e",
+    "method": "operator-verified-pre-spawn-journal-failure",
+    "recovered_via_existing_authenticated_device_rpc": true,
+    "old_failed_lease_released": true,
+    "old_owner_and_model_absent": true,
+    "no_exit_code_or_failed_attempt_rewritten": true
+  },
+  "tests": {
+    "final_tools": {
+      "passed": 63,
+      "seconds": 13.85
+    },
+    "database_regression": {
+      "passed": 45,
+      "seconds": 20.68
+    },
+    "real_complete_second_attempt": {
+      "passed": 1,
+      "seconds": 61.91
+    },
+    "production_regression": {
+      "passed": 27,
+      "seconds": 83.76
+    },
+    "actual_windows_handle_reproduction_and_retry": true,
+    "permanent_handle_rejected": true,
+    "typescript_and_build": true
+  },
+  "backup": {
+    "directory": ".local/backups/v3-postgres-before-cloud-20261018T195658Z",
+    "five_database_restores_verified": true,
+    "databases": [
+      {
+        "name": "_supabase",
+        "sha256": "b25304a3acd90c54989e119d949bfbd458778f13fe5cb62fe16fd230fcc49359",
+        "restore_passed": true
+      },
+      {
+        "name": "agent_local",
+        "sha256": "63d4197165fb741ef03eb9ee119af600440671598fa465b6222d3ef1b86907a4",
+        "restore_passed": true
+      },
+      {
+        "name": "langfuse",
+        "sha256": "5e83d3e6dc84ed41717607b7f20249da4e08ce35577749d7a41cf48e006c49ef",
+        "restore_passed": true
+      },
+      {
+        "name": "litellm",
+        "sha256": "022d16c5af65d056c9cd65b90c8773cd0959c3715fcae3eed8e300f1a4ba300d",
+        "restore_passed": true
+      },
+      {
+        "name": "postgres",
+        "sha256": "8395baa909b7fa156f9613d4fd475db3acff788aade18eff78739427eba21215",
+        "restore_passed": true
+      }
+    ]
+  },
+  "state_protection": {
+    "original_thread_values_preserved": 448,
+    "current_threads": 450,
+    "full_parent_and_child_checkpoint_preserved": true,
+    "protected_container_ids_preserved": 27
+  },
+  "production": {
+    "build": "20261018200402-00558d34",
+    "platform": {
+      "tag": "anp/platform:production-20261018200402-00558d34",
+      "id": "sha256:da20fd8145b311e1b9f0b9f8804699b9ef99fc7f0c19250843c9e7279cfe6794",
+      "base_image": "sha256:a5ddb9b758634ff2b4e50d5e65c3865cecc61ca9ac61bdf999d29557613edee2",
+      "upstreams": [
+        {
+          "name": "studio",
+          "commit": "7425d4930528931400fb3e656e860b1094cb224e"
+        },
+        {
+          "name": "dbx",
+          "commit": "c511c90a7cb5165b7847d5a46dc55f0050e7272b"
+        },
+        {
+          "name": "auth",
+          "commit": "ce9a8eee0cc042be8c7a42981a7ddae631e41d91"
+        },
+        {
+          "name": "storage",
+          "commit": "c826a70ac6e6f56d3e6033ccb164fb1ff5282570"
+        },
+        {
+          "name": "meta",
+          "commit": "ecc19497dcfcb4dc6a83d02e49d812f747cbf981"
+        },
+        {
+          "name": "postgrest",
+          "commit": "922f635dc19edc1abdcc614c22535763dc7d4669"
+        },
+        {
+          "name": "langfuse-web",
+          "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+        },
+        {
+          "name": "langfuse-worker",
+          "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+        },
+        {
+          "name": "litellm",
+          "commit": "c143954493baa810e2704917b9cdeb8fb3523718"
+        },
+        {
+          "name": "lens",
+          "commit": "e320cabdf0a67aa52cafe2ede1b4d10ad66dafad"
+        },
+        {
+          "name": "agent",
+          "commit": "41c9c22fdc83d68a2859d0c9a2b627c8615a792f"
+        }
+      ]
+    },
+    "source_sha256": {
+      "nodes/source_independent_asr.py": "fcab85f39f8c4f85f69bd5fa7124d92dcd7635b7c0c7098a6666ca66d39cbda5",
+      "nodes/transcribe.py": "161cfb9ad8d241e4f23602c33a2b4d6546d502b39e3c2f29702f41356f54dcbd",
+      "services/model_pool.py": "0815bef9565c3ce26023c27c43a26bd493ec099a1af945b8d386ab06b816160d",
+      "services/source_independent_asr.py": "76f2112e8f8555bd3cf79a8748238c21fb7dad8341cef1dde048df7f60a626b1",
+      "services/atomic_journal.py": "f58f6da538865f67494b50070f9fa45a8ca5606bcd22bba78e11db684f296976",
+      "services/local_pool.py": "785930d59013a1be15e9b1f11c939598f281ece5c93aaacfa958f8604428405a",
+      "api/router.py": "810af6f4848964c2d6d39754bde05f55951987235a4aaf4751063dbff0e68af7",
+      "cli.py": "c33f6cfc4f6fccfb746b29aa4bb8dd4e049fae3f1ca118f94469b6633b01add9",
+      "migrations/017_source_independent_asr.sql": "8d326f28c05012e3c8ac91955ecd878b26309090dc7aa6879d23892fb4e85865"
+    },
+    "running_image_matches": true,
+    "source_dirty": true,
+    "components": {
+      "auth": "ready",
+      "storage": "ready",
+      "postgrest": "ready",
+      "meta": "ready",
+      "studio": "ready",
+      "dbx": "ready",
+      "langfuse-web": "ready",
+      "langfuse-worker": "ready",
+      "lens": "ready",
+      "litellm": "ready",
+      "agent": "ready"
+    },
+    "new_ghcr_pull": false
+  },
+  "browser": {
+    "same_origin_workbench": true,
+    "continuous_chunks": 87,
+    "empty_chunks": 0,
+    "primary_differences": 247,
+    "reference_differences": 276,
+    "unmeasured_review_visible": true,
+    "model_stop_visible": true,
+    "web_confirmation_and_replay": true,
+    "mobile": {
+      "document_width": 390,
+      "viewport": 390
+    },
+    "screenshot": "deep-dub-independent-browser-20261019.png"
+  },
+  "not_completed": [
+    "不同识别器差异的独立声学/内容裁决",
+    "可信原文、说话人、语义分段与字幕时钟",
+    "完整生产图与V100真实业务执行",
+    "整片质量与RTF≤0.5",
+    "真实B站投稿回执",
+    "新GHCR发布拉取",
+    "本轮未重新实测IDE F5"
+  ]
+}

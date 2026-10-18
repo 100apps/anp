@@ -16,6 +16,7 @@ from apps.deep_dub.services.model_pool import OwnedModelServer
 
 RULE='qwen3-asr-owned-unprompted-v1'
 ALIGN_RULE='qwen3-forced-word-time-v1'
+NEMOTRON_RULE='nemotron-asr-owned-unprompted-v1'
 
 
 async def _ready(server,config,client):
@@ -65,7 +66,7 @@ class AudioModelSession:
 
 async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=300,exact_text=None,session=None):
     aligning=exact_text is not None
-    if config.family!=('qwen3_forced_aligner' if aligning else 'qwen3_asr') or language not in ('Chinese','English') or not 5<=timeout<=900:
+    if config.family not in (('qwen3_forced_aligner',) if aligning else ('qwen3_asr','nemotron_asr')) or language not in ('Chinese','English') or not 5<=timeout<=900:
         raise BusinessError('ASR模型用途、语言或超时不合法',422,'ASR_INPUT_INVALID')
     if aligning and (not isinstance(exact_text,str) or not exact_text.strip() or len(exact_text)>2000):
         raise BusinessError('强制对齐需要有界且明确的给定文本',422,'ALIGN_INPUT_INVALID')
@@ -100,6 +101,7 @@ async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=
             ready=time.monotonic()
             body={'model':config.model_id,'busy_timeout_ms':1000,'request':{'audio':str(normalized),'text':'',
                 'language':language,'max_tokens':512}}
+            if config.family=='nemotron_asr':body['request'].update(language={'English':'en-US','Chinese':'zh-CN'}[language],max_tokens=0)
             if aligning:body['request']={'audio':str(normalized),'text':exact_text,'language':language,'options':{'clamp_timestamps_to_audio':False}}
             async with asyncio.timeout(timeout), client.stream('POST',server.endpoint+'/v1/tasks/run',json=body) as reply:
                 data=bytearray()
@@ -125,7 +127,7 @@ async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=
             if session is not None:session.requests+=1
     finally:
         if session is None:await await_blocking(server.stop)
-    result={'rule_revision':ALIGN_RULE if aligning else RULE,'language_hint':language,
+    result={'rule_revision':ALIGN_RULE if aligning else NEMOTRON_RULE if config.family=='nemotron_asr' else RULE,'language_hint':language,
         'model_id':config.model_id,'family':config.family,'weights_sha256':config.weights_sha256,
         'runtime_sha256':config.executable_sha256,'source_revision':config.source_revision,
         'input':before,'normalized_input':prepared,'normalized_samples':frames,

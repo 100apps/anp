@@ -1,0 +1,44 @@
+{
+  "created_at_utc": "2026-10-18T01:21:43.643082+00:00",
+  "backup_directory": ".local/backups/v3-state-before-cloud-20261018T012143Z",
+  "source_container_ids": {
+    "platform": "8606377f0f76d4087005414199c2c3bde81c5ed834c2b15296970636e3ab6677",
+    "clickhouse": "ade57c5cf0de9d9e6c42cede269acb81c9cde82c22f585740a0fd2f84c4d9d48"
+  },
+  "archives": {
+    "clickhouse": {
+      "file": "clickhouse.tar",
+      "bytes": 1045340160,
+      "sha256": "de662dfb64e4590f79934cfee0e2d8b67b7e3099904c129115b24294597a1071",
+      "entries": 63269,
+      "restore_files_equal": true
+    },
+    "agent": {
+      "file": "agent.tar",
+      "bytes": 17991680,
+      "sha256": "e5dc0ca9f078fd73664d87f5e84352c7f37bbe902d5aa5a75b82d8ad38241a8a",
+      "entries": 42,
+      "restore_files_equal": true
+    },
+    "dbx": {
+      "file": "dbx.tar",
+      "bytes": 983040,
+      "sha256": "5e37d23a2ed57af37ca92d54c50f5a34a85abcd5eef92409bb1ad38fe2802230",
+      "entries": 9,
+      "restore_files_equal": true
+    }
+  },
+  "clickhouse_restore_verified": true,
+  "original_platform_ready": true,
+  "temporary_resources_removed": true,
+  "limitations": [
+    "停平台后分别备份 ClickHouse/Keeper、Agent 与 DBX 文件；不是全部四存储跨库原子快照",
+    "仅同镜像同配置恢复，不证明跨版本升级成功；Agent/DBX 只校验独立卷文件恢复，未用第二个平台进程读写",
+    "私有物理归档及 ClickHouse 环境含敏感数据，禁止提交版本库"
+  ],
+  "clickhouse_tables": 37,
+  "keeper_map_tables": 2,
+  "private_manifest_sha256": "39c03b7b043f24e0bb0fdc5459783739c4e34393e0a1cd807e114459e8088bce",
+  "all_thread_ids_and_values_sha256_preserved": 299,
+  "protected_container_ids_unchanged": 27
+}

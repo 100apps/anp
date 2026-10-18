@@ -90,7 +90,7 @@
       "status": "in_progress",
       "conclusion": null,
       "current_steps": [
-        "拉取中间制品并组装唯一平台镜像"
+        "Run pnpm/setup@v1"
       ]
     }
   ],
@@ -141,5 +141,22 @@
     "extra_swap_enabled": true,
     "image_export_verified": false,
     "note": "仅组装中途可见样本，不代表最终镜像或后续服务检查通过"
-  }
+  },
+  "assembly_terminal": {
+    "name": "拉取中间制品并组装唯一平台镜像",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at": "2026-10-18T00:55:44Z",
+    "completed_at": "2026-10-18T01:21:58Z",
+    "image_export_verified": true
+  },
+  "runtime_bootstrap_terminal": {
+    "name": "生成隔离配置并实启四存储与单平台",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at": "2026-10-18T01:21:58Z",
+    "completed_at": "2026-10-18T01:25:00Z",
+    "scope": "流水线 prepare --mode docker 实际四存储与单平台健康；业务回归和发布另行验收"
+  },
+  "platform_checked_at_utc": "2026-10-18T01:25:27.743945+00:00"
 }

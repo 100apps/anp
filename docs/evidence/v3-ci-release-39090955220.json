@@ -4,7 +4,7 @@
   "url": "https://github.com/100apps/anp/actions/runs/39090955220",
   "status": "queued",
   "conclusion": null,
-  "checked_at_utc": "2026-10-18T02:44:43.017946+00:00",
+  "checked_at_utc": "2026-10-18T02:51:46.078331+00:00",
   "actual_upstream_manifest": {
     "recorded_at": "2026-10-18T02:42:06.056650+00:00",
     "updated_to_remote_head": true,
@@ -86,14 +86,14 @@
     {
       "id": 117567627756,
       "name": "component (lens)",
-      "status": "queued",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 117567627763,
       "name": "component (meta)",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 117567627767,
@@ -104,8 +104,8 @@
     {
       "id": 117567627777,
       "name": "component (langfuse-worker)",
-      "status": "queued",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 117567627783,
@@ -116,14 +116,14 @@
     {
       "id": 117567627790,
       "name": "component (storage)",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 117567627791,
       "name": "component (langfuse-web)",
-      "status": "queued",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 117567627812,
@@ -134,18 +134,100 @@
     {
       "id": 117567627822,
       "name": "component (litellm)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null
     },
     {
       "id": 117567627871,
       "name": "component (postgrest)",
-      "status": "queued",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     }
   ],
   "full_platform_release_verified": false,
   "local_ghcr_pull_verified": false,
   "runtime_performance_verified": false,
-  "limitation": "流水线运行中，不能当作完整平台镜像或本机验收通过；依赖清单来自本轮已完成 Auth 作业日志。"
+  "limitation": "流水线运行中，不能当作完整平台镜像或本机验收通过；依赖清单来自本轮已完成 Auth 作业日志。",
+  "dbx_prebuild_observation": {
+    "checked_at_utc": "2026-10-18T02:47:54.599280+00:00",
+    "job": 117567627812,
+    "source": "原作业可见的步骤 7 与 9 日志；作业仍运行，终态后补完整官方日志",
+    "rejected_candidate_image": "ghcr.io/100apps/anp-build-dbx:run-39088077132",
+    "candidate_digest": "sha256:17e1cb95f1e9464294fa5cc145e8acc34e500e4c46f91b0281a4aaa9e5ae0316",
+    "candidate_pulled": true,
+    "rejected_candidate_untagged": true,
+    "candidate_layers_deleted": true,
+    "cleanup_free_gib": 43.06,
+    "extra_swap_gib": 8,
+    "resource_gate_passed": true,
+    "source_build_started": true,
+    "source_build_completed": false,
+    "limitation": "只有候选删除与磁盘准备得到直接证据；尚未证明新版编译、发布或运行性能。"
+  },
+  "completed_component_evidence": [
+    {
+      "component": "lens",
+      "job": 117567627756,
+      "conclusion": "success",
+      "source_recipe_reused": true,
+      "reuse_log_line": "2026-10-18T02:49:29.2135151Z 已复用同一源码与配方的组件： lens e320cabdf0a67aa52cafe2ede1b4d10ad66dafad",
+      "official_job_log_redacted_sha256": "da8ba2ab813b11ccc42ffb21e65fc443364d049558ab55d9025c71965c0bf889"
+    },
+    {
+      "component": "meta",
+      "job": 117567627763,
+      "conclusion": "success",
+      "source_recipe_reused": true,
+      "reuse_log_line": "2026-10-18T02:45:03.7442561Z 已复用同一源码与配方的组件： meta ecc19497dcfcb4dc6a83d02e49d812f747cbf981",
+      "official_job_log_redacted_sha256": "4763a7ef042f62516b2e14a791233dbb56b41c2d9afd5e5b5be5d79fd4e9cf84"
+    },
+    {
+      "component": "studio",
+      "job": 117567627767,
+      "conclusion": "success",
+      "source_recipe_reused": true,
+      "reuse_log_line": "2026-10-18T02:43:38.7088648Z 已复用同一源码与配方的组件： studio 7425d4930528931400fb3e656e860b1094cb224e",
+      "official_job_log_redacted_sha256": "acb81e6cfd5c1933397d08fe89d50ff119a68648a9030cb597bfb94505a3676c"
+    },
+    {
+      "component": "langfuse-worker",
+      "job": 117567627777,
+      "conclusion": "success",
+      "source_recipe_reused": true,
+      "reuse_log_line": "2026-10-18T02:48:06.6774485Z 已复用同一源码与配方的组件： langfuse-worker e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3",
+      "official_job_log_redacted_sha256": "324f9a1b5b03bdb8e47dd6bd4d6f7cdc21d407f527e37a84eaa9236ae3cc536e"
+    },
+    {
+      "component": "auth",
+      "job": 117567627783,
+      "conclusion": "success",
+      "source_recipe_reused": true,
+      "reuse_log_line": "2026-10-18T02:43:21.6706338Z 已复用同一源码与配方的组件： auth ce9a8eee0cc042be8c7a42981a7ddae631e41d91",
+      "official_job_log_redacted_sha256": "bfe4e5a0c902b5e1082190002955e950fbbe1d9ff73571a07a55cf9dd051e1c6"
+    },
+    {
+      "component": "storage",
+      "job": 117567627790,
+      "conclusion": "success",
+      "source_recipe_reused": true,
+      "reuse_log_line": "2026-10-18T02:45:05.7320239Z 已复用同一源码与配方的组件： storage c826a70ac6e6f56d3e6033ccb164fb1ff5282570",
+      "official_job_log_redacted_sha256": "ff67a602231def7e8ca3b4c4867bef43847f03073fec1941e07a039aaa8e6e77"
+    },
+    {
+      "component": "langfuse-web",
+      "job": 117567627791,
+      "conclusion": "success",
+      "source_recipe_reused": true,
+      "reuse_log_line": "2026-10-18T02:46:37.5827146Z 已复用同一源码与配方的组件： langfuse-web e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3",
+      "official_job_log_redacted_sha256": "8cb0071ae0dcc93fafa28d275f47c02c7c5cd79b14260b84998b2700006ed85f"
+    },
+    {
+      "component": "postgrest",
+      "job": 117567627871,
+      "conclusion": "success",
+      "source_recipe_reused": true,
+      "reuse_log_line": "2026-10-18T02:46:26.3576515Z 已复用同一源码与配方的组件： postgrest 922f635dc19edc1abdcc614c22535763dc7d4669",
+      "official_job_log_redacted_sha256": "773ed2c55336385d6f0158567e08d5763087d162971d5a4d65d9b7d34e3bcc35"
+    }
+  ]
 }

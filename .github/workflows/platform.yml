@@ -89,7 +89,7 @@ jobs:
         with:
           submodules: recursive
       - name: 为镜像组装准备托管运行器磁盘
-        run: sudo --preserve-env=GITHUB_ACTIONS,RUNNER_ENVIRONMENT python3 scripts/prepare_ci_disk.py --minimum-gb 35
+        run: sudo --preserve-env=GITHUB_ACTIONS,RUNNER_ENVIRONMENT python3 scripts/prepare_ci_disk.py --minimum-gb 35 --extra-swap-gb 8
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.12'

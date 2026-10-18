@@ -1,9 +1,11 @@
 """把已验明 SHA 的源码组件组装成一个平台镜像；部分构建不能标记为发布。"""
 import argparse
 import json
+import os
+import threading
 from pathlib import Path
 import subprocess
-from build_components import RECIPES
+from build_components import RECIPES,monitor
 from sync_upstreams import ROOT
 
 
@@ -93,6 +95,13 @@ if __name__=='__main__':
     if set(selected)!=set(RECIPES) and not args.partial:parser.error('正式构建必须包含全部平台组件')
     if args.partial and (args.tag.endswith(':latest') or args.tag.endswith(':v3')):parser.error('部分构建不能使用正式标签')
     file=prepare(selected,args.partial)
-    subprocess.run(['docker','build','--progress','plain','--build-context',
-        'platform_manifest='+str(file.parent),'--build-context',
-        'graph_source='+str(ROOT/'third_party/langgraph/libs/langgraph'),'-f',str(file),'-t',args.tag,str(ROOT)],check=True)
+    stopping=threading.Event();thread=None
+    if os.environ.get('GITHUB_ACTIONS')=='true':
+        thread=threading.Thread(target=monitor,args=(stopping,),daemon=True);thread.start()
+    try:
+        subprocess.run(['docker','build','--progress','plain','--build-context',
+            'platform_manifest='+str(file.parent),'--build-context',
+            'graph_source='+str(ROOT/'third_party/langgraph/libs/langgraph'),'-f',str(file),'-t',args.tag,str(ROOT)],check=True)
+    finally:
+        stopping.set()
+        if thread:thread.join(timeout=1)

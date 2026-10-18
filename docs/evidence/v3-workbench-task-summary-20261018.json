@@ -1,5 +1,5 @@
 {
-  "scope": "工作台完整统计修复，真实 Supabase 和 RLS；API 经进程内 ASGI HTTP 验证，不冒充浏览器与 IDE 验收",
+  "scope": "工作台完整统计修复，真实 Supabase/RLS、CLI 与 Chrome 展示分项证据；非完整平台发布验收",
   "migration": "migrations/003_task_summary.sql",
   "database_target": "当前独立 anp-storage PostgreSQL 的 54323 端口，未操作旧 anp2",
   "fixture": "新建的隔离验收工作空间内 105 条合成任务，状态仅用于统计检查，非真实运行或产物成功证据",
@@ -26,7 +26,7 @@
   },
   "typescript_and_production_build_passed": true,
   "vite_build_seconds": 2.87,
-  "browser_render_verified": false,
+  "browser_render_verified": true,
   "full_platform_release_verified": false,
   "implementation": "统计使用 SECURITY INVOKER 的一次 SQL 聚合、当前 JWT 与工作空间；最近任务列表仍保留分页，统计失败不显示零",
   "cli_parity_check": {
@@ -40,5 +40,25 @@
     "test_passed": 1,
     "seconds": 4.33,
     "cloud_execution_of_extended_cli_test_verified": false
+  },
+  "browser_check": {
+    "checked_at_utc": "2026-10-18T00:10:42.844458+00:00",
+    "summary": {
+      "total": 377,
+      "failed": 0,
+      "pending": 13,
+      "running": 0,
+      "cancelled": 12,
+      "succeeded": 352
+    },
+    "list_length": 100,
+    "browser_observed": {
+      "total": 377,
+      "running": 0,
+      "succeeded": 352,
+      "recent_task_id": "4349a1c5-4b10-40f4-b099-cb06f74b1422"
+    },
+    "screenshot": "docs/evidence/v3-task-summary-browser-20261018.png",
+    "screenshot_sha256": "6ef86904f44e3b9fd6a20ba6bc35b83820b7e6026509d0095d8d3986764b027d"
   }
 }

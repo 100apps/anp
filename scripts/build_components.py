@@ -139,8 +139,15 @@ def monitor(stopping):
         source=Path('/proc/meminfo')
         if source.exists():
             memory={line.split(':')[0]:line.split(':')[1].strip() for line in source.read_text().splitlines()
-                if line.startswith(('MemTotal:','MemAvailable:','SwapFree:'))}
-        print('ANP_BUILD_RESOURCES',json.dumps({'memory':memory,'disk_free_gb':round(shutil.disk_usage(ROOT).free/2**30,2)}),flush=True)
+                if line.startswith(('MemTotal:','MemAvailable:','SwapTotal:','SwapFree:','Dirty:','Writeback:'))}
+        extra={}
+        for name,filename in [('cgroup_memory_current','/sys/fs/cgroup/memory.current'),
+            ('cgroup_memory_events','/sys/fs/cgroup/memory.events'),
+            ('memory_pressure','/proc/pressure/memory'),('io_pressure','/proc/pressure/io')]:
+            try:extra[name]=Path(filename).read_text().strip()
+            except OSError:extra[name]=None
+        print('ANP_BUILD_RESOURCES',json.dumps({'memory':memory,
+            'disk_free_gb':round(shutil.disk_usage(ROOT).free/2**30,2),**extra}),flush=True)
         stopping.wait(30)
 
 

@@ -20,7 +20,53 @@
       "analyze",
       "save"
     ],
-    "artifact_matches_database": true
+    "artifact_matches_database": true,
+    "hot_reload_rehit": {
+      "recorded_at_utc": "2026-10-18T00:07:04.648Z",
+      "frontend": {
+        "source": "console/src/app.tsx",
+        "line": 22,
+        "observed": true,
+        "trigger": "真实修改源码注释，Vite HMR 后再次命中",
+        "proof": [
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t1444 行 (selectable) 会话 ANP 工作台 « ANP V3: 前端热更新调试 已在断点处暂停 ID: list_id_8_8",
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t4242 行 (selectable) 堆栈帧 App，行 22，src/app.tsx ID: list_id_8_9",
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t4232 文本 const {session,loading,error,logout}=useAuth()，调试已暂停 , reason breakpoint，src/app.tsx: 22"
+        ]
+      },
+      "backend": {
+        "source": "src/anp/tasks/service.py",
+        "line": 23,
+        "observed": true,
+        "trigger": "真实修改 Python 注释，重载出新子进程 48312 后发起 HTTP 创建请求再次命中",
+        "proof": [
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t3854 行 (selectable) 会话 Subprocess 48312 因 breakpoint 已暂停 ID: list_id_8_3",
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t5244 行 (selectable) 堆栈帧 create，行 23，service.py ID: list_id_8_4",
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t5247 行 (selectable) 堆栈帧 create，行 14，router.py ID: list_id_8_5",
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t5201 文本 await actor.require(self.app_id+'.task.create')，调试已暂停 , reason breakpoint，service.py: 23"
+        ]
+      },
+      "task": {
+        "task_id": "4349a1c5-4b10-40f4-b099-cb06f74b1422",
+        "status": "succeeded",
+        "nodes": [
+          "normalize",
+          "analyze",
+          "save"
+        ],
+        "artifact_matches_database": true
+      },
+      "source_restoration": {
+        "console/src/app.tsx": {
+          "restored_byte_for_byte": true,
+          "sha256": "3a80de6841958a700187eba08612c873830bc0ce4ab5b903c33e4f9e10677c92"
+        },
+        "src/anp/tasks/service.py": {
+          "restored_byte_for_byte": true,
+          "sha256": "c101a3d95ba0226ae6c2220d07090b9d3805d2d30cd9d3d9b8d105e527805b58"
+        }
+      }
+    }
   },
   "source_map_repair": {
     "webRoot": "${workspaceFolder}/console",
@@ -49,10 +95,20 @@
     "protected_storage_and_legacy_container_ids_unchanged": 21
   },
   "unfinished": [
-    "前后端热更新后再次命中断点",
     "修复前置任务后的完整 IDE 重复 F5",
     "WSL 平台与业务组合真实 F5"
   ],
-  "current_ui_blocker": "Qoder 重复实例提示无法被自动化工具定位为独立目标窗口，已请求用户点击取消；未确认其关闭",
-  "private_proof_sha256": "7330b438672935ab5a8f480f3fa03b318af279a9203c7b5a10358c51789f702c"
+  "current_ui_blocker": null,
+  "private_proof_sha256": "7330b438672935ab5a8f480f3fa03b318af279a9203c7b5a10358c51789f702c",
+  "popup_recovery": {
+    "closed": true,
+    "method": "Computer Use 使用子弹窗截图 ID 和截图内坐标点击取消，后续确认对话框消失",
+    "prior_user_handoff_required": false,
+    "private_screenshot_sha256": "aac08454b967c6920592adb051e757b3c2f13c64b93b75f0ef4171917b337f79"
+  },
+  "desktop_automation_stopped": {
+    "reason": "用户按物理 Escape 停止 Computer Use",
+    "remaining_checks_not_run": true
+  },
+  "updated_at_utc": "2026-10-18T00:09:47.202867+00:00"
 }

@@ -182,5 +182,40 @@
     "existing_docker_credentials_used": true,
     "credentials_changed": false
   },
-  "recorded_at_utc": "2026-10-17T23:56:19.712204+00:00"
+  "recorded_at_utc": "2026-10-17T23:56:19.712204+00:00",
+  "terminal_result": {
+    "checked_at_utc": "2026-10-18T00:12:11.790449+00:00",
+    "run_status": "completed",
+    "run_conclusion": "failure",
+    "platform_job": 117537146112,
+    "platform_conclusion": "failure",
+    "failure_stage": "镜像导出层",
+    "exit_code": 143,
+    "last_build_output": "#58 exporting layers",
+    "termination_at_utc": "2026-10-18T00:10:37.4745276Z",
+    "cause_verified": false,
+    "note": "官方注释仅给退出码 143；没有内存/磁盘/运行器失联根因证据，不能称为 OOM 或磁盘耗尽",
+    "services_and_release_steps_executed": false,
+    "local_redacted_log_sha256": "229f866dfc821519cd39f81cba12262ed7671f795af2b8afac50e04f51db3c89"
+  },
+  "next_repair": {
+    "platform_ci_extra_swap_gib": 8,
+    "free_disk_after_swap_minimum_gib": 35,
+    "assembly_resource_observation": true,
+    "observed_metrics": [
+      "MemAvailable",
+      "SwapTotal",
+      "SwapFree",
+      "Dirty",
+      "Writeback",
+      "disk_free_gb",
+      "cgroup_memory_current",
+      "cgroup_memory_events",
+      "memory_pressure",
+      "io_pressure"
+    ],
+    "tests_passed": 14,
+    "cache_candidate": 39079130050,
+    "full_cloud_retry_verified": false
+  }
 }

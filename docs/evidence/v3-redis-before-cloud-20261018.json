@@ -1,0 +1,40 @@
+{
+  "created_at_utc": "2026-10-18T01:17:22.037384+00:00",
+  "backup_directory": ".local/backups/v3-redis-before-cloud-20261018T011721Z",
+  "source_container_id": "00e2183937d2db26b73ef3c92b55e3684e743871c9b46f0ba623eb948d8a866a",
+  "image_id": "sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0",
+  "bytes": 244161,
+  "sha256": "108df13be027f96a86d3c09111294d09788acb31e59ad89a0316641ef2197abb",
+  "source_keyspace_before_save": {
+    "db0": {
+      "keys": 193,
+      "expires": 119,
+      "avg_ttl": 155385752,
+      "subexpiry": 0
+    }
+  },
+  "rdb_checksum_passed": true,
+  "isolated_restore_passed": true,
+  "temporary_resources_removed": true,
+  "limitations": [
+    "Redis TTL 采用原绝对过期时间，恢复期间已到期的键正常过期",
+    "仅 RDB 数据快照，不覆盖用户/ACL/服务配置/AOF历史，也不是跨存储原子快照",
+    "临时实例仅无网络 Unix Socket 访问；不代表异地灾难恢复或整个平台迁移完成"
+  ],
+  "loaded_keys": 188,
+  "expired_at_load": 5,
+  "rdb_keys_read": 193,
+  "restored_keyspace": {
+    "db0": {
+      "keys": 188,
+      "expires": 114,
+      "avg_ttl": 150701018,
+      "subexpiry": 0
+    }
+  },
+  "expires_after_load": 0,
+  "network_mode": "none",
+  "public_ports": {},
+  "source_container_unchanged_and_running": true,
+  "private_manifest_sha256": "3859c3cb83369a0ae16590c5efcb14051de7a6dd33eccaae725ae4e1ff6c2e97"
+}

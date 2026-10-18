@@ -4,7 +4,7 @@
   "url": "https://github.com/100apps/anp/actions/runs/39090955220",
   "status": "queued",
   "conclusion": null,
-  "checked_at_utc": "2026-10-18T03:15:17.762541+00:00",
+  "checked_at_utc": "2026-10-18T03:30:21.542362+00:00",
   "actual_upstream_manifest": {
     "recorded_at": "2026-10-18T02:42:06.056650+00:00",
     "updated_to_remote_head": true,
@@ -128,8 +128,8 @@
     {
       "id": 117567627812,
       "name": "component (dbx)",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 117567627822,
@@ -142,6 +142,12 @@
       "name": "component (postgrest)",
       "status": "completed",
       "conclusion": "success"
+    },
+    {
+      "id": 117575822504,
+      "name": "platform",
+      "status": "in_progress",
+      "conclusion": null
     }
   ],
   "full_platform_release_verified": false,
@@ -151,7 +157,7 @@
   "dbx_prebuild_observation": {
     "checked_at_utc": "2026-10-18T02:47:54.599280+00:00",
     "job": 117567627812,
-    "source": "原作业可见的步骤 7 与 9 日志；作业仍运行，终态后补完整官方日志",
+    "source": "完整官方 job 日志，已保留脱敏版本及 SHA256",
     "rejected_candidate_image": "ghcr.io/100apps/anp-build-dbx:run-39088077132",
     "candidate_digest": "sha256:17e1cb95f1e9464294fa5cc145e8acc34e500e4c46f91b0281a4aaa9e5ae0316",
     "candidate_pulled": true,
@@ -161,8 +167,8 @@
     "extra_swap_gib": 8,
     "resource_gate_passed": true,
     "source_build_started": true,
-    "source_build_completed": false,
-    "limitation": "只有候选删除与磁盘准备得到直接证据；尚未证明新版编译、发布或运行性能。"
+    "source_build_completed": true,
+    "limitation": "候选回收、资源准备、源码构建和组件推送已通过；不代表平台整合、发布及运行性能通过。"
   },
   "completed_component_evidence": [
     {
@@ -316,5 +322,93 @@
       }
     ],
     "runtime_verified": false
-  }
+  },
+  "dbx_source_build": {
+    "job": 117567627812,
+    "status": "completed",
+    "conclusion": "success",
+    "actual_upstream_commit": "8b4d1fc930fb7bcdf13f03fe1291e89c136e0dc4",
+    "image": "ghcr.io/100apps/anp-build-dbx:run-39090955220",
+    "registry_digest": "sha256:f1c47cfd92c118bc20c5bf1f6d317200d851df6d3860f86d2fa757dee95b9f27",
+    "official_job_log_redacted_sha256": "7b82e5159122f3ad5a929092cb31090680f58ff6e3e1f834627c392db795ea07",
+    "all_job_steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/setup-python@v5",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "复原同一份构建清单",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run python scripts/checkout_dependencies.py .local/ci/dependencies.json",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run docker/login-action@v3",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "检查可复用的同源码组件",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "记录实际运行器资源，辅助区分编译错误和资源问题",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "为源码编译准备托管运行器磁盘",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "从记录的最新源码构建组件",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "保存本次构建的中间制品",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run docker/login-action@v3",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run actions/setup-python@v5",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "runtime_verified": false
+  },
+  "platform_job": 117575822504
 }

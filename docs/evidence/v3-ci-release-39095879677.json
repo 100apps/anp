@@ -1,0 +1,151 @@
+{
+  "run": 39095879677,
+  "source_sha": "af282f7599b96ff1373b7d6e9a1051c3526ccd70",
+  "url": "https://github.com/100apps/anp/actions/runs/39095879677",
+  "status": "queued",
+  "conclusion": null,
+  "checked_at_utc": "2026-10-18T04:11:46.872246+00:00",
+  "component_candidates": [
+    39090955220
+  ],
+  "actual_upstream_manifest": {
+    "recorded_at": "2026-10-18T04:06:17.883795+00:00",
+    "updated_to_remote_head": true,
+    "dependencies": [
+      {
+        "name": "third_party/supabase",
+        "path": "third_party/supabase",
+        "url": "https://github.com/supabase/supabase.git",
+        "commit": "7425d4930528931400fb3e656e860b1094cb224e"
+      },
+      {
+        "name": "third_party/langfuse",
+        "path": "third_party/langfuse",
+        "url": "https://github.com/langfuse/langfuse.git",
+        "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+      },
+      {
+        "name": "third_party/litellm",
+        "path": "third_party/litellm",
+        "url": "https://github.com/BerriAI/litellm.git",
+        "commit": "f370235bb48f5a61e471bf137416ad39bc35a33d"
+      },
+      {
+        "name": "third_party/dbx",
+        "path": "third_party/dbx",
+        "url": "https://github.com/t8y2/dbx.git",
+        "commit": "c511c90a7cb5165b7847d5a46dc55f0050e7272b"
+      },
+      {
+        "name": "third_party/supabase-auth",
+        "path": "third_party/supabase-auth",
+        "url": "https://github.com/supabase/auth.git",
+        "commit": "ce9a8eee0cc042be8c7a42981a7ddae631e41d91"
+      },
+      {
+        "name": "third_party/supabase-storage",
+        "path": "third_party/supabase-storage",
+        "url": "https://github.com/supabase/storage.git",
+        "commit": "c826a70ac6e6f56d3e6033ccb164fb1ff5282570"
+      },
+      {
+        "name": "third_party/postgres-meta",
+        "path": "third_party/postgres-meta",
+        "url": "https://github.com/supabase/postgres-meta.git",
+        "commit": "ecc19497dcfcb4dc6a83d02e49d812f747cbf981"
+      },
+      {
+        "name": "third_party/postgrest",
+        "path": "third_party/postgrest",
+        "url": "https://github.com/PostgREST/postgrest.git",
+        "commit": "922f635dc19edc1abdcc614c22535763dc7d4669"
+      },
+      {
+        "name": "third_party/langgraph",
+        "path": "third_party/langgraph",
+        "url": "https://github.com/langchain-ai/langgraph.git",
+        "commit": "0870f5efcec9d486046ae8abce0735aa7d1f3b79"
+      },
+      {
+        "name": "third_party/lens",
+        "path": "third_party/lens",
+        "url": "https://github.com/BerriAI/lens.git",
+        "commit": "e320cabdf0a67aa52cafe2ede1b4d10ad66dafad"
+      }
+    ]
+  },
+  "jobs": [
+    {
+      "id": 117582096088,
+      "name": "dependencies",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117582262046,
+      "name": "component (langfuse-worker)",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 117582262047,
+      "name": "component (studio)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117582262048,
+      "name": "component (storage)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117582262057,
+      "name": "component (dbx)",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 117582262067,
+      "name": "component (lens)",
+      "status": "queued",
+      "conclusion": null
+    },
+    {
+      "id": 117582262068,
+      "name": "component (langfuse-web)",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 117582262076,
+      "name": "component (meta)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117582262092,
+      "name": "component (postgrest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117582262116,
+      "name": "component (litellm)",
+      "status": "queued",
+      "conclusion": null
+    },
+    {
+      "id": 117582262158,
+      "name": "component (auth)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "checkpoint_exports_enabled": true,
+  "full_platform_export_verified": false,
+  "full_platform_release_verified": false,
+  "local_ghcr_pull_verified": false,
+  "runtime_performance_verified": false,
+  "limitation": "运行中的替代正式流水线；完整分阶段导出、服务/业务检查、发布、本机拉取及性能尚待。"
+}

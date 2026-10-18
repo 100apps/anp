@@ -91,5 +91,37 @@
       }
     ],
     "runtime_verified": false
+  },
+  "additional_review_39095879677": {
+    "checked_at_utc": "2026-10-18T04:11:44.483328+00:00",
+    "scope": "精确 SHA 的静态重点审查；仅 fetch 对象，未 checkout、未运行新源码，不是全面代码审计",
+    "components": [
+      {
+        "component": "litellm",
+        "previous_commit": "a6245c1bbbea9f75d0eae532b8815c71c011b07a",
+        "new_commit": "f370235bb48f5a61e471bf137416ad39bc35a33d",
+        "changed_file_count": 270,
+        "diff_sha256": "d7661b8c70442d8bacbbbdf5f52b13c145c387ebb75e50b4235b4b490ebada38",
+        "dockerfile_changed": false,
+        "working_tree_unchanged": true,
+        "focused_findings": [
+          "Anthropic/Databricks/Bedrock 消息与头部适配，guardrail 不可应用重写时阻断；内部 extras/enterprise 包及锁文件同步更新；大量集成测试更新。",
+          "重点核对 OpenAI 兼容 auto/auto:fast 的调用、身份/会话和日志契约；不将源码审查当作这些运行检查已通过。"
+        ]
+      },
+      {
+        "component": "dbx",
+        "previous_commit": "8b4d1fc930fb7bcdf13f03fe1291e89c136e0dc4",
+        "new_commit": "c511c90a7cb5165b7847d5a46dc55f0050e7272b",
+        "changed_file_count": 28,
+        "diff_sha256": "bff2d74ffe49c858937535a2ebf70edfbefdcb1a2679a2d528008be03a2852af",
+        "dockerfile_changed": false,
+        "working_tree_unchanged": true,
+        "focused_findings": [
+          "表格详情、对象选择与导出、DDL 缓存，以及 Redis 与部分厂商驱动修改。",
+          "对象选择可包含非 TABLE 项；导出选择保留非表名称，DDL 缓存去除空字符。需在隔离样例核对 PostgreSQL 表/视图选择及导出、原有六连接和大值编辑刷新。"
+        ]
+      }
+    ]
   }
 }

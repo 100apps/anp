@@ -110,6 +110,7 @@ jobs:
             docker tag "$REGISTRY/anp-build-$name:run-${{ github.run_id }}" "anp-build/$name:source"
           done
           uv sync --frozen
+          .venv/bin/python scripts/verify_ci_uv_cache.py --output .local/ci/uv-cache-lifecycle.json
           uv run python scripts/bundle_platform.py --tag anp/platform:ci
       - name: 生成隔离配置并实启四存储与单平台
         run: |
@@ -134,9 +135,9 @@ jobs:
         env:
           ANP_DEV_HOST: '0.0.0.0'
         run: |
-          uv run python -m anp.dev.v3 api > .local/ci-api.log 2>&1 &
-          uv run python -m anp.dev.v3 worker > .local/ci-worker.log 2>&1 &
-          uv run python -m anp.dev.v3 frontend-ready > .local/ci-web-ready.log 2>&1
+          .venv/bin/python -m anp.dev.v3 api > .local/ci-api.log 2>&1 &
+          .venv/bin/python -m anp.dev.v3 worker > .local/ci-worker.log 2>&1 &
+          .venv/bin/python -m anp.dev.v3 frontend-ready > .local/ci-web-ready.log 2>&1
       - name: 验收真实管理接口、登录、连接与状态交接契约
         env:
           ANP_V3_PLATFORM_SMOKE: '1'

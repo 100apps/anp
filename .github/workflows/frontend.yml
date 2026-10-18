@@ -11,6 +11,7 @@ on:
       - pnpm-workspace.yaml
       - src/anp/dev/frontend.py
       - scripts/verify_frontend_runtime.py
+      - scripts/verify_ci_uv_cache.py
       - .github/workflows/frontend.yml
       - .github/workflows/platform.yml
 permissions:
@@ -41,6 +42,8 @@ jobs:
           pnpm --dir console build
       - name: 验证工作区隔离和前置任务重复执行
         run: uv run pytest tests/test_v3_frontend.py -q
+      - name: 实测后台启动方式与 uv 缓存收尾
+        run: .venv/bin/python scripts/verify_ci_uv_cache.py --output .local/ci/uv-cache-lifecycle.json
       - name: 真实启动、修改恢复源码并验证 HMR 与进程退出
         env:
           ANP_DEV_HOST: '0.0.0.0'

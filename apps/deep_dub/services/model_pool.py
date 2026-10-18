@@ -20,6 +20,7 @@ from anp.config import value
 from anp.errors import BusinessError
 from apps.deep_dub.services.blocking import file_identity
 from apps.deep_dub.services.local_pool import LocalCpuPool
+from apps.deep_dub.services.listener_owner import listener_owners
 
 
 class ModelConfig(BaseModel):
@@ -164,10 +165,8 @@ class OwnedModelServer:
     def owns_listener(self):
         if self.process is None or self.process.poll() is not None:return False
         # 不能仅凭health响应把端口抢占者认作本次进程。
-        raw=command_output(['powershell','-NoProfile','-NonInteractive','-Command',
-            f'Get-NetTCPConnection -State Listen -LocalPort {self.config.port} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess'])
-        owners={int(x) for x in raw.split()}
-        return owners=={self.process.pid}
+        owners=listener_owners(self.config.port)
+        return self.process.poll() is None and owners=={self.process.pid}
 
     def stop(self):
         p=self.process

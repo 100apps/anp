@@ -1,0 +1,159 @@
+{
+  "checked_at_utc": "2026-10-18T17:58:58.037194+00:00",
+  "scope": "Windows真实监听PID检查优化，完整既有音轨ASR候选对齐重测；不是整片译配RTF",
+  "implementation": "每次GetExtendedTcpTable读取IPv4及IPv6监听PID，精确匹配Popen进程；读取失败拒绝，不缓存归属或授权",
+  "official_api": "https://learn.microsoft.com/windows/win32/api/iphlpapi/nf-iphlpapi-getextendedtcptable",
+  "microbenchmark": {
+    "powershell": {
+      "count": 5,
+      "seconds_min": 3.7044631999997364,
+      "seconds_median": 3.979104300000472,
+      "seconds_max": 4.126732400000037,
+      "all_owners_match": true
+    },
+    "native": {
+      "count": 100,
+      "seconds_min": 0.00017740000112098642,
+      "seconds_median": 0.00018214999909105245,
+      "seconds_max": 0.000528900000063004,
+      "all_owners_match": true
+    }
+  },
+  "before": {
+    "measurement_seconds": 188.375,
+    "model_process_seconds": 188.3279999999977,
+    "request_seconds_sum": 13.4220000000023,
+    "pre_request_checks_seconds_sum": 165.22100000000137
+  },
+  "after": {
+    "measurement_seconds": 17.639999999999418,
+    "model_process_seconds": 17.57800000000134,
+    "request_seconds_sum": 11.579000000001543,
+    "pre_request_checks_seconds_sum": 0.06199999999807915
+  },
+  "test_seconds": {
+    "before": 204.93,
+    "after": 38.93
+  },
+  "unit_tests": {
+    "passed": 28,
+    "seconds": 11.0
+  },
+  "summary": {
+    "chunk_count": 44,
+    "model_requests": 44,
+    "empty_asr_chunks": 0,
+    "word_count": 5654,
+    "invalid_timestamp_chunks": 1,
+    "uncovered_transcript_chunks": 17,
+    "zero_length_content_words": 0,
+    "internal_overlap_samples": 0,
+    "global_start_order_issues": 0,
+    "cross_chunk_overlap_samples": 2560,
+    "scope": "仅给定ASR候选的词边界测量，不证明正文正确、说话人、语义边界或字幕落点通过"
+  },
+  "word_records_identical": true,
+  "word_records_sha256": "523c90476a8134e8beed9e33bf290dc4fea98f06feb3e3740240612dc88b6bcb",
+  "run_id": "4df3963b-c09b-4ac4-83dc-75e48bbfc549",
+  "stage_attempt_id": "1f29c193-7a4e-416d-b2c4-509e4f6bd1df",
+  "evidence_artifact_id": "7515a8a3-e6f2-4c37-9464-5a2aad163d85",
+  "model": {
+    "model_id": "anp-qwen3-aligner-0-6b-f16",
+    "weights_sha256": "d0a96fb96de17686766688b622394877ee5e89b193be7f53de8715d99151a000",
+    "runtime_sha256": "be820dd89b644b7179614a0444b0be5ad123e81c7794add19619e4cf6a95c81d",
+    "source_revision": "f16f23abf9732b1904fed1f15bddbe9909d21146"
+  },
+  "session": {
+    "session_id": "2b7c64e1a300424cb0c5f1019eec650c",
+    "requests": 44,
+    "warm_cache_checks": 43,
+    "initially_unloaded": true,
+    "startup_seconds": 0.5149999999994179,
+    "process_lifecycle_seconds": 17.57800000000134,
+    "owned_server_exit_code": 1,
+    "operation_stopped": true,
+    "scope": "同一阶段租约内的批量模型进程；不是跨作业后台常驻服务"
+  },
+  "three_entry_replay": true,
+  "viewer_read_only": true,
+  "lease_released": true,
+  "owned_jobs": 89,
+  "all_exit_codes_recorded": true,
+  "production": {
+    "id": "20261018175614-cf374396",
+    "platform": {
+      "tag": "anp/platform:production-20261018175614-cf374396",
+      "id": "sha256:fcae880e8b03880d15966a135cb2b42e0c9bf201fb19fc4c28d38cfe711fd45c",
+      "base_image": "sha256:a5ddb9b758634ff2b4e50d5e65c3865cecc61ca9ac61bdf999d29557613edee2",
+      "upstreams": [
+        {
+          "name": "studio",
+          "commit": "7425d4930528931400fb3e656e860b1094cb224e"
+        },
+        {
+          "name": "dbx",
+          "commit": "c511c90a7cb5165b7847d5a46dc55f0050e7272b"
+        },
+        {
+          "name": "auth",
+          "commit": "ce9a8eee0cc042be8c7a42981a7ddae631e41d91"
+        },
+        {
+          "name": "storage",
+          "commit": "c826a70ac6e6f56d3e6033ccb164fb1ff5282570"
+        },
+        {
+          "name": "meta",
+          "commit": "ecc19497dcfcb4dc6a83d02e49d812f747cbf981"
+        },
+        {
+          "name": "postgrest",
+          "commit": "922f635dc19edc1abdcc614c22535763dc7d4669"
+        },
+        {
+          "name": "langfuse-web",
+          "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+        },
+        {
+          "name": "langfuse-worker",
+          "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+        },
+        {
+          "name": "litellm",
+          "commit": "c143954493baa810e2704917b9cdeb8fb3523718"
+        },
+        {
+          "name": "lens",
+          "commit": "e320cabdf0a67aa52cafe2ede1b4d10ad66dafad"
+        },
+        {
+          "name": "agent",
+          "commit": "41c9c22fdc83d68a2859d0c9a2b627c8615a792f"
+        }
+      ]
+    },
+    "running_image_matches": true,
+    "frozen_source_sha256": {
+      "services/model_pool.py": "303cb7a0314346f96d899c0bdf840eca7489d80e48a4f0d9133c79e4090cf5e6",
+      "services/listener_owner.py": "c8f0015ca4bc9d844590b3b955e4a26e198aa80272f828ed0e80d31bb5c1f714"
+    }
+  },
+  "state_protection": {
+    "previous_thread_values_preserved": 434,
+    "current_threads": 436,
+    "protected_container_ids_preserved": 27
+  },
+  "not_completed": [
+    "第18块末词160ms越界",
+    "17块严格标点覆盖差异",
+    "完整生产图与新下载/批量译配/成片质量",
+    "整片RTF≤0.5",
+    "B站投稿回执",
+    "新GHCR发布和拉取"
+  ],
+  "frozen_production_regression": {
+    "passed": 23,
+    "seconds": 40.57,
+    "scope": "Agent持久化、平台、业务及既有来源结果读取；没有再次执行GPU"
+  }
+}

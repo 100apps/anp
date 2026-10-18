@@ -29,6 +29,7 @@ from apps.deep_dub.services.speech import generate as generate_speech
 from apps.deep_dub.services.audio_review import review as review_audio
 from apps.deep_dub.services.audio_timing import analyze as analyze_timing
 from apps.deep_dub.services.source_recognition import recognize as recognize_source,read_latest as read_source_recognition
+from apps.deep_dub.services.source_reference import compare as compare_source_reference,read as read_source_reference
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -65,6 +66,17 @@ def audio_review(ctx:typer.Context,run_id:str,audio_attempt_id:str,timeout_secon
 def source_recognition(ctx:typer.Context,run_id:str,source_id:str,language:str='English',chunk_seconds:int=60,timeout_seconds:int=3600,request_key:str=''):
     body={'source_id':source_id,'language':language,'chunk_seconds':chunk_seconds,'timeout_seconds':timeout_seconds}
     perform(invoke(ctx,'POST',f'/runs/{run_id}/recognize-source',lambda actor:recognize_source(actor,run_id,body,request_key or None),body,request_key))
+
+
+@run_commands.command('compare-source-reference')
+def source_reference(ctx:typer.Context,run_id:str,source_id:str,reference_url:str,request_key:str=''):
+    body={'source_id':source_id,'reference_url':reference_url}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/compare-source-reference',lambda actor:compare_source_reference(actor,run_id,body,request_key or None),body,request_key))
+
+
+@app.command('source-reference')
+def source_reference_result(ctx:typer.Context,attempt_id:str):
+    perform(invoke(ctx,'GET',f'/attempts/{attempt_id}/source-reference',lambda actor:read_source_reference(actor,attempt_id)))
 
 
 @project_commands.command('source-recognition')

@@ -60,3 +60,45 @@ uv run anp deep_dub projects source-recognition PROJECT_ID SOURCE_ID
 
 - [结构化回执及分块摘要](evidence/deep-dub-source-asr-20261019.json)：完整识别文本留在私有 RustFS 产物，本文件只保存计数、区间、摘要、模型和验收状态。
 - [来源识别页面](evidence/deep-dub-source-asr-browser-20261019.png)
+
+## 官方参考比对后续阶段（2026-10-19）
+
+已实际获取 [耶鲁 HIST 119 第1讲官方页](https://oyc.yale.edu/history/hist-119/lecture-1)，其 iframe 嵌入的视频 ID 为 `QXXp1bHd6gI`，与本次来源登记的 YouTube ID 一致。页面有 6 个章节、解析得到 38 个正文段落。这证明官方页面与登记视频 ID 的关系，**没有证明旧本机视频字节与线上完整媒体一致**，也没有重新下载视频。
+
+### 实现与使用
+
+`nodes/source_reference.py` 限量解析官方 HTML，只读取逐字稿正文容器，忽略脚本/样式/导航/页脚，核对嵌入视频和递增的章节时间。章节原报告时间只保留为参考，不写入字幕落点。逐词比对保留大小写/标点前的文本，比较时归一化大小写和弯引号，输出增删替换及附近 ASR 块索引；不修改任一正文，不判定参考方必然正确。
+
+`services/source_reference.py` 使用当前用户身份、工作空间和来源，CPU 阶段租约覆盖获取、解析、比较及私有对象保存。HTTP 仅允许固定耶鲁官方主机及课程路径，无调用者 Cookie/授权头，拒绝重定向、端口、查询、用户信息与超两 MiB 响应；复用 SDK 的经校验证书上下文。原始 HTML 与 JSON 证据均进入 RustFS 私有对象；读取和评分重新核对原 HTML、源 ASR、模型证据、分区及阶段输入摘要。没有新增存储或数据库表。
+
+```text
+POST /api/apps/deep_dub/runs/{run_id}/compare-source-reference
+GET  /api/apps/deep_dub/attempts/{attempt_id}/source-reference
+GET  /api/apps/deep_dub/projects/{project_id}/sources/{source_id}/reference
+
+uv run anp deep_dub runs compare-source-reference RUN_ID SOURCE_ID https://oyc.yale.edu/history/hist-119/lecture-1
+uv run anp --transport http deep_dub runs compare-source-reference RUN_ID SOURCE_ID https://oyc.yale.edu/history/hist-119/lecture-1
+uv run anp deep_dub source-reference ATTEMPT_ID
+```
+
+生产运行必须绑定相同来源。为避免恢复或重写已取消的历史运行，未绑定来源的 **acceptance + approved_versions** 运行可显式引用同项目历史来源做诊断；证据标明 `explicit-historical-source-diagnostic`，不绑定或替换运行来源，不把这种历史资料诊断当作正式新生产。其他未绑定或跨项目引用仍拒绝。
+
+Web 在运行详情提供 shadcn/ui 来源版本选择、官方 URL、差异摘要、参考/ASR 两列和分批展开。输入相同则重放成功阶段。附近块从 1 开始编号，仅帮助回到原音，不是词时间或字幕时间。取消后按钮禁用且证据保留。普通生产模式与显式历史诊断的权限和约束均由服务端执行。
+
+### 已运行验证
+
+| 范围 | 实际结果 |
+| --- | --- |
+| 单元及真实 API/两种 CLI | 22 passed，10.19 秒。覆盖错误来源 ID、重复正文、损坏/截断/超限 HTML、章节时间、数字/否定差异及固定主机限制；真实官方获取与私有对象保存、只读/匿名/跨空间权限、POST/读取重放、租约释放及四项分数 |
+| 实际文本比对 | 官方参考 5669 词，空提示 ASR 5688 词；152 处差异，其中 20 处涉及数字。参考方也含讲者标识和编辑性说明，这些数量不是错误率或漏译率 |
+| 专名线索 | 官方稿的 Shaara、Doctorow 与 ASR 对应词有差异，已定位到第 7–8 音轨块；只记待复核，不自动纠正原文或写通过 |
+| Web | 使用正式同源 `8089/workbench` 生产入口登录，选择来源、展开差异、从 10 项增加至 20 项、点击同输入比对；后台仍仅 1 个尝试，未新取模型结果。取消诊断运行后执行禁用、全部证据可读 |
+| Langfuse | 逐项读回 differences=152、numeric_candidates=20；semantics、subtitle_timing 均为 not_measured；userId/sessionId 与原执行者/run 一致 |
+| 冻结制品及 Compose | 制品 `20261018172206-5ee42a2d` 完成类型/生产构建、重新 Compose 启动；十一组件 ready、平台容器健康，实际运行镜像 ID 与 manifest 一致，四个业务 Python 源文件逐字节相同；UI 由该制品静态包提供 |
+| 制品联合回归及保护 | 22 passed，38.21 秒；原430条线程最终值完整保留，结束432条；27个受保护容器 ID 不变，无本机原生模型进程被启动或停止 |
+
+首轮参考诊断因新运行尚未绑定来源被拒绝，随后将历史诊断限定为上述显式契约；另一次因 CPU 回调误用了 GPU 三参数签名而返回 500，修复后重新执行。原失败/取消运行仍保留，未将其改写成通过。前端独立 8767 预览曾在重新登录时因跨源认证连接失败，未降低 CORS/认证限制；本轮改用正式同源入口验证通过，不将独立预览登录写成通过。
+
+本次没有创建 source 审核、原文分段、译稿、字幕、时间线或成片。差异逐项独立复核、源字词时序、语义分段、正式新下载与媒体身份、完整生产图/批量译配/质量/整片 RTF≤0.5、真实 B站回执仍待完成。新本机制品也尚未进行本轮 GHCR 发布和拉取。
+
+公开证据：[参考比对摘要](evidence/deep-dub-source-reference-20261019.json)、[正式工作台截图](evidence/deep-dub-source-reference-browser-20261019.png)。官方全文和所有差异留在私有对象及本机 `.local/`，不提交到仓库。

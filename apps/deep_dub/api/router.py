@@ -24,6 +24,7 @@ from apps.deep_dub.services.speech import SpeechInput,generate as generate_speec
 from apps.deep_dub.services.audio_review import AudioReviewInput,review as review_audio,read_latest as read_audio_review
 from apps.deep_dub.services.audio_timing import AudioTimingInput,analyze as analyze_audio_timing,read_latest as read_audio_timing
 from apps.deep_dub.services.source_recognition import SourceRecognitionInput,recognize as recognize_source,read_latest as read_source_recognition
+from apps.deep_dub.services.source_reference import SourceReferenceInput,compare as compare_source_reference,read as read_source_reference,read_latest_reference
 from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,BackgroundInput,RenderInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
@@ -33,6 +34,21 @@ router.include_router(media_router)
 @router.post('/runs/{run_id}/recognize-source')
 async def create_source_recognition(run_id:str,body:SourceRecognitionInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
     return await recognize_source(actor,run_id,body.model_dump(),idempotency_key)
+
+
+@router.post('/runs/{run_id}/compare-source-reference')
+async def create_source_reference(run_id:str,body:SourceReferenceInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await compare_source_reference(actor,run_id,body.model_dump(),idempotency_key)
+
+
+@router.get('/attempts/{attempt_id}/source-reference')
+async def get_source_reference(attempt_id:str,actor=Depends(get_actor)):
+    return await read_source_reference(actor,attempt_id)
+
+
+@router.get('/projects/{project_id}/sources/{source_id}/reference')
+async def get_latest_source_reference(project_id:str,source_id:str,actor=Depends(get_actor)):
+    return await read_latest_reference(actor,project_id,source_id)
 
 
 @router.get('/projects/{project_id}/sources/{source_id}/recognition')

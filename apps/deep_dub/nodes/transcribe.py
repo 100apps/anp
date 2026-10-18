@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import time
 import wave
+from uuid import uuid4
 
 import httpx
 
@@ -17,7 +18,52 @@ RULE='qwen3-asr-owned-unprompted-v1'
 ALIGN_RULE='qwen3-forced-word-time-v1'
 
 
-async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=300,exact_text=None):
+async def _ready(server,config,client):
+    deadline=time.monotonic()+30
+    while True:
+        if server.process.poll() is not None:raise BusinessError('ASR模型进程启动后退出',503,'MODEL_START_FAILED')
+        try:
+            if (await client.get(server.endpoint+'/health',timeout=2)).status_code==200:break
+        except httpx.TransportError:pass
+        if time.monotonic()>deadline:raise BusinessError('ASR模型服务启动超时',504,'MODEL_START_TIMEOUT')
+        await asyncio.sleep(.2)
+    if not await await_blocking(server.owns_listener):raise BusinessError('ASR端口不属于本次进程',409,'MODEL_LISTENER_MISMATCH')
+    models=await client.get(server.endpoint+'/v1/models');models.raise_for_status();entries=models.json().get('data')
+    if not isinstance(entries,list) or len(entries)!=1 or entries[0].get('id')!=config.model_id or entries[0].get('loaded') is not False:
+        raise BusinessError('ASR模型身份或惰性状态不符',409,'MODEL_IDENTITY_MISMATCH')
+
+
+class AudioModelSession:
+    """只在同一次阶段/物理GPU租约内复用；每个HTTP客户端仍独立创建和关闭。"""
+    def __init__(self,config,pool,folder):
+        self.config=config;self.pool=pool;self.server=OwnedModelServer(config,pool,folder)
+        self.id=uuid4().hex;self.active=False;self.closed=False;self.requests=0;self.warm_checks=0
+        self.started=None;self.ready=None;self.finished=None
+
+    async def __aenter__(self):
+        self.started=time.monotonic()
+        try:
+            self.server.start()
+            async with async_client(timeout=httpx.Timeout(30,connect=5),trust_env=False) as client:
+                await _ready(self.server,self.config,client)
+            self.ready=time.monotonic();self.active=True;return self
+        except BaseException:
+            await await_blocking(self.server.stop);self.closed=True;raise
+
+    async def __aexit__(self,*args):
+        self.active=False
+        await await_blocking(self.server.stop)
+        self.finished=time.monotonic();self.closed=True
+
+    def receipt(self):
+        if not self.closed or self.ready is None or self.finished is None or not self.pool.stopped():
+            raise BusinessError('批量模型进程尚未确认退出',409,'OPERATION_NOT_STOPPED')
+        return {'session_id':self.id,'requests':self.requests,'warm_cache_checks':self.warm_checks,'initially_unloaded':True,'startup_seconds':self.ready-self.started,
+            'process_lifecycle_seconds':self.finished-self.started,'owned_server_exit_code':self.server.exit_code,
+            'operation_stopped':True,'scope':'同一阶段租约内的批量模型进程；不是跨作业后台常驻服务'}
+
+
+async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=300,exact_text=None,session=None):
     aligning=exact_text is not None
     if config.family!=('qwen3_forced_aligner' if aligning else 'qwen3_asr') or language not in ('Chinese','English') or not 5<=timeout<=900:
         raise BusinessError('ASR模型用途、语言或超时不合法',422,'ASR_INPUT_INVALID')
@@ -36,22 +82,21 @@ async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=
         if audio.getframerate()!=16000 or audio.getnchannels()!=1 or audio.getsampwidth()!=2 or abs(frames/16-probe['duration_ms'])>3:
             raise BusinessError('ASR格式转换改变了输入时长',422,'ASR_DURATION_MISMATCH')
     prepared=await await_blocking(file_identity,normalized)
-    server=OwnedModelServer(config,pool,folder);started=time.monotonic();ready=None
+    if session is not None and (not isinstance(session,AudioModelSession) or not session.active or session.closed
+        or session.pool is not pool or session.config!=config):
+        raise BusinessError('ASR批量会话不属于当前模型和租约',409,'MODEL_SESSION_MISMATCH')
+    server=session.server if session else OwnedModelServer(config,pool,folder)
+    started=time.monotonic();ready=None
     try:
-        server.start()
+        if session is None:server.start()
         async with async_client(timeout=httpx.Timeout(timeout,connect=5),trust_env=False) as client:
-            deadline=time.monotonic()+30
-            while True:
-                if server.process.poll() is not None:raise BusinessError('ASR模型进程启动后退出',503,'MODEL_START_FAILED')
-                try:
-                    if (await client.get(server.endpoint+'/health',timeout=2)).status_code==200:break
-                except httpx.TransportError:pass
-                if time.monotonic()>deadline:raise BusinessError('ASR模型服务启动超时',504,'MODEL_START_TIMEOUT')
-                await asyncio.sleep(.2)
-            if not await await_blocking(server.owns_listener):raise BusinessError('ASR端口不属于本次进程',409,'MODEL_LISTENER_MISMATCH')
-            models=await client.get(server.endpoint+'/v1/models');models.raise_for_status();entries=models.json().get('data')
-            if not isinstance(entries,list) or len(entries)!=1 or entries[0].get('id')!=config.model_id or entries[0].get('loaded') is not False:
-                raise BusinessError('ASR模型身份或惰性状态不符',409,'MODEL_IDENTITY_MISMATCH')
+            if session is None:await _ready(server,config,client)
+            elif not await await_blocking(server.owns_listener):raise BusinessError('ASR端口不属于本次进程',409,'MODEL_LISTENER_MISMATCH')
+            if session is not None and session.requests:
+                models=await client.get(server.endpoint+'/v1/models');models.raise_for_status();entries=models.json().get('data')
+                if not isinstance(entries,list) or len(entries)!=1 or entries[0].get('id')!=config.model_id or entries[0].get('loaded') is not True:
+                    raise BusinessError('批量识别的模型已被卸载或替换',409,'MODEL_SESSION_RESET')
+                session.warm_checks+=1
             ready=time.monotonic()
             body={'model':config.model_id,'busy_timeout_ms':1000,'request':{'audio':str(normalized),'text':'',
                 'language':language,'max_tokens':512}}
@@ -77,22 +122,26 @@ async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=
             completed=time.monotonic()
             if before!=await await_blocking(file_identity,source) or prepared!=await await_blocking(file_identity,normalized):
                 raise BusinessError('识别期间输入音频变化',409,'ASR_INPUT_CHANGED')
-    finally:await await_blocking(server.stop)
+            if session is not None:session.requests+=1
+    finally:
+        if session is None:await await_blocking(server.stop)
     result={'rule_revision':ALIGN_RULE if aligning else RULE,'language_hint':language,
         'model_id':config.model_id,'family':config.family,'weights_sha256':config.weights_sha256,
         'runtime_sha256':config.executable_sha256,'source_revision':config.source_revision,
         'input':before,'normalized_input':prepared,'normalized_samples':frames,
         'startup_seconds':ready-started,'request_with_cold_load_seconds':completed-ready,
-        'process_lifecycle_seconds':time.monotonic()-started,'reported_timing':response.get('timing'),
+        'process_lifecycle_seconds':time.monotonic()-started if session is None else None,'reported_timing':response.get('timing'),
         'owned_server_exit_code':server.exit_code,'operation_stopped':pool.stopped(),
         'semantic_review':'not_measured','speaker_identity':'not_measured','naturalness':'not_measured'}
+    if session is not None:result.update(model_session_id=session.id,request_seconds=completed-ready,
+        scope='批量中的一个请求；进程退出证明以整批session回执为准，不能单独释放租约')
     if aligning:result.update(words=words,supplied_transcript=exact_text,clamp_timestamps_to_audio=False)
     else:result.update(text=text.strip(),context_prompt='')
     return result
 
 
-async def transcribe(config,pool,folder,source,language='Chinese',timeout=300):
-    return await _run_audio_model(config,pool,folder,source,language,timeout)
+async def transcribe(config,pool,folder,source,language='Chinese',timeout=300,*,session=None):
+    return await _run_audio_model(config,pool,folder,source,language,timeout,session=session)
 
 
 async def align_words(config,pool,folder,source,text,language='Chinese',timeout=300):

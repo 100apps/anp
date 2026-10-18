@@ -1876,3 +1876,33 @@
 }
 
 .dd-platform-overlay{position:fixed;inset:0;z-index:45;background:#111214}.dd-session-error{position:absolute;z-index:60;left:25%;right:25%;top:5px;background:#493727;color:#f2d2a2;padding:6px 12px;border:1px solid #886847;border-radius:6px;font-size:11px}
+
+/* 总览只在需要决策时展开，制作画布继续留给画面、时间线与编辑器。 */
+.dd-review-overview { display: grid; gap: 28px; }
+.dd-overview-identity { display: grid; gap: 9px; padding-bottom: 22px; border-bottom: 1px solid var(--border); }
+.dd-overview-identity h2 { font-size: 18px; font-weight: 600; line-height: 1.6; }
+.dd-overview-identity p, .dd-overview-identity code { color: var(--muted-foreground); font-size: 11px; overflow-wrap: anywhere; }
+.dd-overview-identity [data-slot="badge"] { width: fit-content; color: #e7cc93; border-color: #5d4b2f; }
+.dd-overview-section h3 { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+.dd-readiness { margin-bottom: 15px; }
+.dd-readiness > div:first-child { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.dd-readiness span { display: flex; align-items: center; gap: 8px; }
+.dd-readiness strong { font-size: 17px; font-variant-numeric: tabular-nums; }
+.dd-readiness small { color: var(--muted-foreground); font-weight: normal; font-size: 11px; }
+.dd-readiness-bar { height: 4px; background: var(--muted); border-radius: 4px; overflow: hidden; }
+.dd-readiness-bar i { display: block; height: 100%; background: #b5d98a; }
+.dd-readiness button { padding-left: 0; font-size: 11px; color: #b5d98a; }
+.dd-review-queues { display: grid; gap: 9px; }
+.dd-review-queue[data-slot="button"] { width: 100%; height: auto; min-height: 76px; padding: 14px; display: flex; justify-content: space-between; gap: 12px; text-align: left; white-space: normal; background: #1a1c20; }
+.dd-review-queue > span { display: grid; gap: 5px; flex: 1; }
+.dd-review-queue b { font-size: 12px; font-weight: 500; }
+.dd-review-queue small { font-size: 11px; font-weight: normal; line-height: 1.6; color: var(--muted-foreground); }
+.dd-review-queue strong { font-size: 23px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.dd-review-queue.bad strong { color: #f4a5a0; }
+.dd-review-queue.context strong { color: #d8c18e; }
+.dd-review-queue:disabled { opacity: 0.55; }
+.dd-overview-next { display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: #22271d; border: 1px solid #3d4830; border-radius: 8px; color: #bdcdac; }
+.dd-overview-next svg { flex: none; margin-top: 2px; }
+.dd-overview-next p { font-size: 11px; line-height: 1.8; }
+.dd-queue-scope { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; color: #cbe8a5; background: #283121; border-radius: 5px; padding: 4px 8px; font-size: 11px; }
+@media (max-width: 640px) { .dd-tabs { gap: 12px; } .dd-tabs button { gap: 4px; } .dd-tabs button svg { width: 12px; } }

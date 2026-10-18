@@ -18,6 +18,7 @@ import {
   Info,
   Keyboard,
   ListFilter,
+  ListChecks,
   LoaderCircle,
   Maximize2,
   Mic2,
@@ -75,6 +76,7 @@ import {
 import { TimelineClip } from "./timeline-clip";
 import { useTransport } from "./transport";
 import { WavePlayer } from "./wave-player";
+import { ReviewOverview, inReviewQueue, type ReviewFilter } from "./review-overview";
 
 function QualityBadge({ segment }: { segment: Segment }) {
   return (
@@ -150,14 +152,14 @@ export function TaskStudio({
   const initial = new URLSearchParams(location.search).get("segment");
   const [selectedId, setSelectedId] = useState(initial || ""),
     [search, setSearch] = useState(""),
-    [filter, setFilter] = useState("all"),
+    [filter, setFilter] = useState<ReviewFilter>("all"),
     [editorTab, setEditorTab] = useState("edit");
   const [drafts, setDrafts] = useState<Record<string, string>>({}),
     [placement, setPlacement] = useState(""),
     [factor, setFactor] = useState("1.00");
   const [captions, setCaptions] = useState(false),
     [panel, setPanel] = useState<
-      "voices" | "quality" | "strategies" | "help" | null
+      "overview" | "voices" | "quality" | "strategies" | "help" | null
     >(null),
     [mobilePane, setMobilePane] = useState("preview");
   const [confirm, setConfirm] = useState<{
@@ -192,22 +194,22 @@ export function TaskStudio({
     task?.segments.filter(
       (s) =>
         drafts[s.segmentId] !== undefined &&
-        drafts[s.segmentId] !== s.translation,
+        drafts[s.segmentId] !== (s.translation || ""),
     ).length || 0;
   const filtered = useMemo(
     () =>
       task?.segments.filter(
         (s) =>
-          (filter === "all" ||
-            (filter === "issues" && s.quality?.decision === "failed") ||
-            (filter === "unmeasured" && s.quality?.decision !== "passed") ||
-            (filter === "context" && !!s.quality?.advisories?.length)) &&
+          inReviewQueue(s, filter, drafts) &&
           `${s.segmentId} ${s.sourceText} ${s.translation || ""} ${task.speakerNames?.[s.speakerId] || s.speakerId}`
             .toLowerCase()
             .includes(search.toLowerCase()),
       ) || [],
-    [task, search, filter],
+    [task, search, filter, drafts],
   );
+  const queueIndex = filtered.findIndex(s => s.segmentId === segment?.segmentId);
+  const previous = queueIndex >= 0 ? filtered[queueIndex - 1] : undefined;
+  const next = queueIndex >= 0 ? filtered[queueIndex + 1] : filtered[0];
   useEffect(() => {
     if (segment) {
       setPlacement(segment.playbackStartSec.toFixed(2));
@@ -225,8 +227,8 @@ export function TaskStudio({
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirtyCount]);
-  const actions = useRef({ transport, segment, task });
-  actions.current = { transport, segment, task };
+  const actions = useRef({ transport, segment, task, filtered });
+  actions.current = { transport, segment, task, filtered };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
@@ -235,7 +237,7 @@ export function TaskStudio({
         )
       )
         return;
-      const { transport: t, segment: s, task: current } = actions.current;
+      const { transport: t, segment: s, task: current, filtered: queue } = actions.current;
       if (e.code === "Space") {
         e.preventDefault();
         t.toggle();
@@ -249,8 +251,8 @@ export function TaskStudio({
         t.seek(t.position + 5);
       }
       if ((e.key === "j" || e.key === "k") && current && s) {
-        const i = current.segments.indexOf(s) + (e.key === "j" ? 1 : -1),
-          next = current.segments[i];
+        const i = queue.findIndex(item => item.segmentId === s.segmentId) + (e.key === "j" ? 1 : -1),
+          next = queue[i];
         if (next) {
           t.pause();
           setSelectedId(next.segmentId);
@@ -309,9 +311,16 @@ export function TaskStudio({
     transport.seek(s.startSec);
   }
   function navigate(direction: number) {
-    if (!task || !segment) return;
-    const next = task.segments[task.segments.indexOf(segment) + direction];
-    if (next) choose(next);
+    const target = direction > 0 ? next : previous;
+    if (target) choose(target);
+  }
+  function openQueue(value: ReviewFilter) {
+    setSearch("");
+    setFilter(value);
+    setPanel(null);
+    const first = task?.segments.find(s => inReviewQueue(s, value, drafts));
+    if (first) choose(first);
+    setMobilePane("editor");
   }
   async function write(action: string, body: unknown) {
     if(!can(action))throw Error('当前用户无权执行或此业务执行器尚未接入');
@@ -487,6 +496,9 @@ export function TaskStudio({
       </header>
       <div className="dd-subbar">
         <div className="dd-tabs">
+          <button onClick={() => setPanel("overview")}>
+            <ListChecks size={14} />审阅总览
+          </button>
           <button className="active">
             <SlidersHorizontal size={14} />
             译配编辑
@@ -565,21 +577,26 @@ export function TaskStudio({
                 ["context", "情境", context],
                 [
                   "unmeasured",
-                  "未通过",
-                  task.segments.filter((s) => s.quality?.decision !== "passed")
+                  "待验",
+                  task.segments.filter((s) => inReviewQueue(s, "unmeasured", drafts))
                     .length,
                 ],
               ].map(([key, label, count]) => (
                 <button
                   key={key}
                   className={filter === key ? "active" : ""}
-                  onClick={() => setFilter(String(key))}
+                  aria-pressed={filter === key}
+                  onClick={() => setFilter(key as ReviewFilter)}
                 >
                   {label}
                   <span>{count}</span>
                 </button>
               ))}
             </div>
+            {(["drafts", "no-text", "no-audio"] as ReviewFilter[]).includes(filter) && <div className="dd-queue-scope">
+              <span>{filter === "drafts" ? "未保存草稿" : filter === "no-text" ? "缺少译稿" : "缺少配音"} · {filtered.length} 段</span>
+              <Button size="icon-xs" variant="ghost" aria-label="退出审阅队列" onClick={() => setFilter("all")}><X size={12} /></Button>
+            </div>}
           </div>
           <div className="dd-segment-list" ref={rail}>
             {filtered.length ? (
@@ -604,7 +621,7 @@ export function TaskStudio({
                       {clock(s.startSec)} — {clock(s.endSec)}
                     </span>
                     {drafts[s.segmentId] !== undefined &&
-                      drafts[s.segmentId] !== s.translation && (
+                      drafts[s.segmentId] !== (s.translation || "") && (
                         <i title="未保存草稿" className="dd-dirty-dot" />
                       )}
                   </div>
@@ -708,7 +725,7 @@ export function TaskStudio({
                 variant="ghost"
                 size="icon-sm"
                 aria-label="上一段"
-                disabled={index === 0}
+                disabled={!previous}
                 onClick={() => navigate(-1)}
               >
                 <SkipBack />
@@ -730,7 +747,7 @@ export function TaskStudio({
                 variant="ghost"
                 size="icon-sm"
                 aria-label="下一段"
-                disabled={index >= task.segments.length - 1}
+                disabled={!next}
                 onClick={() => navigate(1)}
               >
                 <SkipForward />
@@ -996,19 +1013,19 @@ export function TaskStudio({
                     variant="ghost"
                     size="icon-xs"
                     aria-label="编辑上一段"
-                    disabled={index === 0}
+                    disabled={!previous}
                     onClick={() => navigate(-1)}
                   >
                     <ChevronLeft />
                   </Button>
                   <span>
-                    {index + 1}/{task.segments.length}
+                    <span title={`全片第 ${index + 1} 段；导航沿当前搜索和筛选移动`} aria-live="polite">{queueIndex < 0 ? "筛选外" : `${queueIndex + 1}/${filtered.length}`}</span>
                   </span>
                   <Button
                     variant="ghost"
                     size="icon-xs"
                     aria-label="编辑下一段"
-                    disabled={index >= task.segments.length - 1}
+                    disabled={!next}
                     onClick={() => navigate(1)}
                   >
                     <ChevronRight />
@@ -1032,6 +1049,21 @@ export function TaskStudio({
                     key={key}
                     role="tab"
                     aria-selected={editorTab === key}
+                    id={`dd-tab-${key}`}
+                    aria-controls="dd-editor-content"
+                    tabIndex={editorTab === key ? 0 : -1}
+                    onKeyDown={(event) => {
+                      const keys = ["edit", "versions", "diagnostics"];
+                      let position = keys.indexOf(key);
+                      if (event.key === "ArrowRight") position = (position + 1) % keys.length;
+                      else if (event.key === "ArrowLeft") position = (position + keys.length - 1) % keys.length;
+                      else if (event.key === "Home") position = 0;
+                      else if (event.key === "End") position = keys.length - 1;
+                      else return;
+                      event.preventDefault();
+                      setEditorTab(keys[position]);
+                      document.getElementById(`dd-tab-${keys[position]}`)?.focus();
+                    }}
                     onClick={() => setEditorTab(key)}
                   >
                     {label}
@@ -1041,6 +1073,10 @@ export function TaskStudio({
               </div>
               <div
                 className="dd-editor-body"
+                role="tabpanel"
+                id="dd-editor-content"
+                aria-labelledby={`dd-tab-${editorTab}`}
+                tabIndex={0}
                 key={segment.segmentId}
                 ref={editorBody}
               >
@@ -1678,7 +1714,7 @@ export function TaskStudio({
           </SheetClose>
           <SheetHeader>
             <SheetTitle>
-              {panel === "voices"
+              {panel === "overview" ? "任务审阅总览" : panel === "voices"
                 ? "说话人与固定音色"
                 : panel === "quality"
                   ? "质量与交付"
@@ -1687,7 +1723,7 @@ export function TaskStudio({
                     : "工作区快捷键"}
             </SheetTitle>
             <SheetDescription>
-              {panel === "voices"
+              {panel === "overview" ? "先看准备情况，再进入需要处理的段落。所有数字来自当前任务记录。" : panel === "voices"
                 ? "每集固定音色，情绪参考独立取本段原声。"
                 : panel === "quality"
                   ? "历史证据和当前档位分开显示；未测不视为通过。"
@@ -1697,13 +1733,14 @@ export function TaskStudio({
             </SheetDescription>
           </SheetHeader>
           <div className="dd-sheet-body">
+            {panel === "overview" && <ReviewOverview task={task} drafts={drafts} onQueue={openQueue} />}
             {panel === "help" && (
               <>
                 <div className="dd-shortcuts">
                   {[
                     ["空格", "播放 / 暂停多轨"],
                     ["← / →", "后退 / 前进 5 秒"],
-                    ["J / K", "下一段 / 上一段"],
+                    ["J / K", "当前筛选内：下一段 / 上一段"],
                     ["Ctrl + 滚轮", "缩放时间线"],
                     ["Shift + 滚轮", "横向移动时间线"],
                     ["M / S 按钮", "静音 / 多轨独听"],

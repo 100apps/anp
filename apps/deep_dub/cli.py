@@ -28,6 +28,7 @@ from apps.deep_dub.services.references import prepare as prepare_reference
 from apps.deep_dub.services.speech import generate as generate_speech
 from apps.deep_dub.services.audio_review import review as review_audio
 from apps.deep_dub.services.audio_timing import analyze as analyze_timing
+from apps.deep_dub.services.source_recognition import recognize as recognize_source,read_latest as read_source_recognition
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -58,6 +59,18 @@ def speech(ctx:typer.Context,run_id:str,segment_id:str,translation_id:str,voice_
 def audio_review(ctx:typer.Context,run_id:str,audio_attempt_id:str,timeout_seconds:int=300,request_key:str=''):
     body={'audio_attempt_id':audio_attempt_id,'timeout_seconds':timeout_seconds}
     perform(invoke(ctx,'POST',f'/runs/{run_id}/review-audio',lambda actor:review_audio(actor,run_id,body,request_key or None),body,request_key))
+
+
+@run_commands.command('recognize-source')
+def source_recognition(ctx:typer.Context,run_id:str,source_id:str,language:str='English',chunk_seconds:int=60,timeout_seconds:int=3600,request_key:str=''):
+    body={'source_id':source_id,'language':language,'chunk_seconds':chunk_seconds,'timeout_seconds':timeout_seconds}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/recognize-source',lambda actor:recognize_source(actor,run_id,body,request_key or None),body,request_key))
+
+
+@project_commands.command('source-recognition')
+def source_recognition_result(ctx:typer.Context,project_id:str,source_id:str):
+    perform(invoke(ctx,'GET',f'/projects/{project_id}/sources/{source_id}/recognition',
+        lambda actor:read_source_recognition(actor,project_id,source_id)))
 
 
 @run_commands.command('align-audio')

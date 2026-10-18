@@ -23,10 +23,21 @@ from apps.deep_dub.services.references import ReferencePreparation,prepare as pr
 from apps.deep_dub.services.speech import SpeechInput,generate as generate_speech
 from apps.deep_dub.services.audio_review import AudioReviewInput,review as review_audio,read_latest as read_audio_review
 from apps.deep_dub.services.audio_timing import AudioTimingInput,analyze as analyze_audio_timing,read_latest as read_audio_timing
+from apps.deep_dub.services.source_recognition import SourceRecognitionInput,recognize as recognize_source,read_latest as read_source_recognition
 from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,BackgroundInput,RenderInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 router.include_router(media_router)
+
+
+@router.post('/runs/{run_id}/recognize-source')
+async def create_source_recognition(run_id:str,body:SourceRecognitionInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await recognize_source(actor,run_id,body.model_dump(),idempotency_key)
+
+
+@router.get('/projects/{project_id}/sources/{source_id}/recognition')
+async def get_source_recognition(project_id:str,source_id:str,actor=Depends(get_actor)):
+    return await read_source_recognition(actor,project_id,source_id)
 
 
 @router.post('/runs/{run_id}/align-audio')

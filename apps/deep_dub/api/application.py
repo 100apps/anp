@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 
 from anp.errors import BusinessError
 from apps.deep_dub.api.router import router
+from apps.deep_dub.api.worker import router as worker_router
 
 app=FastAPI(title='deep_dub 业务 API')
 
@@ -14,3 +15,4 @@ async def business_error(request,error):
 
 
 app.include_router(router)
+app.include_router(worker_router)

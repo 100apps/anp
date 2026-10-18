@@ -21,7 +21,7 @@ class DecodeInput(Contract):
     timeout_seconds: int=Field(default=600,ge=1,le=3600,strict=True)
 
 
-async def decode_artifact(actor,run_id,payload,request_key=None):
+async def describe_decode(actor,run_id,payload):
     await actor.require('deep_dub.task.run')
     await actor.require('deep_dub.audit')
     body=DecodeInput.model_validate(payload);run_id=identifier(run_id)
@@ -32,6 +32,12 @@ async def decode_artifact(actor,run_id,payload,request_key=None):
     item=rows[0]
     fingerprint=sha256(json.dumps({'artifact_id':item['id'],'sha256':item['sha256'],'bytes':item['bytes'],
         'rule_revision':'ffmpeg-all-av-v1','timeout_seconds':body.timeout_seconds},sort_keys=True).encode()).hexdigest()
+    return body,item,fingerprint
+
+
+async def decode_artifact(actor,run_id,payload,request_key=None):
+    run_id=identifier(run_id)
+    body,item,fingerprint=await describe_decode(actor,run_id,payload)
     async def handler(current,attempt_id):
         with TemporaryDirectory(prefix='anp-decode-') as directory:
             file=Path(directory)/'input-media'

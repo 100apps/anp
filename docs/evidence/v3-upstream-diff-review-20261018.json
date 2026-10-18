@@ -1,0 +1,51 @@
+{
+  "checked_at_utc": "2026-10-18T02:01:18.948774+00:00",
+  "scope": "精确 SHA 间静态源码差异；仅 fetch 对象，未切换本机 submodule 或运行环境",
+  "components": [
+    {
+      "component": "dbx",
+      "previous_commit": "3ebaf047e09eb7a2fbd7b63ffc51a8cce24fca65",
+      "new_commit": "de00ff46e437ba00423cd4293119857d508dfef8",
+      "changed_files": [
+        "apps/desktop/src/components/layout/ContentArea.vue",
+        "apps/desktop/src/components/layout/__tests__/ContentArea.serverMessages.spec.ts",
+        "apps/desktop/src/composables/__tests__/useSqlExecution.spec.ts",
+        "apps/desktop/src/composables/useSqlExecution.ts",
+        "apps/desktop/src/types/database.ts",
+        "crates/dbx-ai-provider/Cargo.toml",
+        "crates/dbx-ai-provider/src/ai.rs",
+        "crates/dbx-ai-provider/tests/ai_http_proxy.rs",
+        "scripts/ai-proxy-12277/.gitignore",
+        "scripts/ai-proxy-12277/Cargo.lock",
+        "scripts/ai-proxy-12277/Cargo.toml",
+        "scripts/ai-proxy-12277/README.md",
+        "scripts/ai-proxy-12277/remote_mock.py",
+        "scripts/ai-proxy-12277/run_proof.py",
+        "scripts/ai-proxy-12277/src/main.rs",
+        "scripts/ai-proxy-12277/src/registry.rs"
+      ],
+      "diff_sha256": "e75dd68c641a8223c8d0dace4f608294e2bb46a3baa236c0c8cdd7b73b6b54f7"
+    },
+    {
+      "component": "langgraph",
+      "previous_commit": "0eb194fe6093812243de2249e7092029c87c8820",
+      "new_commit": "0870f5efcec9d486046ae8abce0735aa7d1f3b79",
+      "changed_files": [
+        "libs/cli/js-examples/package.json",
+        "libs/cli/js-examples/yarn.lock",
+        "libs/sdk-py/tests/streaming/test_lifecycle_namespace.py"
+      ],
+      "diff_sha256": "8f2824102cf8b23707a5b85f5ecd26212d1a35f2d5b683c2197056a67aac95b1"
+    }
+  ],
+  "langgraph_python_runtime_files_changed": false,
+  "dbx_dockerfile_changed": false,
+  "runtime_acceptance_passed": false,
+  "new_dbx_performance_passed": false,
+  "pending_runtime_checks": [
+    "新版 DBX 下 PostgreSQL NOTICE 先于表格结果时，结束后回到结果/配置的摘要视图",
+    "用户主动选择消息视图后，执行结束不被自动抢回结果视图；错误和仅消息场景可见",
+    "原三种只读查询、并发 1/4 基线复测；不同源码 SHA 的差异不单独归因于 LTO",
+    "新版镜像完整登录/连接/图执行/SSE/权限回归仍须执行；不能由静态差异推定通过"
+  ]
+}

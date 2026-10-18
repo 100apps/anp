@@ -33,3 +33,9 @@ def application(app_id):
     if app_id not in applications():
         raise ValueError(f'应用不存在：{app_id}')
     return applications()[app_id]
+
+
+def business_execution(app_id):
+    """声明业务自行维护执行状态时，通用宿主不得接管其任务或身份。"""
+    manifest=applications().get(app_id,{})
+    return manifest.get('execution',{}).get('owner')=='business'

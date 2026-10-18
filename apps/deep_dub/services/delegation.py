@@ -112,6 +112,25 @@ class JobVault:
             raise BusinessError('作业授权已过期，请重新授权',401,'JOB_GRANT_EXPIRED')
         return record
 
+    def bind_engine(self,token,run_id,attempt_id):
+        self.load(token,run_id,attempt_id)
+        path=self.directory/('engine-'+identifier(attempt_id)+'.json')
+        encoded=canonical({'run_id':identifier(run_id),'attempt_id':identifier(attempt_id),'job_token':token})
+        with tempfile.NamedTemporaryFile(dir=self.directory,delete=False,prefix='.engine-') as output:
+            temporary=Path(output.name);os.chmod(temporary,0o600)
+            output.write(encoded);output.flush();os.fsync(output.fileno())
+        try:os.replace(temporary,path)
+        finally:temporary.unlink(missing_ok=True)
+
+    def engine_token(self,run_id,attempt_id):
+        self.key()
+        try:record=json.loads((self.directory/('engine-'+identifier(attempt_id)+'.json')).read_bytes())
+        except (OSError,ValueError):
+            raise BusinessError('本次尝试尚未由原用户授权引擎执行',401,'INVALID_JOB_GRANT') from None
+        token=record.get('job_token')
+        self.load(token,run_id,attempt_id)
+        return token
+
 
 vault=JobVault()
 
@@ -137,7 +156,9 @@ async def issue_decode_job(actor,run_id,payload,request_key=None,ttl_seconds=300
         'user_id':actor.user['id'],'actor_token':actor.token,'run_id':identifier(run_id),
         'attempt_id':attempt['id'],'stage_id':attempt['stage_id'],'input_hash':fingerprint,
         'parameters':body.model_dump(mode='json'),'request_key':key,'expires_at':expires}
-    return {'run_id':identifier(run_id),'attempt_id':attempt['id'],'expires_at':expires,'job_token':vault.save(record)}
+    token=vault.save(record)
+    vault.bind_engine(token,run_id,attempt['id'])
+    return {'run_id':identifier(run_id),'attempt_id':attempt['id'],'expires_at':expires,'job_token':token}
 
 
 async def dispatch_decode_job(token,run_id,attempt_id):

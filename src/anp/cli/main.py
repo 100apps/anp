@@ -223,4 +223,7 @@ def register_commands(app_id):
     def result(ctx:typer.Context,task_id:str): perform(invoke(ctx,app_id,'result',task_id))
 
 
-for app_id in applications(): register_commands(app_id)
+for app_id,manifest in applications().items():
+    custom=manifest.get('cli',{}).get('entry')
+    if custom:app.add_typer(entrypoint(custom),name=app_id,help=manifest['name'])
+    else:register_commands(app_id)

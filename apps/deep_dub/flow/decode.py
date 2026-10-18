@@ -1,10 +1,8 @@
-"""薄图适配：引擎只带单尝试能力令牌调用业务Worker，不加载业务用户会话。"""
-from dataclasses import dataclass,field
+"""薄图只传运行/尝试ID；引擎凭据来自部署环境，单尝试授权留在业务主机。"""
 from typing import TypedDict,NotRequired
 from uuid import UUID
 
 from langgraph.graph import StateGraph,START,END
-from langgraph.runtime import Runtime
 from langgraph.types import interrupt
 
 from anp.errors import BusinessError
@@ -17,21 +15,13 @@ class DecodeState(TypedDict):
     result:NotRequired[dict]
 
 
-@dataclass
-class JobContext:
-    # LangGraph context不进入节点输入/输出；令牌也不出现在对象repr。
-    job_token:str=field(repr=False)
-
-
-def build_decode_graph(worker_url,checkpointer=None):
-    async def worker(state:DecodeState,runtime:Runtime[JobContext]):
-        context=runtime.context
-        token=context.get('job_token') if isinstance(context,dict) else getattr(context,'job_token',None)
-        if not token:raise BusinessError('需要先为本次调试签发作业授权',401,'INVALID_JOB_GRANT')
+def build_decode_graph(worker_url,checkpointer=None,*,engine_token=None):
+    async def worker(state:DecodeState):
+        if not engine_token:raise BusinessError('图部署缺少引擎服务凭据',503,'ENGINE_CREDENTIAL_MISSING')
         run_id,attempt_id=str(UUID(state['run_id'])),str(UUID(state['attempt_id']))
         async with async_client(timeout=660,trust_env=False) as client:
-            response=await client.post(worker_url.rstrip('/')+f'/internal/deep_dub/jobs/{attempt_id}/decode',
-                headers={'Authorization':'Bearer '+token},json={'run_id':run_id})
+            response=await client.post(worker_url.rstrip('/')+f'/internal/deep_dub/engine-jobs/{attempt_id}/decode',
+                headers={'Authorization':'Bearer '+engine_token},json={'run_id':run_id})
         if not response.is_success:
             # 不回显头、上下文或原始HTTP异常，避免作业令牌进入图追踪。
             try:error=response.json()['error']
@@ -42,7 +32,7 @@ def build_decode_graph(worker_url,checkpointer=None):
             interrupt({'reason':'等待当前执行尝试','attempt_id':attempt_id})
         if result['status']!='succeeded':raise BusinessError('业务阶段未成功，需检查冻结回执',409,'STAGE_NOT_SUCCEEDED')
         return {'result':result}
-    builder=StateGraph(DecodeState,context_schema=JobContext)
+    builder=StateGraph(DecodeState)
     builder.add_node('full_decode',worker)
     builder.add_edge(START,'full_decode');builder.add_edge('full_decode',END)
     return builder.compile(checkpointer=checkpointer)

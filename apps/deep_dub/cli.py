@@ -19,6 +19,7 @@ from apps.deep_dub.services.artifacts import service as artifacts
 from apps.deep_dub.services.observations import deliver_one
 from apps.deep_dub.services.candidates import service as candidates
 from apps.deep_dub.services.processing import decode_artifact
+from apps.deep_dub.services.workbench import RecordKind,service as workbench
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -28,8 +29,10 @@ app.add_typer(run_commands,name='runs')
 
 
 @app.callback()
-def root(ctx:typer.Context, transport:Literal['local','http']='local', endpoint:str=''):
-    ctx.obj={'transport':transport,'endpoint':(endpoint or value('workbench','api_url')).rstrip('/')}
+def root(ctx:typer.Context, transport:Literal['local','http']|None=None, endpoint:str|None=None):
+    parent=ctx.parent.obj if ctx.parent and isinstance(ctx.parent.obj,dict) else {}
+    ctx.obj={'transport':transport or parent.get('transport','local'),
+             'endpoint':(endpoint or parent.get('endpoint') or value('workbench','api_url')).rstrip('/')}
 
 
 def perform(operation):
@@ -74,6 +77,17 @@ async def invoke(ctx, method, path, local, payload=None, request_key=None):
 @project_commands.command('list')
 def list_projects(ctx:typer.Context):
     perform(invoke(ctx,'GET','/projects',projects.list))
+
+
+@project_commands.command('records')
+def project_records(ctx:typer.Context,project_id:str,kind:RecordKind,offset:int=0,limit:int=100):
+    perform(invoke(ctx,'GET',f'/projects/{project_id}/records/{kind}?offset={offset}&limit={limit}',
+        lambda actor:workbench.records(actor,project_id,kind,offset=offset,limit=limit)))
+
+
+@run_commands.command('get')
+def run_detail(ctx:typer.Context,run_id:str):
+    perform(invoke(ctx,'GET','/runs/'+run_id,lambda actor:workbench.run(actor,run_id)))
 
 
 @project_commands.command('create')

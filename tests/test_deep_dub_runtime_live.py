@@ -29,12 +29,12 @@ from apps.deep_dub.services.versions import service as versions
 from tests.test_deep_dub_contracts_live import context,PROFILE,pytestmark
 
 
-async def setup(actor):
+async def setup(actor,mode='local'):
     project=await projects.create(actor,{'name':'[运行器验收] 本机CPU媒体池',
         'source_url':'https://example.invalid/anp-runtime-acceptance'},'runtime-contract-fixture-v1')
     profile=await versions.create_quality_profile(actor,PROFILE)
     run=await execution.queue(actor,project['id'],{'quality_profile_id':profile['id'],
-        'purpose':'acceptance','flow_revision':'local-cpu-runtime-v1','expected_version':project['row_version']})
+        'purpose':'acceptance','mode':mode,'flow_revision':'local-cpu-runtime-v1','expected_version':project['row_version']})
     await execution.start(actor,run['id'])
     return project,profile,run
 

@@ -1,4 +1,4 @@
-"""项目 HTTP 适配；图、节点与工作台完成前暂不注册到运行中的应用目录。"""
+"""业务HTTP适配；工作台、根CLI与独立开发入口共用同一服务契约。"""
 from fastapi import APIRouter, Depends, Header, Request, Query
 from tempfile import TemporaryDirectory
 from pathlib import Path
@@ -14,9 +14,36 @@ from apps.deep_dub.services.artifacts import service as artifacts, ArtifactMetad
 from apps.deep_dub.services.observations import deliver_one
 from apps.deep_dub.services.processing import DecodeInput,decode_artifact
 from apps.deep_dub.services.delegation import issue_decode_job
+from apps.deep_dub.services.workbench import RecordKind,service as workbench
 from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,BackgroundInput,RenderInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
+
+
+@router.get('/tasks')
+async def list_tasks(actor=Depends(get_actor)):
+    return await workbench.tasks(actor)
+
+
+@router.get('/tasks/summary')
+async def task_summary(actor=Depends(get_actor)):
+    return await workbench.summary(actor)
+
+
+@router.get('/tasks/{task_id}')
+async def get_task(task_id:str,actor=Depends(get_actor)):
+    return await workbench.task(actor,task_id)
+
+
+@router.get('/runs/{run_id}')
+async def run_detail(run_id:str,actor=Depends(get_actor)):
+    return await workbench.run(actor,run_id)
+
+
+@router.get('/projects/{project_id}/records/{kind}')
+async def project_records(project_id:str,kind:RecordKind,offset:int=Query(0,ge=0),
+                          limit:int=Query(100,ge=1,le=200),actor=Depends(get_actor)):
+    return await workbench.records(actor,project_id,kind,offset=offset,limit=limit)
 
 
 @router.post('/projects', status_code=201)

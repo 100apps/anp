@@ -10,7 +10,7 @@ from pydantic import BaseModel,Field
 import httpx
 from anp.sdk.http import async_client
 from anp.config import value,secret
-from anp.applications.registry import applications,entrypoint
+from anp.applications.registry import applications,entrypoint,business_execution
 from anp.auth.dependencies import get_actor
 from anp.errors import BusinessError
 from anp.sdk.objects import Objects
@@ -23,6 +23,7 @@ SOURCE_REVISION='api-v3'
 async def reconcile_batch(objects,tasks,concurrency):
     semaphore=asyncio.Semaphore(concurrency)
     async def reconcile(task):
+        if business_execution(task.get('app_id')):return
         async with semaphore:
             try:await reconcile_remote(objects,task)
             except Exception as error:

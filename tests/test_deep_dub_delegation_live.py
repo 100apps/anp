@@ -18,7 +18,7 @@ from anp.sdk.http import async_client
 from anp.errors import BusinessError
 from anp.config import secret, value
 from anp.management.bootstrap import create_user
-from apps.deep_dub.flow.decode import build_decode_graph, JobContext
+from apps.deep_dub.flow.decode import build_decode_graph
 from apps.deep_dub.nodes.media import executable, _run
 from apps.deep_dub.services.artifacts import service as artifacts
 from apps.deep_dub.services.delegation import issue_decode_job, dispatch_decode_job
@@ -86,13 +86,20 @@ def test_real_graph_worker_scope_replay_and_checkpoint_privacy(context, tmp_path
                         headers = {'Authorization':'Bearer '+grant['job_token']}
                         wrong_scope = await client.post(worker_path, json={'run_id':str(uuid4())}, headers=headers)
                         assert wrong_scope.status_code == 403
+                        engine_path=endpoint+f'/internal/deep_dub/engine-jobs/{attempt_id}/decode'
+                        for bearer in (grant['job_token'],tokens['admin'],'fixture-unknown-engine'):
+                            unauthorized=await client.post(engine_path,json=body,headers={'Authorization':'Bearer '+bearer})
+                            assert unauthorized.status_code==401
+                        unissued=await client.post(endpoint+f'/internal/deep_dub/engine-jobs/{uuid4()}/decode',json=body,
+                            headers={'Authorization':'Bearer '+secret('WORKER_TOKEN')})
+                        assert unissued.status_code==401
                         extra = await client.post(worker_path, json={**body, 'artifact_id':str(uuid4())}, headers=headers)
                         assert extra.status_code == 422
                         saver = InMemorySaver()
-                        graph = build_decode_graph(endpoint, saver)
+                        graph = build_decode_graph(endpoint, saver, engine_token=secret('WORKER_TOKEN'))
                         config = {'configurable':{'thread_id':'acceptance-'+str(uuid4())}}
                         initial = {'run_id':run_id, 'attempt_id':attempt_id}
-                        result = await graph.ainvoke(initial, config, context=JobContext(grant['job_token']))
+                        result = await graph.ainvoke(initial, config)
                         assert result['result']['status'] == 'succeeded'
                         replayed = await client.post(worker_path, json=body, headers=headers)
                         assert replayed.status_code == 200
@@ -100,7 +107,7 @@ def test_real_graph_worker_scope_replay_and_checkpoint_privacy(context, tmp_path
                         snapshots = [item async for item in graph.aget_state_history(config)]
                         # 不在失败断言中输出令牌或整个快照。
                         serialized = repr(saver.storage)+repr(saver.writes)+repr(snapshots)
-                        leaked = any(value in serialized for value in (grant['job_token'], tokens['admin']))
+                        leaked = any(value in serialized for value in (grant['job_token'], tokens['admin'],secret('WORKER_TOKEN')))
                         assert not leaked, '凭据进入检查点或图状态'
                         short = await issue_decode_job(actor, run_id, payload, key, ttl_seconds=1)
                         await asyncio.sleep(1.1)

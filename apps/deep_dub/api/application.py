@@ -1,4 +1,4 @@
-"""业务独立开发入口；共享平台身份与服务契约，生产图接入前不注册菜单。"""
+"""业务独立开发入口；正式宿主通过app.toml加载同一API与Worker路由。"""
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 

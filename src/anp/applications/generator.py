@@ -15,7 +15,7 @@ def sync(generate_legacy_platform=False):
     lines.append('export const applications: {id:string;name:string;component:ComponentType}[] = ['+','.join(entries)+'];')
     file=ROOT/'console/src/generated/applications.ts'
     file.parent.mkdir(parents=True,exist_ok=True)
-    file.write_text('\n'.join(lines)+'\n',encoding='utf-8')
+    file.write_bytes(('\n'.join(lines)+'\n').encode('utf-8'))
     generated=['console/src/generated/applications.ts']
     if generate_legacy_platform:
         from anp.management.platform import generate

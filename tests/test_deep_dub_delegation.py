@@ -85,3 +85,18 @@ foreach($item in $items) {
     check=subprocess.run(['powershell','-NoProfile','-NonInteractive','-Command',script],
         env=environment,capture_output=True,timeout=20,creationflags=subprocess.CREATE_NO_WINDOW)
     assert check.returncode==0, '目录或已有文件仍向其他账号授予读取权限'
+
+
+def test_engine_binding_requires_live_matching_original_grant(grant):
+    vault,record,run,attempt=grant
+    token=vault.save(record)
+    with pytest.raises(BusinessError):vault.engine_token(run,attempt)
+    vault.bind_engine(token,run,attempt)
+    assert vault.engine_token(run,attempt)==token
+    with pytest.raises(BusinessError) as scope:vault.engine_token(str(uuid4()),attempt)
+    assert scope.value.code=='JOB_SCOPE_MISMATCH'
+    expired=vault.save({**record,'expires_at':time.time()-1})
+    path=vault.directory/('engine-'+attempt+'.json')
+    path.write_text(json.dumps({'run_id':run,'attempt_id':attempt,'job_token':expired}),encoding='utf8')
+    with pytest.raises(BusinessError) as deadline:vault.engine_token(run,attempt)
+    assert deadline.value.code=='JOB_GRANT_EXPIRED'

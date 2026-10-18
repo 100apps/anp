@@ -1,0 +1,129 @@
+{
+  "recorded_at_utc": "2026-10-18T10:20:22.996263+00:00",
+  "tools_suite": {
+    "passed": 19,
+    "seconds": 2.12
+  },
+  "live_suite": {
+    "passed": 15,
+    "seconds": 54.42
+  },
+  "targeted_http_task_agent_verification": {
+    "passed": 1,
+    "seconds": 4.63
+  },
+  "frontend_build": {
+    "typescript_and_vite_passed": true,
+    "large_chunk_warning": true
+  },
+  "registered_host_and_root_cli": {
+    "checked_at_utc": "2026-10-18T10:02:21.955567+00:00",
+    "scope": "真实8181 API/8282 Worker与根CLI；现有验收记录只读，不代表完整UI/生产流程",
+    "registered_application_discovered": true,
+    "record_types_checked": [
+      "artifacts",
+      "audio_attempts",
+      "audits",
+      "backgrounds",
+      "emotion_references",
+      "renders",
+      "scores",
+      "segment_sets",
+      "segments",
+      "selections",
+      "sources",
+      "speakers",
+      "stage_attempts",
+      "timeline_revisions",
+      "translations",
+      "voice_references"
+    ],
+    "authenticated_summary_and_task_and_run": true,
+    "anonymous_denied": true,
+    "viewer_summary_read": true,
+    "legacy_worker_paths_denied": true,
+    "own_worker_router_registered": true,
+    "root_cli_default_local_equals_http": true,
+    "root_cli_run_detail_equals_http": true,
+    "parent_http_options_inherited": true,
+    "child_explicit_local_override": true,
+    "sample_run_id": "ca5c9e7c-30cc-4db3-a64c-f7e42e93b9a2"
+  },
+  "actual_platform_agent": {
+    "checked_at_utc": "2026-10-18T10:19:49.683007+00:00",
+    "scope": "实际单平台容器Agent→挂载业务解码子图→8282 Worker→两秒验收媒体；不是整片生产",
+    "run_id": "6293754f-9b1e-4c0e-87eb-f30593264d5d",
+    "attempt_id": "f87069ef-1c0a-436a-97a8-ca0ba70c276e",
+    "thread_id": "7e4fcc9c-9fee-5437-b1bd-88207b25c719",
+    "agent_run_id": "01a14e86-4a8a-76c0-b8bc-b7c6cea91f1e",
+    "agent_status": "success",
+    "business_stage_status": "succeeded",
+    "business_run_status_before_cleanup": "running",
+    "business_task_mode": "http",
+    "generic_coordinator_must_not_complete_business": true,
+    "technical_verified_at_before_cleanup": null,
+    "credentials_in_thread_state": false,
+    "device_lease_released": true,
+    "original_user_id": "655a02be-94ea-43a2-a11e-90b36c59d45e",
+    "job_token_sent_to_agent": false,
+    "agent_credential_source": "平台原有环境，不放入运行上下文"
+  },
+  "initial_real_agent_failure_retained": [
+    {
+      "thread_id": "18e6c3e4-92da-505d-aa7a-54f1f276fc04",
+      "credential_field_paths": [
+        ".metadata.job_token"
+      ],
+      "all_old_job_tokens_expired": true
+    }
+  ],
+  "browser": {
+    "url": "http://127.0.0.1:8089/workbench/apps/deep_dub",
+    "real_login_and_project_creation": true,
+    "created_project_id": "32b88d67-3435-484e-8cd8-d65713d24d22",
+    "real_score_and_not_measured_visible": true,
+    "screenshot": "deep-dub-workbench-scores-20261018.png",
+    "screenshot_sha256": "dedce1b17cc2077c6b6d6fea3ecddea4f250512787ddf5d0d39029813ce2b014",
+    "reconnect_button_fault_interaction_verified": false
+  },
+  "business_counts": {
+    "runs": 98,
+    "devices": 1,
+    "device_leases": 50,
+    "audio_attempts": 0,
+    "backgrounds": 0,
+    "renders": 0,
+    "publications": 0,
+    "audits": 0
+  },
+  "run_purposes": {
+    "acceptance": 98
+  },
+  "run_statuses": {
+    "cancelled": 98
+  },
+  "lease_statuses": {
+    "released": 50
+  },
+  "outbox_statuses": {
+    "sent": 172
+  },
+  "original_thread_count": 305,
+  "original_thread_values_identical": true,
+  "current_thread_count": 308,
+  "protected_container_ids_preserved": 27,
+  "platform_container_id_preserved": true,
+  "platform_image": "ghcr.io/100apps/anp-platform@sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3",
+  "state_backups": [
+    "v3-state-before-deep-workbench-20261018.json",
+    "deep-dub-business-agent-backup-20261018.json"
+  ],
+  "limitations": [
+    "工作台当前为项目管理/只读版本与证据，未实现多轨媒体transport/编辑/试听",
+    "Agent只有解码子图；Studio真实交互、完整生产图、模型执行与远端设备仍待",
+    "首轮Agent context凭据问题已实测发现并修正；历史线程保留，旧单尝试令牌到期，运行已取消",
+    "业务宿主扩展当前以F5源码运行；固定平台镜像未临时打补丁，业务由挂载目录加载",
+    "服务间凭据只能领取业务主机已有原用户授权；跨主机授权文件/轮换/到期清理仍待",
+    "没有生产运行、真实配音、背景、成片、整片RTF通过或B站回执"
+  ]
+}

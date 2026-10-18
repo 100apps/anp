@@ -9,6 +9,7 @@ from anp.sdk.tracing import task_attributes
 from anp.errors import BusinessError
 from anp.sdk.objects import Objects
 from anp.execution.nodes import execute_node
+from anp.applications.registry import applications,entrypoint,business_execution
 
 app=FastAPI(title='ANP 节点 Worker',version='0.2.0')
 SOURCE_REVISION='worker-v2'
@@ -28,6 +29,8 @@ class StudioTaskRequest(BaseModel):
 async def studio_task(app_id:str,body:StudioTaskRequest,authorization: str | None=Header(None)):
     if not secrets.compare_digest(authorization or '', 'Bearer '+secret('WORKER_TOKEN')):
         raise BusinessError('Worker 访问凭据不正确',401,'UNAUTHENTICATED')
+    if business_execution(app_id):
+        raise BusinessError('该业务必须使用自己的身份委派入口',403,'BUSINESS_EXECUTION_REQUIRED')
     from anp.auth.identity import actor_from_token
     from anp.applications.registry import application,entrypoint
     # Studio 是持有引擎令牌的本机管理员开发入口；身份由 Worker 决定。
@@ -59,6 +62,8 @@ async def health():
 async def execute(app_id:str,node:str,body:NodeRequest,authorization: str | None=Header(None)):
     if not secrets.compare_digest(authorization or '', 'Bearer '+secret('WORKER_TOKEN')):
         raise BusinessError('Worker 访问凭据不正确',401,'UNAUTHENTICATED')
+    if business_execution(app_id):
+        raise BusinessError('该业务必须使用自己的身份委派入口',403,'BUSINESS_EXECUTION_REQUIRED')
     objects=Objects(secret('SERVICE_ROLE_KEY'))
     task_id=body.state.get('task_id','')
     rows=await objects.select('tasks',id='eq.'+task_id,app_id='eq.'+app_id)
@@ -73,3 +78,8 @@ async def execute(app_id:str,node:str,body:NodeRequest,authorization: str | None
             await objects.patch('tasks',{'status':'failed','error':str(error)[:1000]},id='eq.'+task_id)
         raise
     return {'output':output,'trace_attributes':task_attributes(task)}
+
+
+for manifest in applications().values():
+    worker=manifest.get('worker',{})
+    if worker.get('entry'):app.include_router(entrypoint(worker['entry']))

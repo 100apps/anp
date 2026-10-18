@@ -2,9 +2,9 @@
   "run": 39090955220,
   "source_sha": "fc994ddfa831fd7a5000c10c2d1e2ccb89eede33",
   "url": "https://github.com/100apps/anp/actions/runs/39090955220",
-  "status": "queued",
-  "conclusion": null,
-  "checked_at_utc": "2026-10-18T03:30:21.542362+00:00",
+  "status": "completed",
+  "conclusion": "failure",
+  "checked_at_utc": "2026-10-18T04:03:46.837019+00:00",
   "actual_upstream_manifest": {
     "recorded_at": "2026-10-18T02:42:06.056650+00:00",
     "updated_to_remote_head": true,
@@ -146,14 +146,14 @@
     {
       "id": 117575822504,
       "name": "platform",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "failure"
     }
   ],
   "full_platform_release_verified": false,
   "local_ghcr_pull_verified": false,
   "runtime_performance_verified": false,
-  "limitation": "流水线运行中，不能当作完整平台镜像或本机验收通过；依赖清单来自本轮已完成 Auth 作业日志。",
+  "limitation": "本轮正式流水线终态失败：十组件成功，但平台导出层时运行器关闭；服务、业务及发布均未执行，本机验收未完成。",
   "dbx_prebuild_observation": {
     "checked_at_utc": "2026-10-18T02:47:54.599280+00:00",
     "job": 117567627812,
@@ -410,5 +410,125 @@
     ],
     "runtime_verified": false
   },
-  "platform_job": 117575822504
+  "platform_job": 117575822504,
+  "platform_job_evidence": {
+    "job": 117575822504,
+    "status": "completed",
+    "conclusion": "failure",
+    "all_job_steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "为镜像组装准备托管运行器磁盘",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run astral-sh/setup-uv@v6",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "复原同一份构建清单",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run python scripts/checkout_dependencies.py .local/ci/dependencies.json",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run docker/login-action@v3",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "拉取中间制品并组装唯一平台镜像",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      {
+        "name": "生成隔离配置并实启四存储与单平台",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "Run pnpm/setup@v1",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "验证工作台 TypeScript 与生产构建",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "验证前端独立启动、真实 HMR 与退出",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "在镜像外启动示例 API、Worker 与工作台",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "验收真实管理接口、登录、连接与状态交接契约",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "验收后发布平台镜像",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "保存构建清单到作业摘要（镜像内也包含该清单）",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "Post Run docker/login-action@v3",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "Post Run astral-sh/setup-uv@v6",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "Post Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "failed_step": "拉取中间制品并组装唯一平台镜像",
+    "exit_code": 143,
+    "official_reason": "The runner has received a shutdown signal",
+    "oom_kill_directly_confirmed": false,
+    "observed_phase": "exporting layers",
+    "agent_install_and_dependency_check_completed": true,
+    "service_business_publish_steps_executed": false,
+    "official_job_log_redacted_sha256": "dfb1d990ff06a18d8ab31b70b87329d11f0bf77a1bbb433833a09991a7e5d7a3",
+    "resource_samples": 47,
+    "min_available_memory_kib": 513352,
+    "min_free_swap_kib": 144,
+    "min_free_disk_gib": 20.06,
+    "limitation": "交换空间接近耗尽与高 I/O 压力是直接采样；143 关闭信号没有确认内核 OOM 根因。未导出最终镜像，未发布新平台。"
+  }
 }

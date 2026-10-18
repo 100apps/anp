@@ -3,6 +3,8 @@ import argparse
 import json
 import os
 import threading
+import time
+from uuid import uuid4
 from pathlib import Path
 import subprocess
 from build_components import RECIPES,monitor
@@ -33,7 +35,8 @@ def prepare(components,partial=False):
             'command':(config.get('Entrypoint') or [])+(config.get('Cmd') or []),
             'working_dir':config.get('WorkingDir') or '/'}
         stages.append(f'FROM {tag} AS component_{index}')
-        copies.append(f'COPY --from=component_{index} / /opt/anp/roots/{name}/')
+        parent='platform_base' if index==0 else f'platform_root_{index-1}'
+        copies.append(f'FROM {parent} AS platform_root_{index}\nCOPY --from=component_{index} / /opt/anp/roots/{name}/')
     graph_revision=subprocess.check_output(['git','-C',str(ROOT/'third_party/langgraph'),'rev-parse','HEAD'],text=True).strip()
     metadata['components']['agent']={'image':'platform-python-runtime','revision':graph_revision,'rootfs':False,
         'environment':['PATH=/opt/anp/.venv/bin:/usr/local/bin:/usr/bin:/bin','ANP_ROOT=/opt/anp',
@@ -54,11 +57,11 @@ def prepare(components,partial=False):
             {'name':name,'commit':item['revision']} for name,item in metadata['components'].items()]}
     (destination/'dependencies.json').write_text(json.dumps(dependencies,ensure_ascii=False,indent=2),encoding='utf8')
     dockerfile='\n'.join(stages)+'''
-FROM python:3.12-slim
+FROM python:3.12-slim AS platform_base
 RUN apt-get update && apt-get install -y --no-install-recommends nginx tini ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=ghcr.io/astral-sh/uv:0.9.16 /uv /usr/local/bin/uv
 WORKDIR /opt/anp
-'''+ '\n'.join(copies)+'''
+'''+ '\n'.join(copies)+f'\nFROM platform_root_{len(components)-1} AS platform_runtime\n'+'''
 COPY pyproject.toml uv.lock ./
 COPY src ./src
 RUN uv sync --frozen --no-dev
@@ -85,10 +88,37 @@ ENTRYPOINT ["/usr/bin/tini","-g","--","python","-m","anp_platform.supervisor"]
     return path
 
 
+def build_image(dockerfile,tag,checkpoints=(),*,context=ROOT,build_contexts=None):
+    """逐个物化大层，再导出最终镜像；任何检查点失败都不更新最终标签。"""
+    if any(not name.startswith('platform_root_') or not name.removeprefix('platform_root_').isdigit() for name in checkpoints):
+        raise ValueError('检查点只能是生成器的组件根目录阶段')
+    build_contexts=build_contexts or {}
+    command=['docker','build','--progress','plain']
+    for name,path in build_contexts.items():command+=['--build-context',name+'='+str(path)]
+    command+=['-f',str(dockerfile)]
+    owned=[];durations=[];identity=uuid4().hex
+    try:
+        for index,target in enumerate(checkpoints):
+            temporary=f'anp-build/platform-checkpoint:{identity}-{index}'
+            started=time.monotonic()
+            subprocess.run(command+['--target',target,'-t',temporary,str(context)],check=True)
+            owned.append(temporary)
+            durations.append({'target':target,'seconds':round(time.monotonic()-started,3)})
+        started=time.monotonic()
+        subprocess.run(command+['-t',tag,str(context)],check=True)
+        durations.append({'target':'final','seconds':round(time.monotonic()-started,3)})
+        return durations
+    finally:
+        # 仅移除本次 UUID 下已成功建立的临时标签；不清理其他镜像、缓存或卷。
+        for temporary in owned:
+            subprocess.run(['docker','image','rm',temporary],check=False)
+
+
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--components',nargs='+',choices=sorted(RECIPES))
     parser.add_argument('--tag',default='anp/platform:v3')
+    parser.add_argument('--checkpoint-exports',action='store_true',help='依次导出组件根目录层，避免最终集中导出的峰值压力')
     parser.add_argument('--partial',action='store_true',help='仅做整合测试；组件缺失时健康接口仍返回 503')
     args=parser.parse_args()
     selected=args.components or list(RECIPES)
@@ -99,9 +129,10 @@ if __name__=='__main__':
     if os.environ.get('GITHUB_ACTIONS')=='true':
         thread=threading.Thread(target=monitor,args=(stopping,),daemon=True);thread.start()
     try:
-        subprocess.run(['docker','build','--progress','plain','--build-context',
-            'platform_manifest='+str(file.parent),'--build-context',
-            'graph_source='+str(ROOT/'third_party/langgraph/libs/langgraph'),'-f',str(file),'-t',args.tag,str(ROOT)],check=True)
+        checkpoints=tuple(f'platform_root_{i}' for i in range(len(selected))) if args.checkpoint_exports else ()
+        durations=build_image(file,args.tag,checkpoints,build_contexts={
+            'platform_manifest':file.parent,'graph_source':ROOT/'third_party/langgraph/libs/langgraph'})
+        print(json.dumps({'checkpoint_exports':args.checkpoint_exports,'build_stages':durations},ensure_ascii=False))
     finally:
         stopping.set()
         if thread:thread.join(timeout=1)

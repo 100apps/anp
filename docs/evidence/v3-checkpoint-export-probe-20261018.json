@@ -1,0 +1,46 @@
+{
+  "checked_at_utc": "2026-10-18T04:02:51.797143+00:00",
+  "file_metadata_and_contents_equal": true,
+  "hardlinks_preserved": true,
+  "entries": 12,
+  "execution_order": [
+    "staged",
+    "direct"
+  ],
+  "fixture_command_unique_per_run": true,
+  "stages": [
+    [
+      {
+        "target": "platform_root_0",
+        "seconds": 0.875
+      },
+      {
+        "target": "platform_root_1",
+        "seconds": 0.578
+      },
+      {
+        "target": "final",
+        "seconds": 0.61
+      }
+    ],
+    [
+      {
+        "target": "final",
+        "seconds": 0.5
+      }
+    ]
+  ],
+  "snapshot_sha256": "202fe959b69ddc28640dc7691e3a9ccb42024c13202eeb1aad42a7b57b8417c0",
+  "scope": "真实小型 Docker 镜像的导出等价检查；不等于完整平台低内存导出或运行验收通过",
+  "protected_existing_container_ids_unchanged": 46,
+  "failure_gate_tests": "30 passed in 0.07s，包含检查点失败不触及最终标签及原有绑定/资源/复用检查",
+  "full_platform_export_verified": false,
+  "runtime_performance_verified": false,
+  "basis": {
+    "observed_failure_run": 39090955220,
+    "official_solver_parallelism_docs": "https://docs.docker.com/build/buildkit/configure/",
+    "official_exporter_source": "https://github.com/moby/buildkit/blob/master/exporter/containerimage/writer.go",
+    "official_blob_chain_source": "https://github.com/moby/buildkit/blob/master/cache/blobs.go"
+  },
+  "reasoning": "上游导出会物化层链；分阶段将每个大组件层先导出并留在缓存，尝试减少最终同时物化多层的峰值。这是待完整 CI 验证的方案，未把 solver 的 max-parallelism 当作导出并发限制。"
+}

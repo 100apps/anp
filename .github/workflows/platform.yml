@@ -111,7 +111,8 @@ jobs:
           done
           uv sync --frozen
           .venv/bin/python scripts/verify_ci_uv_cache.py --output .local/ci/uv-cache-lifecycle.json
-          uv run python scripts/bundle_platform.py --tag anp/platform:ci
+          .venv/bin/python scripts/verify_bundle_checkpoints.py --output .local/ci/checkpoint-export-probe.json
+          .venv/bin/python scripts/bundle_platform.py --tag anp/platform:ci --checkpoint-exports
       - name: 生成隔离配置并实启四存储与单平台
         run: |
           uv run python -c "from pathlib import Path;p=Path('config/deployment.example.toml').read_text();Path('config/deployment.local.toml').write_text(p.replace('127.0.0.1:8080','127.0.0.1:8089').replace('ghcr.io/100apps/anp-platform:latest','anp/platform:ci').replace(':8180',':8181').replace(':8281',':8282').replace(':5173',':5174'))"

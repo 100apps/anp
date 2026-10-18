@@ -1,6 +1,6 @@
 # deep_dub 数据关系与流程草案
 
-状态：**已开始实现。平台 GHCR 制品本机实启与 85 项回归已通过；apps/deep_dub 首批 7 张基础表、受限项目 RPC 和项目服务已落地，独立库 8 项检查及真实 Supabase 项目契约通过。其余关系、完整图/CLI/Web 和整片生产均未完成。**
+状态：**已开始实现。平台 GHCR 制品本机实启与 85 项回归已通过；apps/deep_dub 已部署 23 张关系表、受限项目/审核/选版/时间线契约，25 项独立库检查及 3 项真实 Supabase 的 ASGI 契约检查通过。设备租约等剩余关系、完整图/CLI/Web 和整片生产均未完成。**
 
 ## 已核对的参考
 
@@ -13,7 +13,7 @@
 
 ## 业务代码边界
 
-业务目录为 `apps/deep_dub/`，目标包含 `api/`、`services/`、`nodes/`、`flow/`、`ui/`、`migrations/`、`evaluators.py` 和 `app.toml`；当前只落地关系基础与项目契约，业务不烘焙进平台镜像。
+业务目录为 `apps/deep_dub/`，目标包含 `api/`、`services/`、`nodes/`、`flow/`、`ui/`、`migrations/`、`evaluators.py` 和 `app.toml`；当前落地关系与版本契约，业务不烘焙进平台镜像。
 
 - API、HTTP CLI 和 Web 调用同一组业务服务。
 - 本地 CLI 默认直接调用这些服务和节点，不要求启动业务 Web/API/Worker；仍连接平台身份、存储及模型依赖。
@@ -44,6 +44,7 @@
 | `deep_dub_audio_attempts` | segment、translation、voice_reference、emotion_reference、生成/派生关系、参数、WAV artifact、时长 | 生成次数和派生变速次数分别记录；绑定准确文本、固定音色和逐段情绪版本 |
 | `deep_dub_audits` | 被审对象、输入摘要、审核器/规则版本、状态、证据 artifact、人工/自动来源 | 内容、数字/专名、时序、原语泄漏等独立记录；未知不当作通过 |
 | `deep_dub_selections` | segment、revision、translation、audio_attempt、审核集合、选择人/时间 | 选择保留历史；原子 RPC 校验候选属于同段、同版本并具备必需审核 |
+| `deep_dub_selection_audits` | selection、audit；两端带工作空间与项目复合外键 | 已实施的补充关联表，封存选版后不可追加或删改 |
 | `deep_dub_timeline_revisions` | 项目、分段集、revision、输入摘要、创建人 | 不可变组合；当前指针用期望版本提交，render 引用准确修订 |
 | `deep_dub_timeline_clips` | timeline 修订、segment、selection、播放起点、组合参数 | 复合外键校验空间/项目/分段/选版归属；位移和组合变化触发组合审核 |
 | `deep_dub_backgrounds` | source、revision、分离/净化 artifact、模型/分块计划、泄漏和事件审核 | 区分原版、处理版、诊断 removed 轨；诊断轨不参与成片 |
@@ -145,4 +146,4 @@
 
 ## 工作台源码功能对齐补充
 
-已进一步只读核对旧页面、九项写操作、媒体/波形接口与底层合成/播放位置规则，详见 [工作台功能对齐](deep_dub工作台功能对齐.md)。本次仅补设计：质量档位、逐段情绪参考、独立时间线修订及策略对照；未创建业务代码或数据库迁移。默认沿用 high 质量档位，不允许为 RTF 自动降档。
+早前只读取证阶段核对了旧页面、九项写操作、媒体/波形接口与底层合成/播放位置规则，详见 [工作台功能对齐](deep_dub工作台功能对齐.md)。其时仅补设计；当前关系实施状态以本文开头和 `apps/deep_dub/README.md` 为准，工作台仍未实现。默认沿用 high 质量档位，不允许为 RTF 自动降档。

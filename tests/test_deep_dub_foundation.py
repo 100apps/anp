@@ -1,11 +1,10 @@
 """在独立 PostgreSQL 临时库真实验证迁移、权限与跨空间关系；原业务库不写入。"""
-from pathlib import Path
 from uuid import uuid4
-import json
 import os
 import subprocess
 import tomllib
 from string import Template
+from urllib.parse import urlsplit
 
 import psycopg
 from psycopg import sql
@@ -23,15 +22,29 @@ MIGRATION = ROOT/'apps/deep_dub/migrations/001_foundation.sql'
 def database():
     deployment = tomllib.loads((ROOT/'config/deployment.local.toml').read_text())
     source = Template(deployment['storage']['postgres_host_url']).substitute(POSTGRES_PASSWORD=secret('POSTGRES_PASSWORD'))
+    location=urlsplit(source)
+    assert location.hostname=='127.0.0.1' and location.port==54323,'独立库验收只允许指定的本机 V3 存储'
     name = 'anp_deep_dub_test_'+uuid4().hex
-    backup = json.loads((ROOT/'.local/v3-latest-postgres-backup.json').read_text())
-    archive = ROOT/backup['backup_directory']/next(x['file'] for x in backup['databases'] if x['database']=='postgres')
+    directory=ROOT/'.local/deep-dub-test-fixtures';directory.mkdir(parents=True,exist_ok=True)
+    archive=directory/(name+'.dump')
+    restore_list='/tmp/'+name+'.list'
     with psycopg.connect(source, autocommit=True) as admin:
         admin.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
     try:
+        with archive.open('xb') as output:
+            dumped=subprocess.run(['docker','exec','anp-storage-postgres-1','pg_dump','--username','supabase_admin',
+                '--dbname','postgres','--format=custom'],stdout=output,stderr=subprocess.PIPE)
+        assert dumped.returncode==0,'只读逻辑快照失败，原始诊断不输出凭据'
+        with archive.open('rb') as data:
+            listing=subprocess.run(['docker','exec','-i','anp-storage-postgres-1','pg_restore','--list'],stdin=data,capture_output=True)
+        assert listing.returncode==0,'快照目录解析失败'
+        # 排除当前业务版本，保证每次从基础结构执行迁移，不依赖旧私有备份或主库已装到哪一版。
+        filtered=b'\n'.join(line for line in listing.stdout.splitlines() if b'deep_dub' not in line)+b'\n'
+        saved=subprocess.run(['docker','exec','-i','anp-storage-postgres-1','tee',restore_list],input=filtered,capture_output=True)
+        assert saved.returncode==0,'临时还原目录保存失败'
         with archive.open('rb') as data:
             restored = subprocess.run(['docker','exec','-i','anp-storage-postgres-1','pg_restore',
-                '--exit-on-error','--username','supabase_admin','--dbname',name], stdin=data, capture_output=True)
+                '--exit-on-error','--username','supabase_admin','--dbname',name,'--use-list',restore_list], stdin=data, capture_output=True)
         assert restored.returncode == 0, '独立库恢复失败，原始诊断不输出凭据'
         target = make_conninfo(source, dbname=name)
         with psycopg.connect(target) as connection:
@@ -51,6 +64,8 @@ def database():
         assert name.startswith('anp_deep_dub_test_') and len(name)==50
         with psycopg.connect(source, autocommit=True) as admin:
             admin.execute(sql.SQL('DROP DATABASE {}').format(sql.Identifier(name)))
+        subprocess.run(['docker','exec','anp-storage-postgres-1','rm','-f','--',restore_list],check=True,capture_output=True)
+        archive.unlink(missing_ok=True)
 
 
 def actor(connection, user):

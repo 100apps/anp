@@ -118,9 +118,10 @@ def reference(ctx:typer.Context,run_id:str,segment_id:str,kind:Literal['voice','
 
 @run_commands.command('speech')
 def speech(ctx:typer.Context,run_id:str,segment_id:str,translation_id:str,voice_reference_id:str,emotion_reference_id:str,
-        generation_factor:float=1.,timeout_seconds:int=300,seed:int=42,request_key:str=''):
+        generation_factor:float=1.,timeout_seconds:int=300,seed:int=42,request_key:str='',executor:str=''):
     body={'segment_id':segment_id,'translation_id':translation_id,'voice_reference_id':voice_reference_id,
         'emotion_reference_id':emotion_reference_id,'generation_factor':generation_factor,'timeout_seconds':timeout_seconds,'seed':seed}
+    if executor:body['executor']=executor
     perform(invoke(ctx,'POST',f'/runs/{run_id}/speech',lambda actor:generate_speech(actor,run_id,body,request_key or None),body,request_key))
 
 

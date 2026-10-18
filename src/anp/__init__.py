@@ -9,5 +9,6 @@ if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 ROOT = Path(os.environ.get('ANP_ROOT', Path(__file__).resolve().parents[2])).resolve()
+STATE_ROOT = Path(os.environ.get('ANP_STATE_ROOT', ROOT / '.local')).resolve()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

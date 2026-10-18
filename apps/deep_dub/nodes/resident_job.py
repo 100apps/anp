@@ -148,6 +148,7 @@ def execute(directory,*,identity_probe=describe,opener=None):
             return previous
         started=time.monotonic();identity=identity_probe(spec);checked_input(directory,spec)
         state={'rule_revision':RULE,'job_id':spec['job_id'],'input_sha256':fingerprint,'status':'submit_intent',
+            'worker_sha256':digest(Path(__file__)),
             'worker_pid':os.getpid(),'submitted_at_unix':time.time(),'service_identity':identity,
             'operation_stopped':False,'resident_service_stopped':False,'quality':'not_measured'}
         save(state_path,state)

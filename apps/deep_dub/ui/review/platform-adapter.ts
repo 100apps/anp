@@ -12,7 +12,7 @@ export function platformAdapter(projectId:string,identity:string,permissions:rea
     action==='translate'?permissions.includes('deep_dub.task.run')&&permissions.includes('deep_dub.audit')&&!!activeRun():
     ['prepare-voice','prepare-emotion'].includes(action)&&permissions.includes('deep_dub.task.run')&&permissions.includes('deep_dub.device.manage')&&!!activeRun()
   const file=(id:unknown)=>id?'/api/apps/deep_dub/media/artifacts/'+encodeURIComponent(String(id)):''
-  return {cacheKey:identity+':'+projectId,canWrite,
+  return {cacheKey:identity+':'+projectId,canWrite,speechExecutors:['local','resident'],
     async audioTiming(label,attempt){
       const segment=snapshot?.segments.find(s=>segmentLabel(s)===label),audio=snapshot?.audio_attempts.filter(a=>a.segment_id===segment?.id)[attempt-1]
       if(!audio)throw Error('声音版本不属于当前快照')
@@ -81,6 +81,8 @@ export function platformAdapter(projectId:string,identity:string,permissions:rea
         return result
       }
       if(action==='synthesize'){
+        const executor=text(body.executor)||'local'
+        if(!['local','resident'].includes(executor))throw Error('未知配音执行器')
         const run=activeRun(),translation=raw.translations.filter(t=>t.segment_id===segment.id).at(-1)
         const voice=raw.voice_references.filter(v=>v.speaker_id===segment.speaker_id).at(-1)
         const emotion=raw.emotion_references.filter(e=>e.segment_id===segment.id).at(-1)
@@ -88,7 +90,7 @@ export function platformAdapter(projectId:string,identity:string,permissions:rea
         if(!run||!translation||!voice||!emotion)throw Error('需要同来源执行中运行、已保存译稿、固定音色和本段情绪参考')
         if(!Number.isFinite(durationFactor)||durationFactor<.9||durationFactor>1.1)throw Error('时长系数须为0.90–1.10')
         const base={segment_id:segment.id,translation_id:translation.id,voice_reference_id:voice.id,emotion_reference_id:emotion.id,
-          generation_factor:1/durationFactor,timeout_seconds:300}
+          generation_factor:1/durationFactor,timeout_seconds:300,executor}
         const fingerprint=JSON.stringify([run.id,base])
         if(!speechRequests.has(fingerprint))speechRequests.set(fingerprint,{key:crypto.randomUUID(),seed:crypto.getRandomValues(new Uint32Array(1))[0]&0x7fffffff})
         const request=speechRequests.get(fingerprint)!

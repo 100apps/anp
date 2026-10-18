@@ -144,6 +144,7 @@ export function decision(s: Segment) {
       : "待验收";
 }
 export interface TaskAdapter {
+  speechExecutors?: readonly ('local'|'resident')[];
   audioReview?(segment:string,attempt:number):Promise<AudioReview|null>;
   audioTiming?(segment:string,attempt:number):Promise<AudioTiming|null>;
   reconnectMedia?(): Promise<unknown>;

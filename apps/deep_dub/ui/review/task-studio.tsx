@@ -46,6 +46,7 @@ import { Button } from "@console/components/ui/button";
 import { Badge } from "@console/components/ui/badge";
 import { Input } from "@console/components/ui/input";
 import { Textarea } from "@console/components/ui/textarea";
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@console/components/ui/select";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@console/components/ui/table";
 import {
   Dialog,
@@ -157,6 +158,7 @@ export function TaskStudio({
   const [drafts, setDrafts] = useState<Record<string, string>>({}),
     [placement, setPlacement] = useState(""),
     [factor, setFactor] = useState("1.00");
+  const [speechExecutor,setSpeechExecutor]=useState<'local'|'resident'>('local');
   const [captions, setCaptions] = useState(false),
     [panel, setPanel] = useState<
       "overview" | "voices" | "quality" | "strategies" | "help" | null
@@ -1341,6 +1343,14 @@ export function TaskStudio({
                         <strong>重新配音</strong>
                         <span>保留所有尝试</span>
                       </div>
+                      {adapter.speechExecutors&&<section className="my-3 space-y-2" aria-label="配音计算服务">
+                        <label className="text-xs" htmlFor="dd-speech-executor">执行设备</label>
+                        <Select value={speechExecutor} onValueChange={v=>{if(v==='local'||v==='resident')setSpeechExecutor(v)}} disabled={!can('synthesize')||busy}>
+                          <SelectTrigger id="dd-speech-executor" aria-label="配音执行设备"><SelectValue/></SelectTrigger>
+                          <SelectContent><SelectItem value="local">本机受控 GPU</SelectItem><SelectItem value="resident">已配置的远端常驻服务</SelectItem></SelectContent>
+                        </Select>
+                        {speechExecutor==='resident'&&<p className="text-xs">取消后等待当前已发片段返回；不会关闭远端模型。结果不明时保留待核对状态。</p>}
+                      </section>}
                       <div>
                         <label>
                           时长系数
@@ -1375,6 +1385,7 @@ export function TaskStudio({
                                 const result = (await write("synthesize", {
                                   segmentId: segment.segmentId,
                                   durationFactor: Number(factor),
+                                  ...(adapter.speechExecutors?{executor:speechExecutor}:{}),
                                 })) as { jobId: string;state?:string };
                                 setJob({
                                   id: result.jobId,

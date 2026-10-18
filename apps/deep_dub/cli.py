@@ -24,6 +24,7 @@ from apps.deep_dub.services.media import service as media
 from apps.deep_dub.services.editor import service as editor
 from apps.deep_dub.services import waveforms
 from apps.deep_dub.services.translation import generate as generate_translation
+from apps.deep_dub.services.references import prepare as prepare_reference
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -32,6 +33,14 @@ media_commands=typer.Typer(help='私有音视频信息；同一用户和工作�
 app.add_typer(project_commands,name='projects')
 app.add_typer(run_commands,name='runs')
 app.add_typer(media_commands,name='media')
+
+
+@run_commands.command('prepare-reference')
+def reference(ctx:typer.Context,run_id:str,segment_id:str,kind:Literal['voice','emotion'],
+        voice_start_ms:int|None=None,voice_end_ms:int|None=None,filter_mode:Literal['raw','speech-band']='raw',request_key:str=''):
+    body={'segment_id':segment_id,'kind':kind,'voice_start_ms':voice_start_ms,'voice_end_ms':voice_end_ms,'filter_mode':filter_mode}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/prepare-reference',
+        lambda actor:prepare_reference(actor,run_id,body,request_key or None),body,request_key))
 
 
 @run_commands.command('translate')

@@ -137,6 +137,7 @@ export function decision(s: Segment) {
       : "待验收";
 }
 export interface TaskAdapter {
+  reconnectMedia?(): Promise<unknown>;
   cacheKey?: string;
   canWrite?(action:string):boolean;
   read(): Promise<Task>;

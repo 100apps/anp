@@ -8,11 +8,23 @@ export const text=(value:unknown)=>typeof value==='string'?value:''
 const number=(value:unknown)=>Number.isFinite(Number(value))?Number(value):0
 const byRevision=(rows:Row[])=>[...rows].sort((a,b)=>number(a.revision)-number(b.revision))
 const last=(rows:Row[])=>rows.at(-1)
+const referenceMetrics=(raw:unknown):Record<string,number>=>{
+  if(!raw||typeof raw!=='object')return {}
+  const data=raw as Record<string,unknown>,result:Record<string,number>={}
+  for(const [key,label,scale] of [['duration_ms','时长（秒）',.001],['peak_full_scale','峰值（满幅）',1],['rms_full_scale','均方根（满幅）',1],['clipped_sample_ratio','削波样本比例',1]] as const){
+    const n=data[key];if(typeof n==='number'&&Number.isFinite(n))result[label]=n*scale
+  }
+  return result
+}
 export const segmentLabel=(row:Row)=>'seg'+String(number(row.segment_no)+1).padStart(4,'0')
 export function normalizeSnapshot(raw:StudioSnapshot):Task {
   if(raw.schema_version!==1)throw Error('工作台数据契约版本不支持')
   const voices:Record<string,Voice>={}
-  for(const speaker of raw.speakers){const voice=last(byRevision(raw.voice_references.filter(v=>v.speaker_id===speaker.id)));if(voice)voices[speaker.id]={revision:number(voice.revision),selectionScope:'episode',voiceMode:'本集固定音色',identityReview:'未测',processing:voice.processing as Record<string,unknown>}}
+  for(const speaker of raw.speakers){const voice=last(byRevision(raw.voice_references.filter(v=>v.speaker_id===speaker.id)));if(voice){
+    const processing=voice.processing as Record<string,unknown>|undefined
+    voices[speaker.id]={revision:number(voice.revision),selectionScope:'episode',voiceMode:'本集固定音色',identityReview:'未测',processing,
+      sourceVoiceProfile:referenceMetrics(processing?.original_metrics),voiceProfile:referenceMetrics(processing?.processed_metrics)}
+  }}
   const clips=new Map(raw.timeline_clips.map(c=>[text(c.segment_id),c]))
   const segments:Segment[]=raw.segments.map(row=>{
     const translations=byRevision(raw.translations.filter(t=>t.segment_id===row.id)),working=last(translations)

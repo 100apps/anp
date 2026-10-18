@@ -12,7 +12,7 @@ export function PlatformStudio({projectId,backHref}:{projectId:string;backHref:s
   const adapter=useMemo(()=>platformAdapter(projectId,identity,permissionKey.split(',')),[projectId,identity,permissionKey])
   const media=useQuery({queryKey:['deep-dub','media-session',me?.id,me?.workspace_id],
     queryFn:()=>api<{expires_at:number}>('/apps/deep_dub/media/session',{method:'POST'}),enabled:!!me,
-    staleTime:60000,refetchInterval:90000,retry:1})
+    staleTime:60000,refetchInterval:90000,refetchIntervalInBackground:true,retry:1})
   if(!me)return null
   return <div className="dd-platform-overlay">
     {!media.data?<div className="dd-studio dd-loading"><p role={media.error?'alert':undefined}>{media.error?.message||'正在建立当前用户的私有媒体会话…'}</p>{media.error&&<Button onClick={()=>media.refetch()}>重新连接</Button>}</div>:<>

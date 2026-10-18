@@ -45,6 +45,7 @@ import { Button } from "@console/components/ui/button";
 import { Badge } from "@console/components/ui/badge";
 import { Input } from "@console/components/ui/input";
 import { Textarea } from "@console/components/ui/textarea";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@console/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -1102,6 +1103,14 @@ export function TaskStudio({
                       axis={segment.endSec - segment.startSec}
                       onPlay={transport.pause}
                     />}
+                    {adapter.canWrite&&<div className="dd-save-row">
+                      <Button variant="outline" size="sm" disabled={!can('prepare-emotion')||busy}
+                        onClick={()=>ask('提取原声情绪参考','使用当前段准确原声窗口，保留源时间。只登记参考候选，不判定情绪有效性或听感通过。',
+                          ()=>write('prepare-emotion',{segmentId:segment.segmentId}))}>提取情绪参考</Button>
+                      <Button variant="outline" size="sm" disabled={!can('prepare-voice')||busy||segment.endSec-segment.startSec<3}
+                        onClick={()=>ask('提取本集固定音色参考','从当前角色段开头取最多10秒原声，至少3秒；固定音色与逐段情绪参考分别登记。身份与听感须独立复核。',
+                          ()=>write('prepare-voice',{segmentId:segment.segmentId}))}>提取音色参考</Button>
+                    </div>}
                     <div className="dd-text-label">
                       <span>
                         <span className="dd-language zh">中</span>中文译稿
@@ -1929,7 +1938,7 @@ function VoicePanel({
       <div className="dd-text-label">
         <span>
           <Mic2 size={14} />
-          {id}
+          {name || id}
         </span>
         <Badge variant="outline">
           {voice.revision ? `参考 v${voice.revision}` : "尚未登记参考"}
@@ -1937,7 +1946,7 @@ function VoicePanel({
       </div>
       <div className="dd-voice-name">
         <Input
-          aria-label={id + "说话人显示名"}
+          aria-label={(name || id) + "说话人显示名"}
           value={display}
           maxLength={40}
           onChange={(e) => setDisplay(e.target.value)}
@@ -1960,10 +1969,12 @@ function VoicePanel({
         {voice.selectionScope === "episode" ? "本集独立提取" : "旧版 / 手动"} ·
         身份听审 {voice.identityReview || "未测"}
       </p>
-      {voice.sourceVoiceWaveform && (
+      {(voice.sourceVoiceWaveform || adapter.canWrite) && (
         <WavePlayer
           adapter={adapter}
           title="固定音色 · 原声"
+          segment={adapter.canWrite?id:undefined}
+          kind={adapter.canWrite?'voice-source':undefined}
           key={id + ":source:" + voice.revision}
           data={voice.sourceVoiceWaveform}
           src={adapter.media("voice", { speaker: id, kind: "sourceVoice" })}
@@ -1974,6 +1985,8 @@ function VoicePanel({
         <WavePlayer
           adapter={adapter}
           title="固定音色 · 处理后"
+          segment={adapter.canWrite?id:undefined}
+          kind={adapter.canWrite?'voice-processed':undefined}
           key={id + ":prepared:" + voice.revision}
           data={voice.voiceWaveform}
           src={adapter.media("voice", { speaker: id, kind: "voice" })}
@@ -1982,19 +1995,19 @@ function VoicePanel({
       )}
       <details className="dd-evidence">
         <summary>处理方案与前后技术指标</summary>
-        {Object.entries(voice.sourceVoiceProfile || {}).map(([key, value]) => (
-          <p key={key}>
-            {key}：
-            {typeof value === "number" ? value.toFixed(3) : String(value)} →{" "}
-            {voice.voiceProfile?.[key] == null
-              ? "未测"
-              : typeof voice.voiceProfile[key] === "number"
-                ? voice.voiceProfile[key].toFixed(3)
-                : String(voice.voiceProfile[key])}
-          </p>
-        ))}
-        <pre>{JSON.stringify(voice.processing, null, 2)}</pre>
+        {Object.keys(voice.sourceVoiceProfile || {}).length > 0 ? (
+          <Table aria-label="音色参考处理前后技术指标">
+            <TableHeader><TableRow><TableHead>指标</TableHead><TableHead>原声</TableHead><TableHead>处理后</TableHead></TableRow></TableHeader>
+            <TableBody>{Object.entries(voice.sourceVoiceProfile || {}).map(([key, value]) => (
+              <TableRow key={key}><TableCell>{key}</TableCell>
+                <TableCell className="dd-mono">{typeof value === 'number' ? value.toFixed(key.includes('时长') ? 3 : 5) : String(value)}</TableCell>
+                <TableCell className="dd-mono">{voice.voiceProfile?.[key] == null ? '未测' : voice.voiceProfile[key].toFixed(key.includes('时长') ? 3 : 5)}</TableCell>
+              </TableRow>
+            ))}</TableBody>
+          </Table>
+        ) : <p>尚未登记处理前后的技术指标。</p>}
         <p>这些技术指标不等于身份或自然度通过。</p>
+        {voice.processing && <details className="dd-evidence"><summary>查看完整处理证据</summary><pre>{JSON.stringify(voice.processing, null, 2)}</pre></details>}
       </details>
       <Button
         variant="outline"

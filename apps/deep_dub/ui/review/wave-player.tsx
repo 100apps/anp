@@ -87,7 +87,9 @@ export function WavePlayer({
     [time, setTime] = useState(0),
     [duration, setDuration] = useState(0),
     [playing, setPlaying] = useState(false),
-    [error, setError] = useState(false);
+    [error, setError] = useState(false),
+    [reconnecting,setReconnecting]=useState(false),
+    [reconnectError,setReconnectError]=useState('');
   useEffect(() => {
     const media = audio.current;
     return () => media?.pause();
@@ -219,10 +221,19 @@ export function WavePlayer({
         onEnded={() => setPlaying(false)}
         onError={() => setError(true)}
       />
-      {error && (
+      {(error||wave.isError) && (
         <p role="alert" className="dd-error">
           <Volume2 size={12} />
-          音频加载失败
+          {reconnectError||(error?'音频加载失败':'波形暂不可用')}
+          <Button variant="ghost" size="sm" disabled={reconnecting} onClick={async()=>{
+            setReconnecting(true);setReconnectError('');
+            try{
+              await adapter.reconnectMedia?.();
+              if(error){setError(false);audio.current?.load()}
+              if(segment&&kind)await wave.refetch();
+            }catch(e){setReconnectError(e instanceof Error?e.message:'媒体连接失败')}
+            finally{setReconnecting(false)}
+          }}>{reconnecting?'连接中…':'重新连接'}</Button>
         </p>
       )}
     </div>

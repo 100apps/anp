@@ -7,14 +7,28 @@ export function platformAdapter(projectId:string,identity:string,permissions:rea
   const keys=new Map<string,string>()
   const activeRun=()=>snapshot?.runs.filter(r=>r.status==='running'&&r.source_id===snapshot?.source?.id).at(-1)
   const canWrite=(action:string)=>action==='translation'?permissions.includes('deep_dub.project.edit'):
-    action==='translate'&&permissions.includes('deep_dub.task.run')&&permissions.includes('deep_dub.audit')&&!!activeRun()
+    action==='translate'?permissions.includes('deep_dub.task.run')&&permissions.includes('deep_dub.audit')&&!!activeRun():
+    ['prepare-voice','prepare-emotion'].includes(action)&&permissions.includes('deep_dub.task.run')&&permissions.includes('deep_dub.device.manage')&&!!activeRun()
   const file=(id:unknown)=>id?'/api/apps/deep_dub/media/artifacts/'+encodeURIComponent(String(id)):''
   return {cacheKey:identity+':'+projectId,canWrite,
+    reconnectMedia:()=>api('/apps/deep_dub/media/session',{method:'POST'}),
     async read(){snapshot=await api<StudioSnapshot>(`/apps/deep_dub/projects/${projectId}/studio`);return normalizeSnapshot(snapshot)},
     async wave(label,kind){
-      const raw=snapshot,segment=raw?.segments.find(s=>segmentLabel(s)===label)
+      const raw=snapshot
+      if(raw&&(kind==='voice-source'||kind==='voice-processed')){
+        const voice=raw.voice_references.filter(v=>v.speaker_id===label).at(-1)
+        const artifact=kind==='voice-source'?voice?.original_artifact_id:voice?.processed_artifact_id
+        const asset=raw.artifacts.find(a=>a.id===artifact)
+        if(!asset||!Number(asset.duration_ms))throw Error('参考音频或时长未登记')
+        return api(`/apps/deep_dub/media/artifacts/${artifact}/waveform?`+new URLSearchParams({start:'0',end:String(Number(asset.duration_ms)/1000),points:'640'}))
+      }
+      const segment=raw?.segments.find(s=>segmentLabel(s)===label)
       if(!raw||!segment)throw Error('段不属于当前快照')
       let artifact=raw.source?.artifact_id,start=Number(segment.start_ms)/1000,end=Number(segment.end_ms)/1000
+      if(kind==='source'){
+        const emotion=raw.emotion_references.filter(e=>e.segment_id===segment.id).at(-1)
+        if(emotion){artifact=emotion.original_artifact_id;start=0;end=(Number(emotion.end_ms)-Number(emotion.start_ms))/1000}
+      }
       if(kind==='tts'||kind.startsWith('tts-')){
         const audio=raw.audio_attempts.filter(a=>a.segment_id===segment.id)
         const current=normalizeSnapshot(raw).segments.find(s=>s.segmentId===label)?.tts?.attempt
@@ -42,15 +56,17 @@ export function platformAdapter(projectId:string,identity:string,permissions:rea
       const raw=snapshot,body=input as Record<string,unknown>
       const segment=raw?.segments.find(s=>segmentLabel(s)===body.segmentId)
       if(!raw||!segment)throw Error('段不属于当前快照，请重新加载')
-      if(action==='translate'){
+      if(['translate','prepare-voice','prepare-emotion'].includes(action)){
         const run=activeRun();if(!run)throw Error('需要同来源的执行中运行，请先创建并启动运行')
-        const fingerprint=JSON.stringify(['translate',run.id,segment.id])
+        const fingerprint=JSON.stringify([action,run.id,segment.id])
         if(!keys.has(fingerprint))keys.set(fingerprint,crypto.randomUUID())
-        const result=await api<{status:string;attempt:{error?:{code?:string}}}>(`/apps/deep_dub/runs/${run.id}/translate`,{method:'POST',
-          headers:{'Idempotency-Key':keys.get(fingerprint)!},body:JSON.stringify({segment_id:segment.id,timeout_seconds:120})})
+        const route=action==='translate'?'translate':'prepare-reference'
+        const payload=action==='translate'?{segment_id:segment.id,timeout_seconds:120}:{segment_id:segment.id,kind:action==='prepare-voice'?'voice':'emotion',filter_mode:'raw'}
+        const result=await api<{status:string;attempt:{error?:{code?:string}}}>(`/apps/deep_dub/runs/${run.id}/${route}`,{method:'POST',
+          headers:{'Idempotency-Key':keys.get(fingerprint)!},body:JSON.stringify(payload)})
         if(result.status!=='succeeded'){
           if(result.status==='failed'||result.status==='cancelled')keys.delete(fingerprint)
-          throw Error(result.status==='running'||result.status==='queued'?'此阶段已在执行，请刷新运行状态后查看候选':`译稿阶段未成功：${result.attempt.error?.code||result.status}`)
+          throw Error(result.status==='running'||result.status==='queued'?'此阶段排队或执行中，请刷新运行状态后查看候选':`阶段未成功：${result.attempt.error?.code||result.status}`)
         }
         return result
       }

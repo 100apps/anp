@@ -48,3 +48,29 @@ PostgREST 领域冲突使用 `PT409`，对象不存在使用 `PT404`，避免被
 继续补候选注册/不可变对象提交、设备与发布服务适配、CLI、工作台和真实业务 nodes/flow。远端 worker 尚未有仅限单个尝试的授权签发，不能把完整用户 JWT 当作该功能已实现；丢失投稿凭据后的人工核对恢复也待接入。随后实际探测两 GPU/两 CPU，发起全新整片生产，验证完整墙钟 RTF≤0.5、内容/声音/字幕/时序/碰撞/解码，最后取得 B 站发布回执。未测项保留未测，不以局部测速或旧成片替代。
 
 验收证据：`docs/evidence/deep-dub-foundation-20261018.json`、`docs/evidence/deep-dub-content-contracts-20261018.json`、`docs/evidence/deep-dub-execution-contracts-20261018.json`。旧证据保留当时结构、SHA 和测试范围，不改写为新一轮结果。
+
+## 私有产物与业务 CLI（接入中）
+
+`008_private_artifacts.sql` 在同一个 RustFS 服务上增加 `deep-dub` 私有逻辑桶，不增加实例。对象路径由空间、项目、尝试与 SHA256 组成；普通身份没有覆盖和删除权限。登记 RPC 校验当前尝试、原执行者、取消/设备租约状态及 Storage 记录字节数，支持并发幂等。Python 服务流式上传并完整回读核对摘要，后续读取同样验证摘要；数据库本身不能读取 RustFS 字节，不把客户端提交的摘要当作数据库已独立验真。
+
+首次上传成功而登记失败时保留不可覆盖对象，重试会回读验真后重新登记；尚未提供孤立对象清理，不自动删除原数据。上传文件在本地散列、传输及回读所花时间都属于生产墙钟，不能从 RTF 中扣除。实际大视频上传上限及整片吞吐仍待媒体生产验证。
+
+开发阶段可直接使用业务 CLI，不需要启动业务 Web/API；身份复用平台登录：
+
+```powershell
+uv run anp auth login
+uv run python -m apps.deep_dub.cli projects list
+uv run python -m apps.deep_dub.cli runs list <项目UUID>
+uv run python -m apps.deep_dub.cli projects create "新译配项目" "https://example.com/video"
+```
+
+HTTP 开发入口与 CLI 使用同一组服务、Supabase 身份和工作空间：
+
+```powershell
+uv run uvicorn apps.deep_dub.api.application:app --host 127.0.0.1 --port 8283 --reload
+uv run python -m apps.deep_dub.cli --transport http --endpoint http://127.0.0.1:8283 projects list
+```
+
+`projects quality-profile --input 文件.json` 创建不可变规则修订；`runs queue <项目UUID> --input 文件.json --request-key <幂等键>` 排队，输入包含 `quality_profile_id`、`flow_revision`、`expected_version`，默认 `mode=local,purpose=production,reuse_policy=none`。验收应显式使用 `purpose=acceptance`。`runs start/cancel` 当前管理运行状态，尚未驱动完整生产图；不要将状态切换当作媒体生产完成。
+
+`upload-artifact <尝试UUID> <本地文件> --media-type application/json` 提交当前执行者的私有产物；HTTP 模式流式发送文件内容，不向服务器传宿主文件路径。`flush-observation` 每次投递一个 outbox 事件。工作台菜单、统一 `anp deep_dub` 注册及完整生产图仍待接入，不将上述独立开发入口称为整个平台业务验收完成。

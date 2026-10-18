@@ -1,11 +1,17 @@
 """项目 HTTP 适配；图、节点与工作台完成前暂不注册到运行中的应用目录。"""
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Request, Query
+from tempfile import TemporaryDirectory
+from pathlib import Path
+from pydantic import ValidationError
 
 from anp.auth.dependencies import get_actor
 from apps.deep_dub.services.projects import ProjectInput, service
 from apps.deep_dub.services.versions import AuditInput, QualityProfileInput, SelectionInput, TimelineInput, service as versions
 from apps.deep_dub.services.execution import RunInput, StageInput, StageReceipt, ScoreInput, service as execution
 from typing import Literal
+from anp.errors import BusinessError
+from apps.deep_dub.services.artifacts import service as artifacts, ArtifactMetadata
+from apps.deep_dub.services.observations import deliver_one
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 
@@ -83,3 +89,29 @@ async def finish_stage(attempt_id: str, body: StageReceipt, actor=Depends(get_ac
 @router.post('/attempts/{attempt_id}/scores', status_code=201)
 async def record_score(attempt_id: str, body: ScoreInput, actor=Depends(get_actor), idempotency_key: str | None=Header(None)):
     return await execution.record_score(actor, attempt_id, body.model_dump(), idempotency_key)
+
+
+@router.post('/attempts/{attempt_id}/artifacts', status_code=201)
+async def upload_artifact(attempt_id: str, request: Request, actor=Depends(get_actor),
+        duration_ms: int | None=Query(None,ge=0), sample_rate: int | None=Query(None,gt=0)):
+    await artifacts.authorize_upload(actor,attempt_id)
+    try:
+        meta=ArtifactMetadata(media_type=request.headers.get('content-type','application/octet-stream').split(';',1)[0].strip(),
+                              duration_ms=duration_ms,sample_rate=sample_rate)
+    except ValidationError:
+        raise BusinessError('产物元数据不合法',422,'VALIDATION_ERROR') from None
+    # 不接受客户端宿主文件路径。暂存只活到本次请求结束，长期文件落在 RustFS 命名卷。
+    with TemporaryDirectory(prefix='anp-deep-dub-upload-') as folder:
+        file=Path(folder)/'upload';size=0
+        with file.open('wb') as target:
+            async for block in request.stream():
+                size+=len(block)
+                if size>16*1024**3:
+                    raise BusinessError('单个产物超过 16 GiB',413,'ARTIFACT_TOO_LARGE')
+                target.write(block)
+        return await artifacts.upload(actor,attempt_id,file,meta.media_type,meta.duration_ms,meta.sample_rate)
+
+
+@router.post('/observations/flush')
+async def flush_observation(actor=Depends(get_actor)):
+    return await deliver_one(actor)

@@ -1,0 +1,80 @@
+{
+  "checked_at_utc": "2026-10-18T07:44:21.936671+00:00",
+  "migration": "apps/deep_dub/migrations/008_private_artifacts.sql",
+  "sha256": "35e3ae0118683a3774e7fa2b03a25547fb4f0cd1e3f99f05924d955cf090f33a",
+  "backup_directory": ".local/backups/v3-postgres-before-cloud-20261018T074403Z",
+  "postgres_container_id": "627452dce9ce667ce855e996047a6ebac1fe6e669976845a37d39bad903bde56",
+  "existing_task_count_unchanged": 948,
+  "private_bucket": "deep-dub",
+  "recorded_at_utc": "2026-10-18T07:51:02.904960+00:00",
+  "database_tests": {
+    "passed": 50,
+    "seconds": 9.34,
+    "scope": "独立临时库，含12次并发产物登记，设备/媒体为合成夹具"
+  },
+  "live_tests": {
+    "passed": 6,
+    "seconds": 15.44,
+    "scope": "真实Supabase/RustFS/Langfuse + CLI子进程 + 临时业务HTTP + ASGI"
+  },
+  "object_readback": {
+    "checked_at_utc": "2026-10-18T07:50:31.218254+00:00",
+    "purpose": "acceptance",
+    "scope": "真实 Supabase Storage/RustFS 的私有 JSON，非生产媒体",
+    "run_id": "6d3b7513-e8ee-43ba-8bf3-c6a452fb0e5c",
+    "attempt_id": "7001616a-5fc4-45f0-b998-59eddccbd8de",
+    "artifact_id": "9b12b696-c633-4d11-96f2-bed9d51f3269",
+    "sha256": "e4c8fb7b5494efeefea690ec2de988c41ad73309968375b8652015ae64abaf22",
+    "bytes": 122,
+    "range_206": true,
+    "anonymous_denied": true,
+    "cross_workspace_denied": true,
+    "viewer_upload_denied": true,
+    "overwrite_denied": true,
+    "delete_denied": true,
+    "signed_url_expiry_verified": true,
+    "bad_hash_rejected": true,
+    "replay_same_artifact": true
+  },
+  "cli_readback": {
+    "checked_at_utc": "2026-10-18T07:50:28.564187+00:00",
+    "local_default_without_test_http_process": true,
+    "projects_equal": true,
+    "runs_equal": true,
+    "local_and_http_upload_same_artifact": true,
+    "artifact_bytes": 2228224,
+    "viewer_forbidden_in_both_transports": true,
+    "scope": "真实 CLI 子进程 + 临时业务 HTTP + V3 Supabase；尚未注册工作台或生产图"
+  },
+  "business_counts": {
+    "artifacts": 6,
+    "sources": 0,
+    "runs": 11,
+    "devices": 0,
+    "device_leases": 0,
+    "audio_attempts": 0,
+    "renders": 0,
+    "publications": 0
+  },
+  "run_purposes": {
+    "acceptance": 11
+  },
+  "run_statuses": {
+    "cancelled": 11
+  },
+  "outbox_statuses": {
+    "sent": 16
+  },
+  "threads_preserved": 305,
+  "all_thread_values_identical": true,
+  "protected_container_ids_preserved": 27,
+  "platform_container_unchanged": true,
+  "platform_image": "ghcr.io/100apps/anp-platform@sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3",
+  "limitations": [
+    "对象为验收JSON/字节夹具，没有媒体生产；失败验收记录保留",
+    "CLI runs start仅切换状态，完整生产图、候选注册和工作台尚待接入",
+    "SHA由Python流式回读验证，数据库只校验Storage元数据及关系，不能独立读取S3字节",
+    "实际大视频上传上限、媒体Range续播、真实整片RTF与B站回执尚未验收",
+    "首次上传后登记失败的不可覆盖对象保留，孤立对象清理尚未实现"
+  ]
+}

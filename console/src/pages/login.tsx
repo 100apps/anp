@@ -14,7 +14,7 @@ export default function Login(){
   async function submit(event:FormEvent){
     event.preventDefault();setBusy(true);setError('')
     const result=await client!.auth.signInWithPassword({email,password})
-    if(result.error)setError('邮箱或密码不正确，请重新输入。')
+    if(result.error)setError(result.error.status ? '邮箱或密码不正确，请重新输入。' : '无法连接认证服务，请检查服务地址和同源代理配置。')
     setBusy(false)
   }
   return <div className="min-h-screen grid lg:grid-cols-2 bg-card">

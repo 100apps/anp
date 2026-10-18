@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.25.0",
   "scripts": {
+    "dev:deep-dub": "pnpm --dir console exec vite --mode deep-dub-review --port 8766 --host 127.0.0.1",
     "dev": "pnpm --dir console dev",
     "build": "pnpm --dir console build",
     "test:e2e": "playwright test"

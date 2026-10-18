@@ -12,6 +12,12 @@ RECORD_KINDS=set(RecordKind.__args__)
 
 
 class WorkbenchService:
+    async def studio(self,actor,project_id,*,source_id=None,segment_set_id=None,profile_id=None,timeline_id=None):
+        await actor.require('deep_dub.project.read')
+        return await actor.objects.rpc('deep_dub_studio_snapshot',p_workspace=actor.workspace_id,p_project=identifier(project_id),
+            p_source=identifier(source_id) if source_id else None,p_segment_set=identifier(segment_set_id) if segment_set_id else None,
+            p_profile=identifier(profile_id) if profile_id else None,p_timeline=identifier(timeline_id) if timeline_id else None)
+
     async def tasks(self,actor):
         await actor.require('deep_dub.task.read')
         return await actor.objects.select('tasks',workspace_id='eq.'+actor.workspace_id,

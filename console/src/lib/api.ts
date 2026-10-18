@@ -1,6 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 let client: SupabaseClient
 let workspace = ''
+const appSessionCleanups = new Map<string,()=>Promise<void>>()
+export function registerSessionCleanup(appId:string,cleanup:()=>Promise<void>) {appSessionCleanups.set(appId,cleanup)}
+export async function clearAppSessions() {await Promise.allSettled([...appSessionCleanups.values()].map(cleanup=>cleanup()))}
 export function setAuthClient(value: SupabaseClient) { client = value }
 export function setWorkspace(value: string) { workspace = value }
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {

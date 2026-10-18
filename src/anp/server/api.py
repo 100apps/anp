@@ -85,7 +85,7 @@ async def health():
 
 @app.get('/api/public/config')
 async def public_config():
-    return {'title':value('workbench','title'),'supabase_url':value('supabase','url'),
+    return {'title':value('workbench','title'),'supabase_url':value('supabase','public_url',value('supabase','url')),
             'supabase_anon_key':secret('ANON_KEY')}
 
 

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, setAuthClient, setWorkspace, type Me } from '@/lib/api'
+import { api, setAuthClient, setWorkspace, clearAppSessions, type Me } from '@/lib/api'
 
 type Auth = { client:SupabaseClient|null;session:Session|null;me:Me|undefined;loading:boolean;error:string;logout:()=>Promise<void>;selectWorkspace:(id:string)=>void }
 const Context = createContext<Auth>(null!)
@@ -32,8 +32,8 @@ export function AuthProvider({ children }: { children:ReactNode }) {
   },[])
   const profile=useQuery({queryKey:['me',session?.user.id,workspace],queryFn:()=>api<Me>('/me'),enabled:!!session})
   useEffect(()=>{if(profile.data)setWorkspace(profile.data.workspace_id)},[profile.data])
-  async function logout(){await client?.auth.signOut();setWorkspace('');chooseWorkspace('');queryClient.clear()}
-  function selectWorkspace(id:string){setWorkspace(id);chooseWorkspace(id);queryClient.clear()}
+  async function logout(){await clearAppSessions();await client?.auth.signOut();setWorkspace('');chooseWorkspace('');queryClient.clear()}
+  async function selectWorkspace(id:string){await clearAppSessions();setWorkspace(id);chooseWorkspace(id);queryClient.clear()}
   return <Context.Provider value={{client,session,me:profile.data,loading:loading||(!!session&&profile.isLoading),error:error||(profile.error?.message||''),logout,selectWorkspace}}>{children}</Context.Provider>
 }
 export const useAuth=()=>useContext(Context)

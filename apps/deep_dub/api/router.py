@@ -15,9 +15,18 @@ from apps.deep_dub.services.observations import deliver_one
 from apps.deep_dub.services.processing import DecodeInput,decode_artifact
 from apps.deep_dub.services.delegation import issue_decode_job
 from apps.deep_dub.services.workbench import RecordKind,service as workbench
+from apps.deep_dub.api.media import router as media_router
+from apps.deep_dub.services.editor import TranslationEdit, service as editor
 from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,BackgroundInput,RenderInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
+router.include_router(media_router)
+
+
+@router.post('/projects/{project_id}/segments/{segment_id}/translations',status_code=201)
+async def edit_translation(project_id:str,segment_id:str,body:TranslationEdit,
+        actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await editor.edit_translation(actor,project_id,segment_id,body.model_dump(),idempotency_key)
 
 
 @router.get('/tasks')
@@ -44,6 +53,12 @@ async def run_detail(run_id:str,actor=Depends(get_actor)):
 async def project_records(project_id:str,kind:RecordKind,offset:int=Query(0,ge=0),
                           limit:int=Query(100,ge=1,le=200),actor=Depends(get_actor)):
     return await workbench.records(actor,project_id,kind,offset=offset,limit=limit)
+
+
+@router.get('/projects/{project_id}/studio')
+async def studio_snapshot(project_id:str,source_id:str|None=None,segment_set_id:str|None=None,
+        profile_id:str|None=None,timeline_id:str|None=None,actor=Depends(get_actor)):
+    return await workbench.studio(actor,project_id,source_id=source_id,segment_set_id=segment_set_id,profile_id=profile_id,timeline_id=timeline_id)
 
 
 @router.post('/projects', status_code=201)

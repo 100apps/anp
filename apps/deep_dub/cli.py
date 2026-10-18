@@ -20,12 +20,29 @@ from apps.deep_dub.services.observations import deliver_one
 from apps.deep_dub.services.candidates import service as candidates
 from apps.deep_dub.services.processing import decode_artifact
 from apps.deep_dub.services.workbench import RecordKind,service as workbench
+from apps.deep_dub.services.media import service as media
+from apps.deep_dub.services.editor import service as editor
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
 run_commands=typer.Typer(help='运行；排队起点不可重置')
+media_commands=typer.Typer(help='私有音视频信息；同一用户和工作空间权限')
 app.add_typer(project_commands,name='projects')
 app.add_typer(run_commands,name='runs')
+app.add_typer(media_commands,name='media')
+
+
+@app.command('edit-translation')
+def edit_translation(ctx:typer.Context,project_id:str,segment_id:str,
+        input:Path=typer.Option(...,exists=True,dir_okay=False),request_key:str=''):
+    body=input_json(input)
+    perform(invoke(ctx,'POST',f'/projects/{project_id}/segments/{segment_id}/translations',
+        lambda actor:editor.edit_translation(actor,project_id,segment_id,body,request_key or None),body,request_key))
+
+
+@media_commands.command('info')
+def media_info(ctx:typer.Context,artifact_id:str):
+    perform(invoke(ctx,'GET','/media/artifacts/'+artifact_id+'/info',lambda actor:media.info(actor,artifact_id)))
 
 
 @app.callback()
@@ -83,6 +100,13 @@ def list_projects(ctx:typer.Context):
 def project_records(ctx:typer.Context,project_id:str,kind:RecordKind,offset:int=0,limit:int=100):
     perform(invoke(ctx,'GET',f'/projects/{project_id}/records/{kind}?offset={offset}&limit={limit}',
         lambda actor:workbench.records(actor,project_id,kind,offset=offset,limit=limit)))
+
+
+@project_commands.command('studio')
+def studio_snapshot(ctx:typer.Context,project_id:str,source_id:str='',segment_set_id:str='',profile_id:str='',timeline_id:str=''):
+    from urllib.parse import urlencode
+    options={key:val for key,val in dict(source_id=source_id,segment_set_id=segment_set_id,profile_id=profile_id,timeline_id=timeline_id).items() if val}
+    perform(invoke(ctx,'GET',f'/projects/{project_id}/studio?'+urlencode(options),lambda actor:workbench.studio(actor,project_id,**options)))
 
 
 @run_commands.command('get')

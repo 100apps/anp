@@ -49,6 +49,7 @@ translation_model = "auto"
 tts_config = ""
 asr_config = ""
 independent_asr_config = ""
+diarization_config = ""
 aligner_config = ""
 source_fetch_config = ""
 

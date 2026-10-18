@@ -27,6 +27,7 @@ from apps.deep_dub.services.source_recognition import SourceRecognitionInput,rec
 from apps.deep_dub.services.source_reference import SourceReferenceInput,compare as compare_source_reference,read as read_source_reference,read_latest_reference
 from apps.deep_dub.services.source_alignment import SourceAlignmentInput,align as align_source,read_latest as read_source_alignment
 from apps.deep_dub.services.source_review import read as read_source_review,ReviewKind
+from apps.deep_dub.services.source_speakers import SpeakerInput,generate as analyze_speakers,read_latest as read_speakers
 from apps.deep_dub.services.source_recheck import RecheckInput,generate as recheck_source,read_latest as read_source_recheck
 from apps.deep_dub.services.source_independent_asr import IndependentInput,generate as recognize_independent,read_latest as read_independent
 from apps.deep_dub.services.source_acquisition import AcquisitionInput,acquire as acquire_source,read as read_source_acquisition
@@ -36,6 +37,16 @@ from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,Transl
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 router.include_router(media_router)
+
+
+@router.post('/runs/{run_id}/analyze-source-speakers')
+async def create_source_speakers(run_id:str,body:SpeakerInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await analyze_speakers(actor,run_id,body.model_dump(),idempotency_key)
+
+
+@router.get('/projects/{project_id}/sources/{source_id}/speaker-timing')
+async def get_source_speakers(project_id:str,source_id:str,actor=Depends(get_actor)):
+    return await read_speakers(actor,project_id,source_id)
 
 
 @router.post('/runs/{run_id}/recognize-source-independent')

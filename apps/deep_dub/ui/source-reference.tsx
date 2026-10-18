@@ -11,6 +11,7 @@ import { SourceWordTiming } from './source-word-timing'
 import { SourceReview } from './source-review'
 import { SourceRecheck } from './source-recheck'
 import { SourceIndependent } from './source-independent'
+import { SourceSpeakers } from './source-speakers'
 
 type Result={stage_attempt_id:string;evidence_artifact_id:string;proof:{input:{reference_url:string;binding_scope:string};
   reference:{video_id:string;chapters:{title:string;reported_start_ms:number}[]};comparison:{reference_token_count:number;asr_token_count:number;
@@ -50,6 +51,7 @@ export function SourceReference({projectId,runId,sourceId,status,canRun,identity
     {source&&item&&<SourceReview key={source} projectId={projectId} sourceId={source} identity={identity}/>}
     {source&&item&&<SourceRecheck key={'recheck:'+source} projectId={projectId} runId={runId} sourceId={source} status={status} canRun={canRun} identity={identity}/>}
     {source&&item&&<SourceIndependent key={'independent:'+source} projectId={projectId} runId={runId} sourceId={source} status={status} canRun={canRun} identity={identity}/>}
+    {source&&<SourceSpeakers key={'speakers:'+source} projectId={projectId} runId={runId} sourceId={source} status={status} canRun={canRun} identity={identity}/>}
     <div className="space-y-2"><label className="text-xs" htmlFor="official-reference-url">耶鲁官方课程页 URL</label><Input id="official-reference-url" value={referenceUrl} placeholder="https://oyc.yale.edu/history/hist-119/lecture-1" disabled={compare.isPending} onChange={e=>{setUrl(e.target.value);key.current=crypto.randomUUID()}}/>
       <Button size="sm" variant="outline" disabled={!canRun||status!=='running'||!source||!referenceUrl||compare.isPending} onClick={()=>compare.mutate()}>{compare.isPending?'正在获取并比对…':'获取官方参考并比对'}</Button>
       <p className="text-xs text-muted-foreground">执行需要运行、评分和设备权限。同输入复用已保存证据；原始 HTML 保存在私有对象库中。</p>

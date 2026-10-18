@@ -246,6 +246,14 @@ async def invoke(ctx, method, path, local, payload=None, request_key=None, *, ti
     if not response.is_success:
         try:error=response.json()['error']
         except (ValueError,KeyError,TypeError):error={}
+        if response.status_code==422 and not error:
+            try:details=response.json().get('detail')
+            except (ValueError,TypeError):details=None
+            if isinstance(details,list):
+                # 只输出校验消息，不回显 FastAPI 的 input、ctx 或原请求体。
+                messages=[item['msg'][:500] for item in details[:10]
+                          if isinstance(item,dict) and isinstance(item.get('msg'),str)]
+                if messages:error={'code':'VALIDATION_ERROR','message':'；'.join(messages)}
         raise BusinessError(error.get('message','业务接口请求失败'),response.status_code,error.get('code','HTTP_ERROR'))
     return response.json()
 
@@ -309,6 +317,14 @@ def cancel(ctx:typer.Context,run_id:str):
 @app.command('flush-observation')
 def flush(ctx:typer.Context):
     perform(invoke(ctx,'POST','/observations/flush',deliver_one))
+
+
+@app.command('audit')
+def record_audit(ctx:typer.Context,project_id:str,input:Path=typer.Option(...,exists=True,dir_okay=False),request_key:str=''):
+    """提交已有复核证据；方法与质量门禁由共用服务和数据库再次校验。"""
+    body=input_json(input)
+    perform(invoke(ctx,'POST',f'/projects/{project_id}/audits',
+        lambda actor:versions.record_audit(actor,project_id,body,request_key or None),body,request_key))
 
 
 @run_commands.command('decode')

@@ -20,7 +20,7 @@ def executions(versions):
     connect,users,workspaces=versions
     with connect() as c:
         for _ in range(2):
-            for name in ['004_execution_relations.sql','005_run_and_device_contracts.sql','006_stage_and_observation_contracts.sql','007_publication_contracts.sql']:
+            for name in ['004_execution_relations.sql','005_run_and_device_contracts.sql','006_stage_and_observation_contracts.sql','007_publication_contracts.sql','018_source_content_audit_gate.sql']:
                 c.execute((ROOT/'apps/deep_dub/migrations'/name).read_text(),prepare=False)
         c.execute("UPDATE platform.members SET role='admin' WHERE workspace_id=%s AND user_id=%s",(workspaces[0],users[0]))
     return versions
@@ -295,7 +295,7 @@ def qualified_render(c,s):
         ('background',background,['decode','source_language_leakage','event_preservation']),
         ('render',render,['full_decode','loudness','duration','subtitles','snapshot','content','collision','bounds'])]:
         for rule in rules:
-            method='independent_model' if rule in ('speaker_identity','event_preservation') else 'technical'
+            method='independent_model' if rule in ('speaker_identity','event_preservation','transcript_coverage') else 'technical'
             audit(c,s,kind,rule,subject=subject,method=method)
     return render
 

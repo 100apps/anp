@@ -1,5 +1,7 @@
 # deep_dub 译配业务
 
+审核 CLI：`uv run anp deep_dub audit <项目UUID> --input <审核JSON> --request-key <稳定键>`；根参数 `--transport http` 对接同一审核服务。来源 `transcript_coverage` 不能以技术方法签发通过，旧技术通过也不会满足成片门禁；仍须真实内容复核。见 [来源正文审核门禁](../../docs/deep_dub来源正文审核门禁.md)。
+
 源稿队列可用 `projects source-review-queue <项目UUID> <来源UUID> --include-secondary` 加入第二套整轨识别差异；Web 的「加入第二套识别差异」调用同一权限契约。两侧候选与原音块粗定位只辅助裁决，不自动改稿或通过审核。分页绑定完整证据摘要；原始不含第二套的队列保持兼容。见 [跨模型源稿复核](../../docs/deep_dub跨模型源稿复核.md)。
 
 ## 第二套整轨识别

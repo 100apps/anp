@@ -31,6 +31,8 @@ export type AudioVersion = {
   findings?: string[];
   emotionMode?: string;
 };
+export type AudioReview = {recognized_text:string;expected_text:string;model_id:string;weights_sha256:string;
+  character_error_rate:number;edit_distance:number;performed_at:string;scope:string;semantic_review:string;evidence_artifact_id:string};
 export type Segment = {
   emotionReady?: boolean;
   segmentId: string;
@@ -137,6 +139,7 @@ export function decision(s: Segment) {
       : "待验收";
 }
 export interface TaskAdapter {
+  audioReview?(segment:string,attempt:number):Promise<AudioReview|null>;
   reconnectMedia?(): Promise<unknown>;
   cacheKey?: string;
   canWrite?(action:string):boolean;

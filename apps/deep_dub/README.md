@@ -140,3 +140,7 @@ uv run python -m apps.deep_dub.cli --transport http --endpoint http://127.0.0.1:
 ## 真实 GPU 配音候选
 
 `runs speech <运行UUID> <段UUID> <译稿UUID> <音色参考UUID> <情绪参考UUID>` 接本地/HTTP CLI 与同一业务服务，正式详情已实际点击生成、保存私有新 WAV、显示波形并同步试听。受控本机进程持有 GPU/旧路由锁与数据库租约，取消要确认实际退出再释放；不停止远端或未知模型。20 项工具、2 项真实 GPU 集成、类型与构建通过；Langfuse 实际读回 PCM 契约与三个未测质量项。私有 `[deep_dub].tts_config` 已配置，公开模板为 `tts.local.example.json`。当前每次冷启动，只有 Windows NVIDIA 本机默认设备管理员执行路径，未完成云/远端、安全驻留、独立质量、整片生产/RTF 或发布。详见 [真实配音生成](../../docs/deep_dub真实配音生成.md)。
+
+## 独立回转录与声音版本证据
+
+`runs review-audio <运行UUID> <声音版本UUID>` 接相同本地/HTTP 契约，详情的声音版本可实际运行独立 ASR 并查看识别文本、绑定译稿、CER 和模型摘要。期待译稿不进入 ASR 提示，符号/数字等差异不静默抹平；CER=0 也不自动签发事实、专名或听感审核。24 项工具检查、1 项真实新 WAV→ASR→三入口集成、类型与构建通过；浏览器操作和 Langfuse 代理分/未测状态及用户/session 读回通过。私有 `[deep_dub].asr_config` 已配置，公开模板为 `asr.local.example.json`。源整片 ASR、强制对齐、独立语义/听感、性能优化及完整生产/发布继续。详见 [独立回转录](../../docs/deep_dub独立回转录.md)。

@@ -26,6 +26,7 @@ from apps.deep_dub.services import waveforms
 from apps.deep_dub.services.translation import generate as generate_translation
 from apps.deep_dub.services.references import prepare as prepare_reference
 from apps.deep_dub.services.speech import generate as generate_speech
+from apps.deep_dub.services.audio_review import review as review_audio
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -50,6 +51,12 @@ def speech(ctx:typer.Context,run_id:str,segment_id:str,translation_id:str,voice_
     body={'segment_id':segment_id,'translation_id':translation_id,'voice_reference_id':voice_reference_id,
         'emotion_reference_id':emotion_reference_id,'generation_factor':generation_factor,'timeout_seconds':timeout_seconds,'seed':seed}
     perform(invoke(ctx,'POST',f'/runs/{run_id}/speech',lambda actor:generate_speech(actor,run_id,body,request_key or None),body,request_key))
+
+
+@run_commands.command('review-audio')
+def audio_review(ctx:typer.Context,run_id:str,audio_attempt_id:str,timeout_seconds:int=300,request_key:str=''):
+    body={'audio_attempt_id':audio_attempt_id,'timeout_seconds':timeout_seconds}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/review-audio',lambda actor:review_audio(actor,run_id,body,request_key or None),body,request_key))
 
 
 @run_commands.command('translate')

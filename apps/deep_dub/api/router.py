@@ -21,10 +21,21 @@ from apps.deep_dub.services.waveforms import WaveformInput,prepare as prepare_wa
 from apps.deep_dub.services.translation import TranslationInput as GenerateTranslationInput,generate as generate_translation
 from apps.deep_dub.services.references import ReferencePreparation,prepare as prepare_reference
 from apps.deep_dub.services.speech import SpeechInput,generate as generate_speech
+from apps.deep_dub.services.audio_review import AudioReviewInput,review as review_audio,read_latest as read_audio_review
 from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,BackgroundInput,RenderInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 router.include_router(media_router)
+
+
+@router.post('/runs/{run_id}/review-audio')
+async def create_audio_review(run_id:str,body:AudioReviewInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await review_audio(actor,run_id,body.model_dump(),idempotency_key)
+
+
+@router.get('/projects/{project_id}/audio/{audio_id}/backtranscription')
+async def get_audio_review(project_id:str,audio_id:str,actor=Depends(get_actor)):
+    return await read_audio_review(actor,project_id,audio_id)
 
 
 @router.post('/runs/{run_id}/speech')

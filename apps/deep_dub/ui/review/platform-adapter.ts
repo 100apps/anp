@@ -8,11 +8,17 @@ export function platformAdapter(projectId:string,identity:string,permissions:rea
   const speechRequests=new Map<string,{key:string;seed:number}>()
   const activeRun=()=>snapshot?.runs.filter(r=>r.status==='running'&&r.source_id===snapshot?.source?.id).at(-1)
   const canWrite=(action:string)=>action==='translation'?permissions.includes('deep_dub.project.edit'):
-    action==='synthesize'?['deep_dub.task.run','deep_dub.audit','deep_dub.device.manage'].every(p=>permissions.includes(p))&&!!activeRun():
+    ['synthesize','review-audio'].includes(action)?['deep_dub.task.run','deep_dub.audit','deep_dub.device.manage'].every(p=>permissions.includes(p))&&!!activeRun():
     action==='translate'?permissions.includes('deep_dub.task.run')&&permissions.includes('deep_dub.audit')&&!!activeRun():
     ['prepare-voice','prepare-emotion'].includes(action)&&permissions.includes('deep_dub.task.run')&&permissions.includes('deep_dub.device.manage')&&!!activeRun()
   const file=(id:unknown)=>id?'/api/apps/deep_dub/media/artifacts/'+encodeURIComponent(String(id)):''
   return {cacheKey:identity+':'+projectId,canWrite,
+    async audioReview(label,attempt){
+      const segment=snapshot?.segments.find(s=>segmentLabel(s)===label)
+      const audio=snapshot?.audio_attempts.filter(a=>a.segment_id===segment?.id)[attempt-1]
+      if(!audio)throw Error('声音版本不属于当前快照')
+      return api(`/apps/deep_dub/projects/${projectId}/audio/${audio.id}/backtranscription`)
+    },
     reconnectMedia:()=>api('/apps/deep_dub/media/session',{method:'POST'}),
     async read(){snapshot=await api<StudioSnapshot>(`/apps/deep_dub/projects/${projectId}/studio`);return normalizeSnapshot(snapshot)},
     async wave(label,kind){
@@ -58,6 +64,16 @@ export function platformAdapter(projectId:string,identity:string,permissions:rea
       const raw=snapshot,body=input as Record<string,unknown>
       const segment=raw?.segments.find(s=>segmentLabel(s)===body.segmentId)
       if(!raw||!segment)throw Error('段不属于当前快照，请重新加载')
+      if(action==='review-audio'){
+        const run=activeRun(),audio=raw.audio_attempts.filter(a=>a.segment_id===segment.id)[Number(body.attempt)-1]
+        if(!run||!audio)throw Error('需要同来源执行中运行和明确声音版本')
+        const fingerprint=JSON.stringify([action,run.id,audio.id]);if(!keys.has(fingerprint))keys.set(fingerprint,crypto.randomUUID())
+        const result=await api<{status:string;attempt:{error?:{code?:string}}}>(`/apps/deep_dub/runs/${run.id}/review-audio`,{
+          method:'POST',headers:{'Idempotency-Key':keys.get(fingerprint)!},body:JSON.stringify({audio_attempt_id:audio.id,timeout_seconds:300})})
+        if(['failed','cancelled'].includes(result.status))keys.delete(fingerprint)
+        if(result.status!=='succeeded')throw Error(`回转录未完成：${result.attempt.error?.code||result.status}`)
+        return result
+      }
       if(action==='synthesize'){
         const run=activeRun(),translation=raw.translations.filter(t=>t.segment_id===segment.id).at(-1)
         const voice=raw.voice_references.filter(v=>v.speaker_id===segment.speaker_id).at(-1)

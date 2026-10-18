@@ -1464,7 +1464,16 @@ export function TaskStudio({
                           axis={segment.endSec - segment.startSec}
                           onPlay={transport.pause}
                         />
-                        <ScoreCard score={v.score} />
+                        {(!adapter.audioReview||v.score)&&<ScoreCard score={v.score} />}
+                        {adapter.audioReview&&!v.score&&<p className="dd-small-note">暂无可显示的时序评分；音色身份与听感仍需另行复核。</p>}
+                        {adapter.audioReview && <>
+                          <AudioReviewPanel adapter={adapter} segment={segment.segmentId} attempt={v.attempt} refresh={query.dataUpdatedAt} />
+                          <Button variant="outline" size="sm" disabled={busy||!can('review-audio')} onClick={()=>ask(
+                            '独立回转录当前声音版本','识别实际WAV，不把期待译稿作为ASR提示。相同输入复用成功回执；字符差异不自动签发内容或听感通过。',
+                            ()=>write('review-audio',{segmentId:segment.segmentId,attempt:v.attempt}))}>
+                            <Search />独立回转录
+                          </Button>
+                        </>}
                         {!v.selected && (
                           <Button
                             size="sm"
@@ -1900,6 +1909,27 @@ export function TaskStudio({
       </Sheet>
     </div>
   );
+}
+
+function AudioReviewPanel({adapter,segment,attempt,refresh}:{adapter:TaskAdapter;segment:string;attempt:number;refresh:number}){
+  const review=useQuery({queryKey:['dd-audio-review',adapter.cacheKey,segment,attempt],
+    queryFn:()=>adapter.audioReview!(segment,attempt),staleTime:60000})
+  const lastRefresh=useRef(refresh)
+  useEffect(()=>{
+    if(lastRefresh.current!==refresh){lastRefresh.current=refresh;void review.refetch()}
+  },[refresh,review.refetch])
+  if(review.error)return <p role="alert" className="dd-error">回转录证据载入失败：{review.error.message}<Button variant="ghost" size="sm" onClick={()=>review.refetch()}>重新载入</Button></p>
+  if(review.data===null)return <p className="dd-small-note">尚无成功回转录证据；失败尝试保留在运行记录中，内容与听感保持未测。</p>
+  if(!review.data)return <p className="dd-small-note">正在载入当前声音的回转录证据…</p>
+  const data=review.data
+  return <section className="dd-evidence" aria-label="独立回转录差异">
+    <div className="dd-text-label"><span>独立回转录</span><Badge variant="outline">语义待复核</Badge></div>
+    <p className="dd-small-note">{data.model_id} · 字符错误率 {(data.character_error_rate*100).toFixed(1)}% · {data.edit_distance} 次编辑</p>
+    <p><strong>实际识别：</strong>{data.recognized_text||'未识别到文本'}</p>
+    <p><strong>绑定译稿：</strong>{data.expected_text}</p>
+    <p className="dd-small-note">{data.scope}</p>
+    <details><summary>模型与证据版本</summary><p className="dd-small-note break-all">权重 SHA256：{data.weights_sha256}</p><p className="dd-small-note break-all">证据：{data.evidence_artifact_id}</p></details>
+  </section>
 }
 
 function VoicePanel({

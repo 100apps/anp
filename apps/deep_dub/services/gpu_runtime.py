@@ -11,9 +11,9 @@ from apps.deep_dub.services.model_pool import LocalModelPool
 from apps.deep_dub.services.runtime import StageResult
 
 
-async def run_gpu_stage(actor,run_id,input_hash,handler,config,*,partition,request_key=None):
+async def run_gpu_stage(actor,run_id,input_hash,handler,config,*,partition,request_key=None,node='generate_audio'):
     await actor.require('deep_dub.task.run')
-    stage=await execution.begin_stage(actor,run_id,{'node':'generate_audio','partition':partition,
+    stage=await execution.begin_stage(actor,run_id,{'node':node,'partition':partition,
         'input_hash':input_hash,'device_kind':'gpu'},request_key)
     attempt=stage['attempt']
     if attempt['status']!='queued' or attempt['created_by']!=actor.user['id']:

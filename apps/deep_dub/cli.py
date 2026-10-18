@@ -114,7 +114,7 @@ def flush(ctx:typer.Context):
 
 
 @app.command('candidate')
-def candidate(ctx:typer.Context,kind:Literal['source','transcript','translation'],attempt_id:str,
+def candidate(ctx:typer.Context,kind:Literal['source','transcript','translation','reference','audio'],attempt_id:str,
         input:Path=typer.Option(...,exists=True,dir_okay=False),request_key:str=''):
     body=input_json(input)
     operation=getattr(candidates,kind)

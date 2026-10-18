@@ -1,6 +1,6 @@
 """来源、原文分段、译文候选；登记与独立审核分开。"""
 from uuid import UUID
-from typing import Annotated
+from typing import Annotated,Literal
 from pydantic import Field, model_validator
 
 from apps.deep_dub.services.versions import Contract,identifier,operation_key
@@ -57,6 +57,48 @@ class TranslationInput(Contract):
     prompt_revision: str=Field(min_length=1,max_length=200)
 
 
+class ReferenceInput(Contract):
+    kind: Literal['voice','emotion']
+    source_id: UUID
+    subject_id: UUID
+    start_ms: int=Field(ge=0,le=2**63-1,strict=True)
+    end_ms: int=Field(gt=0,le=2**63-1,strict=True)
+    original_artifact_id: UUID
+    processed_artifact_id: UUID
+    processing: dict=Field(default_factory=dict)
+
+    @model_validator(mode='after')
+    def valid_window(self):
+        if self.end_ms<=self.start_ms:raise ValueError('参考窗口结束必须晚于开始')
+        return self
+
+
+class AudioInput(Contract):
+    segment_id: UUID
+    translation_id: UUID
+    voice_reference_id: UUID
+    emotion_reference_id: UUID
+    artifact_id: UUID
+    evidence_artifact_id: UUID
+    kind: Literal['generation','pcm_tempo']='generation'
+    parent_id: UUID|None=None
+    generation_factor: float=Field(default=1,ge=.90,le=1.35,allow_inf_nan=False,strict=True)
+    pcm_tempo_factor: float=Field(default=1,ge=.90,le=1.10,allow_inf_nan=False,strict=True)
+    parameters: dict=Field(min_length=1)
+
+    @model_validator(mode='after')
+    def generation_and_pcm_are_distinct(self):
+        if self.kind=='generation':
+            if self.parent_id is not None or self.pcm_tempo_factor!=1:
+                raise ValueError('模型生成不能伪装为PCM派生')
+            model=self.parameters.get('model_id')
+            if not isinstance(model,str) or not 1<=len(model.strip())<=200:
+                raise ValueError('必须记录实际模型身份')
+        elif self.parent_id is None:
+            raise ValueError('PCM派生必须保留父音频版本')
+        return self
+
+
 class CandidateService:
     async def source(self,actor,attempt_id,payload,request_key=None):
         await actor.require('deep_dub.task.run')
@@ -80,6 +122,24 @@ class CandidateService:
             p_attempt=identifier(attempt_id),p_segment=str(body.segment_id),p_context=str(body.context_artifact_id),
             p_chinese=body.chinese_text,p_model=body.model_id,p_prompt=body.prompt_revision,
             p_request_key=operation_key(request_key))
+
+    async def reference(self,actor,attempt_id,payload,request_key=None):
+        await actor.require('deep_dub.task.run')
+        body=ReferenceInput.model_validate(payload)
+        return await actor.objects.rpc('deep_dub_register_reference',p_workspace=actor.workspace_id,
+            p_attempt=identifier(attempt_id),p_kind=body.kind,p_source=str(body.source_id),p_subject=str(body.subject_id),
+            p_start_ms=body.start_ms,p_end_ms=body.end_ms,p_original=str(body.original_artifact_id),
+            p_processed=str(body.processed_artifact_id),p_processing=body.processing,p_request_key=operation_key(request_key))
+
+    async def audio(self,actor,attempt_id,payload,request_key=None):
+        await actor.require('deep_dub.task.run')
+        body=AudioInput.model_validate(payload)
+        return await actor.objects.rpc('deep_dub_register_audio',p_workspace=actor.workspace_id,
+            p_attempt=identifier(attempt_id),p_segment=str(body.segment_id),p_translation=str(body.translation_id),
+            p_voice=str(body.voice_reference_id),p_emotion=str(body.emotion_reference_id),p_artifact=str(body.artifact_id),
+            p_evidence=str(body.evidence_artifact_id),p_kind=body.kind,p_parent=str(body.parent_id) if body.parent_id else None,
+            p_generation_factor=body.generation_factor,p_pcm_tempo_factor=body.pcm_tempo_factor,
+            p_parameters=body.parameters,p_request_key=operation_key(request_key))
 
 
 service=CandidateService()

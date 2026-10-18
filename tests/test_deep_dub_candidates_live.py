@@ -34,6 +34,9 @@ def test_source_transcript_and_translation_via_real_identity_and_same_service(co
                              check=True,capture_output=True,text=True,timeout=10)
         duration=round(float(json.loads(probe.stdout)['format']['duration'])*1000)
         assert duration==2000
+        reference_file=Path(folder)/'silent-reference.wav'
+        subprocess.run([ffmpeg,'-v','error','-f','lavfi','-i','anullsrc=r=24000:cl=mono','-t','1',
+                        '-c:a','pcm_s16le',str(reference_file)],check=True,capture_output=True,timeout=20)
         app,tokens=context
 
         async def run():
@@ -84,10 +87,31 @@ def test_source_transcript_and_translation_via_real_identity_and_same_service(co
                     assert denied.status_code==403
                     audits=await actor.objects.select('deep_dub_audits',translation_id='eq.'+translation['id'])
                     assert audits==[]
+                    reference_artifact=await artifacts.upload(actor,attempt,reference_file,'audio/wav',1000,24000)
+                    reference_body={'kind':'voice','source_id':source['id'],'subject_id':segments[0]['speaker_id'],
+                        'start_ms':0,'end_ms':1000,'original_artifact_id':reference_artifact['id'],
+                        'processed_artifact_id':reference_artifact['id'],'processing':{'fixture_only':True,'silent_pcm':True}}
+                    key=str(uuid4())
+                    response=await client.post(f'/api/apps/deep_dub/attempts/{attempt}/reference',json=reference_body,headers={'Idempotency-Key':key})
+                    assert response.status_code==201,response.text
+                    voice=response.json();assert voice==await candidates.reference(actor,attempt,reference_body,key)
+                    emotion_body={**reference_body,'kind':'emotion','subject_id':segments[0]['id']}
+                    response=await client.post(f'/api/apps/deep_dub/attempts/{attempt}/reference',json=emotion_body)
+                    assert response.status_code==201,response.text
+                    emotion=response.json()
+                    audio_body={'segment_id':segments[0]['id'],'translation_id':translation['id'],
+                        'voice_reference_id':voice['id'],'emotion_reference_id':emotion['id'],
+                        'artifact_id':reference_artifact['id'],'evidence_artifact_id':context_artifact['id'],
+                        'parameters':{'model_id':'acceptance-only-no-generation'}}
+                    rejected=await client.post(f'/api/apps/deep_dub/attempts/{attempt}/audio',json=audio_body)
+                    assert rejected.status_code==400 and rejected.json()['error']['code']=='23514'
+                    denied=await client.post(f'/api/apps/deep_dub/attempts/{attempt}/audio',json=audio_body,
+                        headers={'Authorization':'Bearer '+tokens['viewer']})
+                    assert denied.status_code==403
                     invalid={**transcript_body,'segments':[{'cue_numbers':[0]}]}
                     assert (await client.post(f'/api/apps/deep_dub/attempts/{attempt}/transcript',json=invalid)).status_code==422
                     receipt=await execution.finish_stage(actor,attempt,{'status':'succeeded',
-                        'outputs':[original['id'],context_artifact['id']],
+                        'outputs':[original['id'],context_artifact['id'],reference_artifact['id']],
                         'elapsed_seconds':time.monotonic()-started,'operation_stopped':True})
                     assert receipt['committed']
                 for _ in range(20):
@@ -99,6 +123,9 @@ def test_source_transcript_and_translation_via_real_identity_and_same_service(co
                     'scope':'真实Supabase/RustFS+ASGI；2秒无语音合成视频及人工夹具原文/译文，不是生产或媒体质量验收',
                     'purpose':'acceptance','run_id':queued['id'],'source_id':source['id'],
                     'segment_set_id':parts['id'],'translation_id':translation['id'],
+                    'voice_reference_id':voice['id'],'emotion_reference_id':emotion['id'],
+                    'reference_fixture':'1秒静音PCM，仅验证参考关系，不是人物音色或情绪质量',
+                    'audio_without_device_rejected':True,
                     'video_duration_ms':duration,'source_replay_same':True,'transcript_replay_same':True,
                     'translation_replay_same':True,'viewer_write_forbidden':True,
                     'incomplete_transcript_rejected':True,'no_automatic_quality_audits':True},ensure_ascii=False,indent=2)+'\n').encode())

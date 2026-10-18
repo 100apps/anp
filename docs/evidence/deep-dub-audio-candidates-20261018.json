@@ -1,0 +1,164 @@
+{
+  "checked_at_utc": "2026-10-18T08:07:48.762039+00:00",
+  "backup_directory": ".local/backups/v3-postgres-before-cloud-20261018T080744Z",
+  "postgres_container_id": "627452dce9ce667ce855e996047a6ebac1fe6e669976845a37d39bad903bde56",
+  "migration": "apps/deep_dub/migrations/011_audio_candidates.sql",
+  "sha256": "57856d4d159bb547901af9c11160f30531e082080dfd4d0f24499742d52d67de",
+  "existing_task_count_unchanged": 960,
+  "recorded_at_utc": "2026-10-18T08:11:33.727421+00:00",
+  "database_tests": {
+    "passed": 67,
+    "seconds": 13.98,
+    "scope": "独立临时库，含参考窗口/归属、音频幂等/并发、回执/租约、累计PCM派生门禁；设备/音频元数据均为夹具"
+  },
+  "live_tests": {
+    "passed": 7,
+    "seconds": 18.71,
+    "scope": "真实Supabase/RustFS/Langfuse + CLI/临时业务HTTP + ASGI参考登记与无设备拒绝"
+  },
+  "reference_readback": {
+    "checked_at_utc": "2026-10-18T08:09:45.230530+00:00",
+    "scope": "真实Supabase/RustFS+ASGI；2秒无语音合成视频及人工夹具原文/译文，不是生产或媒体质量验收",
+    "purpose": "acceptance",
+    "run_id": "9eca4de2-90d2-413e-9ac8-d06f3f20a711",
+    "source_id": "3d8167a3-bf9d-475a-95ff-11de8a3be03f",
+    "segment_set_id": "240404f8-9724-477a-a753-e8fbf7ea2955",
+    "translation_id": "949e94fe-3ae1-457f-89cf-1d7b37a7ac8a",
+    "voice_reference_id": "6d32c402-6cf6-4658-bb37-76b4fc5ed6cf",
+    "emotion_reference_id": "2a2584c1-aaeb-4139-8f12-d5a4ccd60cd3",
+    "reference_fixture": "1秒静音PCM，仅验证参考关系，不是人物音色或情绪质量",
+    "audio_without_device_rejected": true,
+    "video_duration_ms": 2000,
+    "source_replay_same": true,
+    "transcript_replay_same": true,
+    "translation_replay_same": true,
+    "viewer_write_forbidden": true,
+    "incomplete_transcript_rejected": true,
+    "no_automatic_quality_audits": true
+  },
+  "readonly_model_preflight": {
+    "checked_at_utc": "2026-10-18T08:09:00.147055+00:00",
+    "scope": "仅GET，不调用生成/加载/卸载/取消；健康不等于设备可领取",
+    "backends": [
+      {
+        "id": "local-5060ti",
+        "observations": [
+          {
+            "route": "/health",
+            "http_status": 200,
+            "response_fields": [
+              "status",
+              "backend",
+              "models",
+              "ui",
+              "ui_management"
+            ],
+            "health": {
+              "status": "ok"
+            }
+          },
+          {
+            "route": "/v1/models",
+            "http_status": 200,
+            "response_fields": [
+              "object",
+              "data"
+            ],
+            "models": [
+              {
+                "id": "index-tts2-5",
+                "loaded": false
+              },
+              {
+                "id": "dots-tts-edit-q8",
+                "loaded": false
+              },
+              {
+                "id": "qwen3-asr-1.7b-q8",
+                "loaded": false
+              },
+              {
+                "id": "qwen3-forced-aligner-0.6b-f16",
+                "loaded": false
+              },
+              {
+                "id": "bs-roformer-ep368-q8",
+                "loaded": false
+              },
+              {
+                "id": "nemotron-3-diar-bf16",
+                "loaded": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lan-v100",
+        "observations": [
+          {
+            "route": "/health",
+            "http_status": 200,
+            "response_fields": [
+              "status",
+              "backend",
+              "models",
+              "ui",
+              "ui_management"
+            ],
+            "health": {
+              "status": "ok"
+            }
+          },
+          {
+            "route": "/v1/models",
+            "http_status": 200,
+            "response_fields": [
+              "object",
+              "data"
+            ],
+            "models": [
+              {
+                "id": "indextts2",
+                "loaded": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "business_counts": {
+    "voice_references": 2,
+    "emotion_references": 2,
+    "audits": 0,
+    "runs": 21,
+    "devices": 0,
+    "device_leases": 0,
+    "audio_attempts": 0,
+    "renders": 0,
+    "publications": 0
+  },
+  "run_purposes": {
+    "acceptance": 21
+  },
+  "run_statuses": {
+    "cancelled": 21
+  },
+  "outbox_statuses": {
+    "sent": 28
+  },
+  "yale_project_source_count": 0,
+  "threads_preserved": 305,
+  "all_thread_values_identical": true,
+  "protected_container_ids_preserved": 27,
+  "platform_container_unchanged": true,
+  "platform_image": "ghcr.io/100apps/anp-platform@sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3",
+  "limitations": [
+    "参考实测使用1秒静音PCM，不是人物身份/音色/情绪或自然度测评",
+    "音频成功与PCM派生只在独立库的合成设备/产物元数据测试；真实API验证的是无租约拒绝",
+    "模型服务仅GET健康与模型列表，不代表设备可领取；没有加载/卸载/生成/取消请求",
+    "实际设备租约、模型适配/生产图、背景/成片登记与工作台仍待完成",
+    "主库音频生成候选、生产run、Yale来源、成片和B站投稿仍为0"
+  ]
+}

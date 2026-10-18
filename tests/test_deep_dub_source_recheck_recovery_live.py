@@ -43,11 +43,12 @@ def test_original_attempt_identity_scores_and_cli_replay_without_new_model(monke
             response=await client.get(value('langfuse','url')+'/api/public/v3/scores',params={'traceId':run.replace('-',''),'limit':100});response.raise_for_status();found={s['id']:s for s in response.json()['data']}
             for score in scores:assert found[score['id']]['value']==(score['value'] if score['measurement_status']=='measured' else 'not_measured')
         packet=await review_queue(actor,project,source)
+        audits=await actor.objects.select('deep_dub_audits',project_id='eq.'+project,order='id.asc')
         old=json.loads((ROOT/'.local/deep-dub-source-review-live.json').read_bytes())
         assert packet['packet_sha256']==old['packet_sha256']
-        return actor,runs,leases,scores,packet
+        return actor,runs,leases,scores,packet,audits
     try:
-        actor,runs,leases,scores,packet=asyncio.run(before())
+        actor,runs,leases,scores,packet,audits=asyncio.run(before())
         for options in [('--endpoint','http://127.0.0.1:1'),('--transport','http','--endpoint','http://127.0.0.1:8181')]:
             replay=subprocess.run([sys.executable,'-m','anp.cli.entry',*options,'deep_dub','runs','recheck-source-boundaries',run,source,
                 '--request-key',attempt['request_key']],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',timeout=180)
@@ -62,13 +63,13 @@ def test_original_attempt_identity_scores_and_cli_replay_without_new_model(monke
             stages=await actor.objects.select('deep_dub_stages',run_id='eq.'+run,node='eq.source_boundary_recheck')
             attempts=await actor.objects.select('deep_dub_stage_attempts',stage_id='eq.'+stages[0]['id'])
             assert len(stages)==len(attempts)==1
-            assert not await actor.objects.select('deep_dub_audits',project_id='eq.'+project)
+            assert await actor.objects.select('deep_dub_audits',project_id='eq.'+project,order='id.asc')==audits
             assert not await actor.objects.select('deep_dub_segment_sets',project_id='eq.'+project)
         asyncio.run(after())
         assert proof['session']['requests']==43 and proof['session']['operation_stopped'] and proof['summary']['empty_windows']==0
         result={'project_id':project,'source_id':source,'run_id':run,'result':{'status':'succeeded','attempt':attempt},'readback':record['readback'],
             'actor_user_id':attempt['created_by'],'trace_task_user_id':record['task_user_id'],'lease':leases[0],'score_ids':[s['id'] for s in scores],
-            'original_queue_sha256':packet['packet_sha256'],'original_run_unchanged':True,'source_not_modified':True,'no_source_audit_or_segments':True,
+            'original_queue_sha256':packet['packet_sha256'],'original_run_unchanged':True,'source_not_modified':True,'source_audits_unchanged_in_recovery':True,'source_audits_present_before_recovery':len(audits),'no_segments':True,
             'langfuse_verified':True,'two_cli_replay_and_read':True,'new_model_in_recovery':False,'retained_initial_test_failure_seconds':46.81,
             'initial_test_failure_reason':'错误将Langfuse运行发起者userId与此次管理员执行者混为一谈；按任务原身份核对并保留执行尝试关联'}
         (ROOT/'.local/deep-dub-source-recheck-live.json').write_bytes(json.dumps(result,ensure_ascii=False,indent=2).encode())

@@ -36,6 +36,7 @@ from apps.deep_dub.services.source_reference import compare as compare_source_re
 from apps.deep_dub.services.source_alignment import align as align_source,read_latest as read_source_alignment
 from apps.deep_dub.services.source_review import read as read_source_review,ReviewKind
 from apps.deep_dub.services.source_speakers import generate as analyze_speakers,read_latest as read_speakers
+from apps.deep_dub.services.auditory_review import generate as review_source_audio,read_latest as read_auditory_review
 from apps.deep_dub.services.source_recheck import generate as recheck_source,read_latest as read_source_recheck
 from apps.deep_dub.services.source_independent_asr import generate as recognize_independent,read_latest as read_independent
 
@@ -46,6 +47,17 @@ media_commands=typer.Typer(help='私有音视频信息；同一用户和工作�
 app.add_typer(project_commands,name='projects')
 app.add_typer(run_commands,name='runs')
 app.add_typer(media_commands,name='media')
+
+
+@run_commands.command('review-source-audio')
+def source_auditory_review(ctx:typer.Context,run_id:str,source_id:str,timeout_seconds:int=3600,request_key:str=''):
+    body={'source_id':source_id,'timeout_seconds':timeout_seconds}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/review-source-audio',lambda actor:review_source_audio(actor,run_id,body,request_key or None),body,request_key,timeout_seconds=timeout_seconds+300))
+
+
+@project_commands.command('source-auditory-review')
+def source_auditory_read(ctx:typer.Context,project_id:str,source_id:str):
+    perform(invoke(ctx,'GET',f'/projects/{project_id}/sources/{source_id}/auditory-review',lambda actor:read_auditory_review(actor,project_id,source_id)))
 
 
 @run_commands.command('analyze-source-speakers')

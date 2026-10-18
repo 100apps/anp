@@ -1,0 +1,130 @@
+{
+  "scope": "新正式流水线的当前实际状态，未将组件构建或资源心跳当作正式发布",
+  "checked_at_utc": "2026-10-18T00:56:37.743833+00:00",
+  "run": 39081912265,
+  "source_sha": "1c0e2f772d4653431d2a7953c6f80878d5671144",
+  "url": "https://github.com/100apps/anp/actions/runs/39081912265",
+  "status": "in_progress",
+  "conclusion": null,
+  "jobs": [
+    {
+      "id": 117540434314,
+      "name": "dependencies",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117540688820,
+      "name": "component (auth)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117540688831,
+      "name": "component (lens)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117540688833,
+      "name": "component (storage)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117540688836,
+      "name": "component (studio)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117540688842,
+      "name": "component (dbx)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117540688847,
+      "name": "component (meta)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117540688851,
+      "name": "component (langfuse-web)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117540688859,
+      "name": "component (postgrest)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117540688883,
+      "name": "component (langfuse-worker)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117540688901,
+      "name": "component (litellm)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117547699189,
+      "name": "platform",
+      "status": "in_progress",
+      "conclusion": null,
+      "current_steps": [
+        "拉取中间制品并组装唯一平台镜像"
+      ]
+    }
+  ],
+  "browser_log_observation": {
+    "job": 117540688901,
+    "step": "主包 uv sync 原生构建",
+    "last_visible_build_output": "Building litellm @ file:///app",
+    "visible_resource_sample": {
+      "mem_available_kib": 3342572,
+      "swap_free_kib": 3145644,
+      "disk_free_gib": 27.1
+    },
+    "search_literal_error_colon_matches": 0,
+    "resource_sample_has_log_timestamp": false,
+    "underlying_compiler_progress_proven": false,
+    "note": "资源监视器心跳与编译进度不同；日志搜索无匹配也不能证明没有其他形式错误。作业仍运行，保留原句柄等待。 后续原作业已成功，终态以上方 litellm_terminal 为准。",
+    "private_ax_sha256": "8d6903e2e9f2f8f541a8ca75aa04c631c0e3482422574047826920bfddb20415"
+  },
+  "local_read_packages_authorization_completed": false,
+  "full_platform_release_verified": false,
+  "local_ghcr_pull_and_start_verified": false,
+  "all_component_jobs_success": true,
+  "litellm_terminal": {
+    "job": 117540688901,
+    "conclusion": "success",
+    "actual_upstream_sha": "75faaeab641e161a3d6bc38a42fcaa71c5602d90",
+    "checkout_note": "初始 gitlink c143954 不等于实际构建 SHA；checkout_dependencies 随后检出 75faaeab，不能混用",
+    "registry_digest": "sha256:89c4cf02143b2a750f02ebf0e351a0278a0f45ec7fc2b9d16bb12052a9282da4",
+    "native_package_build_step_seconds": 1547.5,
+    "redacted_log_sha256": "c578450bb768846313f7c7db57eb732232d906079e875d1483aeebdd2738ac0b"
+  },
+  "frontend_ci": {
+    "run": 39083130776,
+    "source_sha": "0ecb256bdedd2a29cb4ddc09817f478d127e10f6",
+    "conclusion": "success"
+  }
+}

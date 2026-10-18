@@ -127,10 +127,8 @@
     "existing_thread_states_unchanged": 281,
     "protected_storage_and_legacy_container_ids_unchanged": 21
   },
-  "unfinished": [
-    "WSL 平台与业务组合真实 F5"
-  ],
-  "current_ui_blocker": "Qoder 窗口被最小化，Computer Use 两次恢复提示用户操作；停止继续发送桌面输入，平台断点继续执行及组合剩余检查未完成",
+  "unfinished": [],
+  "current_ui_blocker": null,
   "private_proof_sha256": "7330b438672935ab5a8f480f3fa03b318af279a9203c7b5a10358c51789f702c",
   "popup_recovery": {
     "closed": true,
@@ -140,12 +138,19 @@
   },
   "desktop_automation_stopped": {
     "reason": "用户按物理 Escape 停止 Computer Use",
-    "remaining_checks_not_run": true
+    "remaining_checks_not_run": true,
+    "subsequently_resumed_and_verified": true
   },
   "updated_at_utc": "2026-10-18T00:09:47.202867+00:00",
   "native_business_f5": {
-    "full_verified": false,
-    "actual_ide_platform_breakpoint_observed": true,
+    "full_verified": true,
+    "frontend_hmr_rehit": true,
+    "backend_hmr_rehit": true,
+    "platform_source_hmr_rehit": true,
+    "native_regression_passed": 76,
+    "docker_return_regression_passed": 76,
+    "all_thread_states_preserved_on_return": 293,
     "evidence": "docs/evidence/v3-native-ide-readiness-20261018.json"
-  }
+  },
+  "full_platform_release_verified": false
 }

@@ -29,6 +29,7 @@ from apps.deep_dub.services import waveforms
 from apps.deep_dub.services.translation import generate as generate_translation
 from apps.deep_dub.services.references import prepare as prepare_reference
 from apps.deep_dub.services.speech import generate as generate_speech
+from apps.deep_dub.services.resident_recovery import recover as recover_resident
 from apps.deep_dub.services.audio_review import review as review_audio
 from apps.deep_dub.services.audio_timing import analyze as analyze_timing
 from apps.deep_dub.services.source_recognition import recognize as recognize_source,read_latest as read_source_recognition
@@ -53,6 +54,11 @@ app.add_typer(media_commands,name='media')
 def close_lost_attempt(ctx:typer.Context,attempt_id:str,lease_ids:list[str]=typer.Option(...,'--lease-id')):
     body={'lease_ids':lease_ids}
     perform(invoke(ctx,'POST',f'/attempts/{attempt_id}/close-lost',lambda actor:execution.close_lost_attempt(actor,attempt_id,lease_ids),body))
+
+
+@app.command('recover-resident')
+def recover_resident_attempt(ctx:typer.Context,attempt_id:str):
+    perform(invoke(ctx,'POST',f'/attempts/{attempt_id}/recover-resident',lambda actor:recover_resident(actor,attempt_id),{}))
 
 
 @run_commands.command('review-source-audio')

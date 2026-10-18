@@ -21,6 +21,7 @@ from apps.deep_dub.services.waveforms import WaveformInput,prepare as prepare_wa
 from apps.deep_dub.services.translation import TranslationInput as GenerateTranslationInput,generate as generate_translation
 from apps.deep_dub.services.references import ReferencePreparation,prepare as prepare_reference
 from apps.deep_dub.services.speech import SpeechInput,generate as generate_speech
+from apps.deep_dub.services.resident_recovery import recover as recover_resident
 from apps.deep_dub.services.audio_review import AudioReviewInput,review as review_audio,read_latest as read_audio_review
 from apps.deep_dub.services.audio_timing import AudioTimingInput,analyze as analyze_audio_timing,read_latest as read_audio_timing
 from apps.deep_dub.services.source_recognition import SourceRecognitionInput,recognize as recognize_source,read_latest as read_source_recognition
@@ -43,6 +44,11 @@ router.include_router(media_router)
 @router.post('/attempts/{attempt_id}/close-lost')
 async def close_lost_attempt(attempt_id:str,body:LostAttemptInput,actor=Depends(get_actor)):
     return await execution.close_lost_attempt(actor,attempt_id,body.lease_ids)
+
+
+@router.post('/attempts/{attempt_id}/recover-resident')
+async def recover_resident_attempt(attempt_id:str,actor=Depends(get_actor)):
+    return await recover_resident(actor,attempt_id)
 
 
 @router.post('/runs/{run_id}/review-source-audio')

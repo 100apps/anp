@@ -12,7 +12,7 @@
 
 ## 已实现但未完成集成
 
-`api/router.py` 是项目、规则、审核、选版和时间线的 HTTP 适配。3 项 ASGI 适配测试通过真实 Supabase 身份与 RPC，验证登录/只读角色、相同服务契约及 409/404 领域错误；尚未注册到运行中的业务 API，不算真实 HTTP 端口或 Web 验收。
+`api/router.py` 提供项目、规则、审核、选版、时间线、运行与阶段/评分的 HTTP 适配。4 项 ASGI 适配测试使用真实 Supabase 身份与 RPC，并实际写入和读回本机 Langfuse；尚未注册到运行中的业务 API，不算真实 HTTP 端口或 Web 验收。
 
 ## 内容与版本关系（已部署、关系约束已验证）
 
@@ -27,8 +27,24 @@
 
 PostgREST 领域冲突使用 `PT409`，对象不存在使用 `PT404`，避免被数据库回滚/过程错误的默认 HTTP 500 语义混淆。依据：[官方错误映射与自定义状态码](https://docs.postgrest.org/en/v14/references/errors.html)；本机真实映射已验证。
 
+## 执行、租约、观测与发布账本（已部署）
+
+`004` 至 `007` 迁移补齐设备、租约、评分、事务 outbox、发布五表，当前共 28 表，全部启用工作空间 RLS。迁移前五库备份均完成独立实际恢复；应用迁移不重建平台镜像、不改变原有任务。
+
+- 排队起点、首次启动与完成时间由数据库保存；默认本地运行，生产与验收目的分开。运行冻结质量规则、源输入与复用策略，不允许事后缩短墙钟。
+- 设备初始未核验；过期租约隔离设备，不能把超时当作实际停止。CPU 容量与 GPU 独占通过数据库锁维护，迟到 worker 的 token/fence 不能提交成功结果。管理员恢复也需要实际停止及外部进程检查证据。
+- 阶段回执与 outbox 同事务提交；评分绑定具体尝试指纹及规则修订，已测必须关联证据，未知数值为 NULL。投递失败保留重试与退避，不写原始异常/凭据到错误字段。
+- `services/observations.py` 使用 OTLP 写入 Langfuse v4，user 来自原任务创建者、session 来自 run，事件与观察 ID 固定。旧批量 trace/span 入口在当前 v4 的 events_only 模式返回 400，已实际复现并适配，未切换平台到兼容旧数据模式。
+- 真实 Langfuse v4 已读回正确 user/session；未测项表现为独立 TEXT `speaker_identity:status=not_measured`，本地数值仍为 NULL。Scores API v3 的 `value` 是多态字段，文本返回字符串，并非旧版 `stringValue`。
+- 整片验收要求所有阶段完成、运算停止及质量审核通过；RTF 使用原始排队至技术验收结束。复用其他轮次音频（含 PCM 父链）不能冒充全新生产；允许复用的编辑轮次不计性能通过。
+- 投稿账本要求完整生产轮次通过技术与性能门禁。同一成片只有一条投稿；上传超时进入回执未知，不自动重投。真实投稿回执与公开页面查证使用不同证据，分别登记，尚未发生实际投稿。
+
+46 项独立临时数据库检查及 4 项真实 Supabase/本机 Langfuse 集成检查通过。设备、媒体审核和发布门禁在独立库使用合成夹具，不能当作真实设备空闲、媒体质量或 B 站发布通过。
+
+协议依据：[Langfuse v4 迁移说明](https://langfuse.com/self-hosting/upgrade/upgrade-guides/upgrade-v3-to-v4)；实现同时对照仓库锁定的 Langfuse 源码与本机 SDK，最终以实际接口读回为准。
+
 ## 接续范围
 
-继续按 `docs/deep_dub设计草案.md` 实现剩余 5 表（设备、租约、评分、outbox、发布）及相应受限 RPC，再补候选注册/作业提交、CLI、工作台和真实业务 nodes/flow。随后接入两 GPU/两 CPU，发起全新整片生产，验证完整墙钟 RTF≤0.5、内容/声音/字幕/时序/碰撞/解码，最后取得 B 站发布回执。未测项保留未测，不以局部测速或旧成片替代。
+继续补候选注册/不可变对象提交、设备与发布服务适配、CLI、工作台和真实业务 nodes/flow。远端 worker 尚未有仅限单个尝试的授权签发，不能把完整用户 JWT 当作该功能已实现；丢失投稿凭据后的人工核对恢复也待接入。随后实际探测两 GPU/两 CPU，发起全新整片生产，验证完整墙钟 RTF≤0.5、内容/声音/字幕/时序/碰撞/解码，最后取得 B 站发布回执。未测项保留未测，不以局部测速或旧成片替代。
 
-验收证据：`docs/evidence/deep-dub-foundation-20261018.json`、`docs/evidence/deep-dub-content-contracts-20261018.json`。
+验收证据：`docs/evidence/deep-dub-foundation-20261018.json`、`docs/evidence/deep-dub-content-contracts-20261018.json`、`docs/evidence/deep-dub-execution-contracts-20261018.json`。旧证据保留当时结构、SHA 和测试范围，不改写为新一轮结果。

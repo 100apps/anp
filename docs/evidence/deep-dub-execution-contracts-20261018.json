@@ -1,0 +1,117 @@
+{
+  "checked_at_utc": "2026-10-18T07:34:13.063191+00:00",
+  "backup_directory": ".local/backups/v3-postgres-before-cloud-20261018T073350Z",
+  "postgres_container_id": "627452dce9ce667ce855e996047a6ebac1fe6e669976845a37d39bad903bde56",
+  "migrations": [
+    {
+      "path": "apps/deep_dub/migrations/003_selection_contracts.sql",
+      "sha256": "f945738000bc3a82e0c0ff3639614160ded8a72be5c4d74ab097c4f30c0aa7c6"
+    },
+    {
+      "path": "apps/deep_dub/migrations/004_execution_relations.sql",
+      "sha256": "5b264bffc58c65fe97ac4a92df7987e88a175e1d6f65368e667a48f0eca1891e"
+    },
+    {
+      "path": "apps/deep_dub/migrations/005_run_and_device_contracts.sql",
+      "sha256": "e8893503e5981a895ee9b4f777abff0c0c3b41f969efe80f7c89af9b6b99c6c0"
+    },
+    {
+      "path": "apps/deep_dub/migrations/006_stage_and_observation_contracts.sql",
+      "sha256": "2ff290de35cb1b5e80836f405158a119f5004aab02b1fe3501d2a343d3fd2ad7"
+    },
+    {
+      "path": "apps/deep_dub/migrations/007_publication_contracts.sql",
+      "sha256": "cf23ff8fd0d87b2a841d9db01755010279577a4611fe7d478446efc149a45531"
+    }
+  ],
+  "task_count_before_after": 944,
+  "rls_tables": [
+    "deep_dub_artifacts",
+    "deep_dub_audio_attempts",
+    "deep_dub_audits",
+    "deep_dub_backgrounds",
+    "deep_dub_cues",
+    "deep_dub_device_leases",
+    "deep_dub_devices",
+    "deep_dub_emotion_references",
+    "deep_dub_observation_outbox",
+    "deep_dub_projects",
+    "deep_dub_publications",
+    "deep_dub_quality_profiles",
+    "deep_dub_renders",
+    "deep_dub_runs",
+    "deep_dub_scores",
+    "deep_dub_segment_cues",
+    "deep_dub_segment_sets",
+    "deep_dub_segments",
+    "deep_dub_selection_audits",
+    "deep_dub_selections",
+    "deep_dub_sources",
+    "deep_dub_speakers",
+    "deep_dub_stage_attempts",
+    "deep_dub_stages",
+    "deep_dub_timeline_clips",
+    "deep_dub_timeline_revisions",
+    "deep_dub_translations",
+    "deep_dub_voice_references"
+  ],
+  "production_runs": 0,
+  "recorded_at_utc": "2026-10-18T07:39:57.155887+00:00",
+  "database_contract_tests": {
+    "passed": 46,
+    "seconds": 7.24,
+    "scope": "独立临时库真实 SQL，设备/媒体/回执均为合成夹具"
+  },
+  "live_contract_tests": {
+    "passed": 4,
+    "seconds": 6.92,
+    "scope": "ASGI 适配 + 真实 V3 Supabase + 本机 Langfuse，尚未注册业务 HTTP 端口"
+  },
+  "observation_readback": {
+    "checked_at_utc": "2026-10-18T07:37:57.424254+00:00",
+    "scope": "真实 V3 Supabase + ASGI 业务契约 + 本机 Langfuse；没有媒体生产或真实设备操作",
+    "run_id": "933f206e-0556-4d59-87f8-0404213b6dff",
+    "purpose": "acceptance",
+    "trace_id": "933f206e05564d5987f80404213b6dff",
+    "user_id": "655a02be-94ea-43a2-a11e-90b36c59d45e",
+    "session_id": "933f206e-0556-4d59-87f8-0404213b6dff",
+    "attempt_id": "b3f940a1-c10a-4b81-b3cc-36c6e32b03e2",
+    "score_id": "13a65a61-5139-4bdb-b5f4-9a2195030d07",
+    "score_type": "TEXT",
+    "local_numeric_value": null,
+    "langfuse_polymorphic_value": "not_measured",
+    "delivery_count": 3,
+    "viewer_forbidden": true
+  },
+  "current_business_counts": {
+    "runs": 4,
+    "sources": 0,
+    "audio_attempts": 0,
+    "audits": 0,
+    "selections": 0,
+    "renders": 0,
+    "publications": 0,
+    "devices": 0,
+    "device_leases": 0,
+    "scores": 4
+  },
+  "run_purposes": {
+    "acceptance": 4
+  },
+  "outbox_statuses": {
+    "sent": 8
+  },
+  "current_platform_tasks": 948,
+  "threads_preserved": 305,
+  "all_thread_values_identical": true,
+  "protected_container_ids_preserved": 27,
+  "platform_container_unchanged": true,
+  "platform_image": "ghcr.io/100apps/anp-platform@sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3",
+  "limitations": [
+    "没有媒体生产、下载、TTS、实际设备租约或 B站网络请求",
+    "独立库门禁不能替代真实质量、整片 RTF 或发布验收",
+    "候选/对象注册、远端单尝试授权、CLI/Web/nodes/flow 待实施",
+    "设备/发布服务与丢失上传凭据后的核对恢复待集成",
+    "Langfuse 旧 trace/span 批量入口实际返回400，已改OTLP；评分用新v3读取"
+  ]
+}

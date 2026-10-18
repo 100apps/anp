@@ -13,6 +13,7 @@ dependencies = [
   "typer>=0.20,<1", "rich>=14,<15", "watchfiles>=1.1,<2", "debugpy>=1.8,<2",
   "langgraph==1.2.16", "langgraph-cli[inmem]==0.4.36", "langgraph-api==0.16.1",
   "langgraph-runtime-inmem==0.36.1", "langgraph-sdk==0.4.8", "langfuse==4.15.6",
+  "opentelemetry-proto==1.42.1",
   "langgraph-checkpoint-postgres>=3,<4", "psycopg[binary,pool]>=3.2,<4",
   "boto3==1.43.114", "redis>=6,<8", "PyJWT>=2.10,<3", "certifi==2026.7.22",
 ]

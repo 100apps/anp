@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, Header
 from anp.auth.dependencies import get_actor
 from apps.deep_dub.services.projects import ProjectInput, service
 from apps.deep_dub.services.versions import AuditInput, QualityProfileInput, SelectionInput, TimelineInput, service as versions
+from apps.deep_dub.services.execution import RunInput, StageInput, StageReceipt, ScoreInput, service as execution
+from typing import Literal
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 
@@ -41,3 +43,43 @@ async def select_version(project_id: str, body: SelectionInput, actor=Depends(ge
 @router.post('/projects/{project_id}/timeline', status_code=201)
 async def commit_timeline(project_id: str, body: TimelineInput, actor=Depends(get_actor), idempotency_key: str | None=Header(None)):
     return await versions.commit_timeline(actor, project_id, body.model_dump(), idempotency_key)
+
+
+@router.post('/projects/{project_id}/runs', status_code=201)
+async def queue_run(project_id: str, body: RunInput, actor=Depends(get_actor), idempotency_key: str | None=Header(None)):
+    return await execution.queue(actor, project_id, body.model_dump(), idempotency_key)
+
+
+@router.get('/projects/{project_id}/runs')
+async def list_runs(project_id: str, actor=Depends(get_actor)):
+    return await execution.list(actor, project_id)
+
+
+@router.post('/runs/{run_id}/start')
+async def start_run(run_id: str, actor=Depends(get_actor)):
+    return await execution.start(actor, run_id)
+
+
+@router.post('/runs/{run_id}/cancel')
+async def cancel_run(run_id: str, actor=Depends(get_actor)):
+    return await execution.cancel(actor, run_id)
+
+
+@router.post('/runs/{run_id}/stages', status_code=201)
+async def begin_stage(run_id: str, body: StageInput, actor=Depends(get_actor), idempotency_key: str | None=Header(None)):
+    return await execution.begin_stage(actor, run_id, body.model_dump(), idempotency_key)
+
+
+@router.post('/attempts/{attempt_id}/mark/{phase}')
+async def mark_stage(attempt_id: str, phase: Literal['started', 'loaded'], actor=Depends(get_actor)):
+    return await execution.mark_stage(actor, attempt_id, phase)
+
+
+@router.post('/attempts/{attempt_id}/receipt')
+async def finish_stage(attempt_id: str, body: StageReceipt, actor=Depends(get_actor)):
+    return await execution.finish_stage(actor, attempt_id, body.model_dump())
+
+
+@router.post('/attempts/{attempt_id}/scores', status_code=201)
+async def record_score(attempt_id: str, body: ScoreInput, actor=Depends(get_actor), idempotency_key: str | None=Header(None)):
+    return await execution.record_score(actor, attempt_id, body.model_dump(), idempotency_key)

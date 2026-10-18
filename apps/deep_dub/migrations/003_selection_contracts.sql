@@ -77,8 +77,9 @@ BEGIN
  IF target_project IS DISTINCT FROM p_project THEN RAISE EXCEPTION '审核对象不属于项目' USING ERRCODE='42501'; END IF;
  IF p_rule IS NULL OR btrim(p_rule)='' OR p_rule_revision IS NULL OR btrim(p_rule_revision)='' THEN
   RAISE EXCEPTION '审核必须带指标及规则版本' USING ERRCODE='22023'; END IF;
- IF p_status='passed' AND p_kind='translation' AND p_method='technical' THEN
-  RAISE EXCEPTION '译文通过必须来自人工或独立模型复核' USING ERRCODE='23514'; END IF;
+ IF p_status='passed' AND p_method='technical' AND (p_kind='translation'
+ OR (p_kind='voice_reference' AND p_rule='speaker_identity') OR (p_kind='background' AND p_rule='event_preservation')) THEN
+  RAISE EXCEPTION '语义、身份或事件保留通过必须来自人工或独立模型复核' USING ERRCODE='23514'; END IF;
  request_fingerprint:=platform.deep_dub_digest(jsonb_build_array(p_project,p_kind,p_subject,p_profile,p_rule,p_rule_revision,p_status,p_method,p_evidence,p_details,fingerprint));
  INSERT INTO platform.deep_dub_audits(workspace_id,project_id,translation_id,audio_attempt_id,voice_reference_id,
  emotion_reference_id,background_id,timeline_id,render_id,source_id,quality_profile_id,rule_key,rule_revision,

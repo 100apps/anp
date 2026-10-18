@@ -42,8 +42,10 @@ class AuditInput(Contract):
     def measured_requires_evidence(self):
         if self.status != 'not_measured' and self.evidence_artifact_id is None:
             raise ValueError('已测审核必须关联证据产物')
-        if self.status == 'passed' and self.kind == 'translation' and self.method == 'technical':
-            raise ValueError('译文通过需要人工或独立模型复核')
+        if self.status == 'passed' and self.method == 'technical' and (self.kind == 'translation'
+            or (self.kind == 'voice_reference' and self.rule_key == 'speaker_identity')
+            or (self.kind == 'background' and self.rule_key == 'event_preservation')):
+            raise ValueError('语义、身份或事件保留通过需要人工或独立模型复核')
         return self
 
 

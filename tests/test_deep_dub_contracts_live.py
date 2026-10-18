@@ -14,6 +14,8 @@ from anp.auth.identity import actor_from_token
 from anp.server.api import business_error
 from apps.deep_dub.api.router import router
 from apps.deep_dub.services.versions import service
+from apps.deep_dub.services.execution import service as execution
+from apps.deep_dub.services.observations import deliver_one
 
 pytestmark=pytest.mark.skipif(os.environ.get('ANP_DEEP_DUB_LIVE')!='1',reason='需显式开启真实 V3 契约验收')
 PROFILE={'profile_key':'high','revision':1,'provenance':'deep_dub 本机规则契约 v1'}
@@ -71,4 +73,85 @@ def test_postgrest_preserves_conflict_and_not_found_as_domain_http_status(contex
                 'kind':'translation','subject_id':str(uuid4()),'quality_profile_id':profile.json()['id'],
                 'rule_key':'meaning','rule_revision':'contract-only','status':'not_measured','method':'independent_model'})
             assert missing.status_code==404 and missing.json()['error']['code']=='PT404'
+    asyncio.run(run())
+
+
+def test_execution_same_identity_and_real_langfuse_unknown_score(context):
+    """行政验收阶段，无视频/设备操作；未测质量必须在 Langfuse 保持未测。"""
+    import time
+    import json
+    from pathlib import Path
+    from datetime import datetime, timezone
+    app, tokens = context
+
+    async def run():
+        actor = await actor_from_token(tokens['admin'])
+        async with async_client(transport=httpx.ASGITransport(app=app), base_url='http://acceptance',
+                headers={'Authorization':'Bearer '+tokens['admin']}) as client:
+            projects = (await client.get('/api/apps/deep_dub/projects')).json()
+            project = projects[0]
+            profile = await service.create_quality_profile(actor, PROFILE)
+            body = {'quality_profile_id':profile['id'], 'purpose':'acceptance',
+                    'flow_revision':'observation-contract-v1', 'expected_version':project['row_version']}
+            key = 'observation-acceptance-'+str(uuid4())
+            response = await client.post('/api/apps/deep_dub/projects/'+project['id']+'/runs',
+                                         json=body, headers={'Idempotency-Key':key})
+            assert response.status_code == 201, response.text
+            queued = response.json()
+            assert queued == await execution.queue(actor, project['id'], body, key)
+            try:
+                assert (await client.post('/api/apps/deep_dub/runs/'+queued['id']+'/start')).status_code == 200
+                denied = await client.post('/api/apps/deep_dub/runs/'+queued['id']+'/stages',
+                    json={'node':'acceptance_observation','input_hash':'a'*64},
+                    headers={'Authorization':'Bearer '+tokens['viewer']})
+                assert denied.status_code == 403
+                staged = await client.post('/api/apps/deep_dub/runs/'+queued['id']+'/stages',
+                    json={'node':'acceptance_observation','input_hash':'a'*64})
+                assert staged.status_code == 201, staged.text
+                attempt = staged.json()['attempt']['id']
+                assert (await client.post('/api/apps/deep_dub/attempts/'+attempt+'/mark/started')).status_code == 200
+                started = time.monotonic()
+                receipt = {'status':'succeeded','outputs':[], 'elapsed_seconds':time.monotonic()-started}
+                finished = await client.post('/api/apps/deep_dub/attempts/'+attempt+'/receipt', json=receipt)
+                assert finished.status_code == 200 and finished.json()['committed'], finished.text
+                measured = {'metric':'speaker_identity','rule_revision':'acceptance-unmeasured-v1',
+                            'measurement_status':'not_measured'}
+                scored = await client.post('/api/apps/deep_dub/attempts/'+attempt+'/scores',json=measured)
+                assert scored.status_code == 201 and scored.json()['value'] is None, scored.text
+                results = []
+                for _ in range(100):
+                    delivered = await deliver_one(actor)
+                    if not delivered['claimed']:
+                        break
+                    assert delivered['sent'], delivered
+                    results.append(delivered)
+                else:
+                    raise AssertionError('观测投递未在限定批数内排空')
+                trace_id = queued['id'].replace('-','')
+                async with async_client(timeout=15,trust_env=False,
+                        auth=httpx.BasicAuth(secret('LANGFUSE_PUBLIC_KEY'),secret('LANGFUSE_SECRET_KEY'))) as lf:
+                    for _ in range(20):
+                        trace = await lf.get(value('langfuse','url')+'/api/public/v2/observations',
+                                             params={'traceId':trace_id,'limit':100})
+                        scores = await lf.get(value('langfuse','url')+'/api/public/v3/scores',
+                                              params={'traceId':trace_id,'limit':100})
+                        if (trace.is_success and trace.json().get('data') and scores.is_success
+                                and any(s['id']==scored.json()['id'] for s in scores.json().get('data', []))):
+                            break
+                        await asyncio.sleep(1)
+                    assert trace.is_success, 'Langfuse 追踪尚未可读'
+                    data = trace.json()['data'][0]
+                    assert data['userId']==actor.user['id'] and data['sessionId']==queued['id']
+                    score = next(s for s in scores.json()['data'] if s['id']==scored.json()['id'])
+                    assert score['dataType']=='TEXT' and score['value']=='not_measured'
+                evidence = {'checked_at_utc':datetime.now(timezone.utc).isoformat(),
+                    'scope':'真实 V3 Supabase + ASGI 业务契约 + 本机 Langfuse；没有媒体生产或真实设备操作',
+                    'run_id':queued['id'],'purpose':'acceptance','trace_id':trace_id,
+                    'user_id':data['userId'],'session_id':data['sessionId'],
+                    'attempt_id':attempt,'score_id':score['id'],'score_type':score['dataType'],
+                    'local_numeric_value':scored.json()['value'],'langfuse_polymorphic_value':score['value'],
+                    'delivery_count':len(results),'viewer_forbidden':True}
+                Path('.local/deep-dub-observation-live.json').write_bytes((json.dumps(evidence,ensure_ascii=False,indent=2)+'\n').encode())
+            finally:
+                await execution.cancel(actor, queued['id'])
     asyncio.run(run())

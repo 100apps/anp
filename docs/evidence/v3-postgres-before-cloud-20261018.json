@@ -1,0 +1,83 @@
+{
+  "scope": "五个新平台 PostgreSQL 库的逐库一致快照和归档对象实际还原；非全平台灾难恢复",
+  "created_at_utc": "2026-10-18T01:00:34.198935+00:00",
+  "container": "anp-storage-postgres-1",
+  "container_id": "627452dce9ce667ce855e996047a6ebac1fe6e669976845a37d39bad903bde56",
+  "server_image": "supabase/postgres:17.6.1.136",
+  "volume": "anp_v3_smoke_pg_data",
+  "backup_directory": ".local/backups/v3-postgres-before-cloud-20261018T010034Z",
+  "databases": [
+    {
+      "database": "_supabase",
+      "file": "database-00.dump",
+      "bytes": 870,
+      "sha256": "fc27909555c5448a8f708f674438e1348edc4eb5acd8beb36084a79286b24b74",
+      "consistent_exported_snapshot": true,
+      "source_table_count": 0,
+      "restore_passed": true,
+      "row_counts_owners_and_acl_equal": true,
+      "temporary_database_removed": true
+    },
+    {
+      "database": "agent_local",
+      "file": "database-01.dump",
+      "bytes": 61956,
+      "sha256": "aaa42be65d64e7d8e4d6872a6627367d50150bba79b68ed2d3a4481f8bdb9dd0",
+      "consistent_exported_snapshot": true,
+      "source_table_count": 4,
+      "restore_passed": true,
+      "row_counts_owners_and_acl_equal": true,
+      "temporary_database_removed": true
+    },
+    {
+      "database": "langfuse",
+      "file": "database-02.dump",
+      "bytes": 383274,
+      "sha256": "9380d22501b9f7545613e10cd754c8b3ef809dfb68eb6b363a0f1d3ef2ead1a8",
+      "consistent_exported_snapshot": true,
+      "source_table_count": 84,
+      "restore_passed": true,
+      "row_counts_owners_and_acl_equal": true,
+      "temporary_database_removed": true
+    },
+    {
+      "database": "litellm",
+      "file": "database-03.dump",
+      "bytes": 381833,
+      "sha256": "df369ae131167df6479c9a91c2d4c56f0ef75e2dc9efee4668861b99e8ebd598",
+      "consistent_exported_snapshot": true,
+      "source_table_count": 102,
+      "restore_passed": true,
+      "row_counts_owners_and_acl_equal": true,
+      "temporary_database_removed": true
+    },
+    {
+      "database": "postgres",
+      "file": "database-04.dump",
+      "bytes": 629001,
+      "sha256": "7ff10a02509ab65ee1536381225f468caece4b0f1b1c8a265a7d01c8d1c83de0",
+      "consistent_exported_snapshot": true,
+      "source_table_count": 52,
+      "restore_passed": true,
+      "row_counts_owners_and_acl_equal": true,
+      "tasks": 826,
+      "results": 377,
+      "temporary_database_removed": true
+    }
+  ],
+  "globals_restore_verified": false,
+  "all_restore_checks_passed": true,
+  "limitations": [
+    "依赖当前实例已有角色和相同扩展版本；未重建全局角色",
+    "每库使用独立导出快照，不是跨库原子快照",
+    "不覆盖 Redis、ClickHouse、RustFS 或 Agent 文件，迁移切换前仍需相应保护"
+  ],
+  "globals_backup_created": true,
+  "completed_at_utc": "2026-10-18T01:00:38.060236+00:00",
+  "temporary_databases_remaining": 0,
+  "source_counts_after_restore_probes": {
+    "tasks": 826,
+    "results": 377
+  },
+  "task_count_note": "含隔离工作空间内合成统计验收任务，不作为生产成功或 deep_dub 质量证据"
+}

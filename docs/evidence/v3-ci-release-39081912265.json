@@ -126,5 +126,20 @@
     "run": 39083130776,
     "source_sha": "0ecb256bdedd2a29cb4ddc09817f478d127e10f6",
     "conclusion": "success"
+  },
+  "assembly_observation": {
+    "checked_at_utc": "2026-10-18T01:02:27.293785+00:00",
+    "job": 117547699189,
+    "step": "拉取中间制品并组装唯一平台镜像",
+    "visible_layer": "COPY --from=component_8 / /opt/anp/roots/litellm/",
+    "visible_resource_sample": {
+      "mem_available_kib": 6183452,
+      "swap_total_kib": 11534328,
+      "swap_free_kib": 11534276,
+      "disk_free_gib": 21.24
+    },
+    "extra_swap_enabled": true,
+    "image_export_verified": false,
+    "note": "仅组装中途可见样本，不代表最终镜像或后续服务检查通过"
   }
 }

@@ -5,8 +5,10 @@ import {normalizeSnapshot,segmentLabel,text,type StudioSnapshot} from './platfor
 export function platformAdapter(projectId:string,identity:string,permissions:readonly string[]):TaskAdapter {
   let snapshot:StudioSnapshot|undefined
   const keys=new Map<string,string>()
+  const speechRequests=new Map<string,{key:string;seed:number}>()
   const activeRun=()=>snapshot?.runs.filter(r=>r.status==='running'&&r.source_id===snapshot?.source?.id).at(-1)
   const canWrite=(action:string)=>action==='translation'?permissions.includes('deep_dub.project.edit'):
+    action==='synthesize'?['deep_dub.task.run','deep_dub.audit','deep_dub.device.manage'].every(p=>permissions.includes(p))&&!!activeRun():
     action==='translate'?permissions.includes('deep_dub.task.run')&&permissions.includes('deep_dub.audit')&&!!activeRun():
     ['prepare-voice','prepare-emotion'].includes(action)&&permissions.includes('deep_dub.task.run')&&permissions.includes('deep_dub.device.manage')&&!!activeRun()
   const file=(id:unknown)=>id?'/api/apps/deep_dub/media/artifacts/'+encodeURIComponent(String(id)):''
@@ -56,6 +58,25 @@ export function platformAdapter(projectId:string,identity:string,permissions:rea
       const raw=snapshot,body=input as Record<string,unknown>
       const segment=raw?.segments.find(s=>segmentLabel(s)===body.segmentId)
       if(!raw||!segment)throw Error('段不属于当前快照，请重新加载')
+      if(action==='synthesize'){
+        const run=activeRun(),translation=raw.translations.filter(t=>t.segment_id===segment.id).at(-1)
+        const voice=raw.voice_references.filter(v=>v.speaker_id===segment.speaker_id).at(-1)
+        const emotion=raw.emotion_references.filter(e=>e.segment_id===segment.id).at(-1)
+        const durationFactor=Number(body.durationFactor)
+        if(!run||!translation||!voice||!emotion)throw Error('需要同来源执行中运行、已保存译稿、固定音色和本段情绪参考')
+        if(!Number.isFinite(durationFactor)||durationFactor<.9||durationFactor>1.1)throw Error('时长系数须为0.90–1.10')
+        const base={segment_id:segment.id,translation_id:translation.id,voice_reference_id:voice.id,emotion_reference_id:emotion.id,
+          generation_factor:1/durationFactor,timeout_seconds:300}
+        const fingerprint=JSON.stringify([run.id,base])
+        if(!speechRequests.has(fingerprint))speechRequests.set(fingerprint,{key:crypto.randomUUID(),seed:crypto.getRandomValues(new Uint32Array(1))[0]&0x7fffffff})
+        const request=speechRequests.get(fingerprint)!
+        const result=await api<{status:string;attempt:{id:string;error?:{code?:string}}}>(`/apps/deep_dub/runs/${run.id}/speech`,{
+          method:'POST',headers:{'Idempotency-Key':request.key},body:JSON.stringify({...base,seed:request.seed})})
+        if(['failed','cancelled'].includes(result.status))speechRequests.delete(fingerprint)
+        if(result.status!=='succeeded')throw Error(`配音未完成：${result.attempt.error?.code||result.status}，请查看运行记录`)
+        speechRequests.delete(fingerprint)
+        return {jobId:result.attempt.id,state:'done'}
+      }
       if(['translate','prepare-voice','prepare-emotion'].includes(action)){
         const run=activeRun();if(!run)throw Error('需要同来源的执行中运行，请先创建并启动运行')
         const fingerprint=JSON.stringify([action,run.id,segment.id])

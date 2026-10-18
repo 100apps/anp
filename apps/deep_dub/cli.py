@@ -25,6 +25,7 @@ from apps.deep_dub.services.editor import service as editor
 from apps.deep_dub.services import waveforms
 from apps.deep_dub.services.translation import generate as generate_translation
 from apps.deep_dub.services.references import prepare as prepare_reference
+from apps.deep_dub.services.speech import generate as generate_speech
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -41,6 +42,14 @@ def reference(ctx:typer.Context,run_id:str,segment_id:str,kind:Literal['voice','
     body={'segment_id':segment_id,'kind':kind,'voice_start_ms':voice_start_ms,'voice_end_ms':voice_end_ms,'filter_mode':filter_mode}
     perform(invoke(ctx,'POST',f'/runs/{run_id}/prepare-reference',
         lambda actor:prepare_reference(actor,run_id,body,request_key or None),body,request_key))
+
+
+@run_commands.command('speech')
+def speech(ctx:typer.Context,run_id:str,segment_id:str,translation_id:str,voice_reference_id:str,emotion_reference_id:str,
+        generation_factor:float=1.,timeout_seconds:int=300,seed:int=42,request_key:str=''):
+    body={'segment_id':segment_id,'translation_id':translation_id,'voice_reference_id':voice_reference_id,
+        'emotion_reference_id':emotion_reference_id,'generation_factor':generation_factor,'timeout_seconds':timeout_seconds,'seed':seed}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/speech',lambda actor:generate_speech(actor,run_id,body,request_key or None),body,request_key))
 
 
 @run_commands.command('translate')

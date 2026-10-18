@@ -115,6 +115,7 @@ export function WavePlayer({
   const end =
     axis || duration || data?.durationSec || wave.data?.durationSec || 1;
   const playbackDuration=sync ? axis || wave.data?.durationSec || duration : duration;
+  const mediaDuration=(sync&&kind==='source'?axis:0)||data?.durationSec||wave.data?.durationSec||duration||0;
   const now = sync
     ? Math.max(0, Math.min(playbackDuration, sync.position - sync.start))
     : time;
@@ -156,7 +157,7 @@ export function WavePlayer({
         </Button>
         <span>{title}</span>
         <small className="dd-mono">
-          {clock(now)} / {clock(playbackDuration)}
+          {clock(sync?Math.min(now,mediaDuration):now)} / {clock(mediaDuration)}
         </small>
       </div>
       <button

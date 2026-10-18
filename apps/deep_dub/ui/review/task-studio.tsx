@@ -1325,6 +1325,7 @@ export function TaskStudio({
                             !can('synthesize') ||
                             dirty ||
                             !segment.translation ||
+                            (!!adapter.canWrite&&(!segment.emotionReady||!task.voices?.[segment.speakerId]?.revision)) ||
                             !Number.isFinite(Number(factor)) ||
                             Number(factor) < 0.9 ||
                             Number(factor) > 1.1 ||
@@ -1333,16 +1334,16 @@ export function TaskStudio({
                           onClick={() =>
                             ask(
                               "生成当前段的新配音",
-                              "将调用原工作台的实际配音服务，产生新音频尝试；不会覆盖旧音频。",
+                              "使用已保存译稿、固定音色与本段情绪参考生成新候选；保留旧音频，不自动确认内容或听感通过。",
                               async () => {
                                 const result = (await write("synthesize", {
                                   segmentId: segment.segmentId,
                                   durationFactor: Number(factor),
-                                })) as { jobId: string };
+                                })) as { jobId: string;state?:string };
                                 setJob({
                                   id: result.jobId,
                                   segment: segment.segmentId,
-                                  state: "running",
+                                  state: result.state || "running",
                                 });
                               },
                             )
@@ -1353,7 +1354,7 @@ export function TaskStudio({
                         </Button>
                       </div>
                       <p>
-                        {!can('synthesize')&&adapter.canWrite ? '当前入口尚未开放配音生成。' : '允许 0.90–1.10；候选须复核内容、时序与听感。'}
+                        {adapter.canWrite&&(!can('synthesize')||!segment.emotionReady||!task.voices?.[segment.speakerId]?.revision) ? '需要执行/评分/设备权限、同来源执行中运行、固定音色和本段情绪参考。' : '允许 0.90–1.10；候选须复核内容、时序与听感。'}
                         {dirty ? "请先保存译稿。" : ""}
                       </p>
                     </div>
@@ -1643,7 +1644,7 @@ export function TaskStudio({
               取消
             </Button>
             <Button disabled={busy} onClick={apply}>
-              {busy && <LoaderCircle className="animate-spin" />}确认执行
+              {busy && <LoaderCircle className="animate-spin" />}{busy?'正在执行…':'确认执行'}
             </Button>
           </DialogFooter>
         </DialogContent>

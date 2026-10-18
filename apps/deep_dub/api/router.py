@@ -20,10 +20,16 @@ from apps.deep_dub.services.editor import TranslationEdit, service as editor
 from apps.deep_dub.services.waveforms import WaveformInput,prepare as prepare_waveform
 from apps.deep_dub.services.translation import TranslationInput as GenerateTranslationInput,generate as generate_translation
 from apps.deep_dub.services.references import ReferencePreparation,prepare as prepare_reference
+from apps.deep_dub.services.speech import SpeechInput,generate as generate_speech
 from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,BackgroundInput,RenderInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 router.include_router(media_router)
+
+
+@router.post('/runs/{run_id}/speech')
+async def create_speech(run_id:str,body:SpeechInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await generate_speech(actor,run_id,body.model_dump(),idempotency_key)
 
 
 @router.post('/runs/{run_id}/prepare-reference')

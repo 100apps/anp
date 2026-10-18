@@ -1,0 +1,176 @@
+{
+  "scope": "acceptance，本机真实GPU配音候选与取消；非整片生产、质量或RTF通过",
+  "complete": {
+    "project_id": "e5f69ceb-15fa-493f-a9b1-ac3b454df12f",
+    "run_id": "82aa8df6-38a8-4c7a-8e75-9cebeed52fc5",
+    "stage_attempt_id": "2e5fece8-7429-4b8e-9af5-a1cb751f17e4",
+    "audio_attempt_id": "ebe1a1b5-e0ed-405b-afc7-52575a58423f",
+    "audio_artifact_id": "010a0ee5-7278-4088-a316-3c49cf127aaa",
+    "evidence_artifact_id": "6f1c88e6-b987-43e3-a148-e4d0b8a923ca",
+    "audio_metrics": {
+      "sample_rate": 22050,
+      "channels": 1,
+      "sample_count": 146944,
+      "duration_ms": 6664
+    },
+    "startup_seconds": 4.031000000000859,
+    "request_with_cold_load_seconds": 15.15599999999904,
+    "process_lifecycle_seconds": 19.32799999999952,
+    "model_parameters": {
+      "model_id": "anp-index-tts2-5-q8",
+      "model_family": "index_tts2",
+      "model_variant": "2.5",
+      "weights_sha256": "5e827b2072042e4a1b21ccf24a5cb4f71cb1011403067a0a9b039311d8b38628",
+      "runtime_sha256": "be820dd89b644b7179614a0444b0be5ad123e81c7794add19619e4cf6a95c81d",
+      "source_revision": "f16f23abf9732b1904fed1f15bddbe9909d21146",
+      "rule_revision": "index-tts2-5-owned-http-v1",
+      "backend": "cuda",
+      "generation_factor": 1.0,
+      "do_sample": false,
+      "num_beams": 3,
+      "max_tokens": 1500,
+      "seed": 42,
+      "emotion_alpha": 1,
+      "duration_factor": 1.0,
+      "quality_scope": "候选生成，非独审/音色身份/自然度通过"
+    },
+    "owned_server_stopped": true,
+    "lease_released": true,
+    "same_stage_cli_replay": true,
+    "content_identity_naturalness": "not_measured",
+    "scope": "acceptance，既有原文/人工中文新生成；不是整片生产或RTF",
+    "checked_at_utc": "2026-10-18T14:39:30.137144+00:00",
+    "run_cancelled": true
+  },
+  "cancel": {
+    "project_id": "ca005161-9a76-4356-b221-f27874c69d1c",
+    "run_id": "413b16c7-393a-43d2-a165-87c96d3a068b",
+    "stage_attempt_id": "36338a7b-7e8f-424e-9cce-9ffae8a76bb4",
+    "loaded_before_cancel": true,
+    "lease_released_after_owned_process_stop": true,
+    "no_audio_candidate": true,
+    "scope": "acceptance，真实CUDA推理取消；非生产完成",
+    "checked_at_utc": "2026-10-18T14:39:56.810650+00:00",
+    "run_cancelled": true
+  },
+  "web": {
+    "project_id": "99ec1299-a16c-4e10-9a93-cfda4af772db",
+    "run_id": "70aff53a-400b-40a6-83af-b3f667ff820b",
+    "segment_id": "75448c17-8b98-4e6a-96c6-365014069e6e",
+    "source_id": "e9d6f9ed-8119-4ac3-85fd-a0248f816672",
+    "ready": true,
+    "run_cancelled": true,
+    "audio_artifact_id": "4c5d31a6-2d18-4e4e-87c4-121fe96cc990",
+    "audio_attempt_id": "0bcc4997-814c-4b7c-b811-83ac3bbc0995",
+    "stage_attempt_id": "e1ebf667-0be5-4aab-af04-95d7817cc015",
+    "evidence_artifact_id": "9398645e-4872-41f3-adcd-d767626f2e93",
+    "audio": {
+      "sample_rate": 22050,
+      "channels": 1,
+      "sample_count": 146944,
+      "duration_ms": 6664
+    },
+    "model": {
+      "model_id": "anp-index-tts2-5-q8",
+      "model_family": "index_tts2",
+      "model_variant": "2.5",
+      "weights_sha256": "5e827b2072042e4a1b21ccf24a5cb4f71cb1011403067a0a9b039311d8b38628",
+      "runtime_sha256": "be820dd89b644b7179614a0444b0be5ad123e81c7794add19619e4cf6a95c81d",
+      "source_revision": "f16f23abf9732b1904fed1f15bddbe9909d21146",
+      "rule_revision": "index-tts2-5-owned-http-v1",
+      "backend": "cuda",
+      "generation_factor": 1.0,
+      "do_sample": false,
+      "num_beams": 3,
+      "max_tokens": 1500,
+      "seed": 1898283737,
+      "emotion_alpha": 1,
+      "duration_factor": 1.0,
+      "quality_scope": "候选生成，非独审/音色身份/自然度通过"
+    },
+    "request_with_cold_load_seconds": 14.531000000000859,
+    "process_lifecycle_seconds": 19.34400000000096,
+    "web_generated": true,
+    "browser_ready_state": 4,
+    "browser_duration_seconds": 6.664127,
+    "browser_played_and_paused": true,
+    "langfuse_four_scores_read_back": true,
+    "langfuse_user_session_match": true,
+    "score_ids": [
+      "03ead250-abb2-4382-b011-168285b7917b",
+      "276ee384-059a-4b10-8ebb-a818768ca13d",
+      "8022d86d-318b-41ab-9645-0a7cfe738cba",
+      "83b1dec1-8d4a-4cd4-8ab3-28c43552d715"
+    ],
+    "content_identity_naturalness": "not_measured"
+  },
+  "tools_passed": 20,
+  "gpu_live_passed": 2,
+  "gpu_live_seconds": 58.15,
+  "typescript": "passed",
+  "vite_build": "passed，入口块大小提示保留",
+  "weights_metadata": {
+    "gguf_version": 3,
+    "tensor_count": 3790,
+    "metadata_count": 16,
+    "identity_metadata": {
+      "general.architecture": "audiocpp",
+      "general.name": "root",
+      "audiocpp.model_spec.family": "index_tts2",
+      "embedded_config:bigvgan/config.json": {
+        "version_lines": []
+      },
+      "embedded_config:config.yaml": {
+        "version_lines": [
+          "version: \"2.5\""
+        ]
+      },
+      "embedded_config:qwen0.6bemo4-merge/config.json": {
+        "version_lines": []
+      },
+      "embedded_config:qwen0.6bemo4-merge/generation_config.json": {
+        "version_lines": []
+      },
+      "embedded_config:qwen0.6bemo4-merge/tokenizer_config.json": {
+        "version_lines": []
+      },
+      "embedded_config:w2v-bert-2.0/config.json": {
+        "version_lines": []
+      },
+      "embedded_config:w2v-bert-2.0/preprocessor_config.json": {
+        "version_lines": []
+      }
+    },
+    "keys": [
+      "general.architecture",
+      "general.name",
+      "audiocpp.tensor_name_format",
+      "audiocpp.source_format",
+      "audiocpp.weight_type",
+      "audiocpp.model_spec.version",
+      "audiocpp.model_spec.family",
+      "audiocpp.model_spec.json",
+      "audiocpp.tensor_sources.names",
+      "audiocpp.tensor_sources.paths",
+      "audiocpp.embedded_files.names",
+      "audiocpp.embedded_files.offsets",
+      "audiocpp.embedded_files.data",
+      "audiocpp.tensor_names",
+      "audiocpp.tensor_ranks",
+      "audiocpp.tensor_shapes"
+    ]
+  },
+  "after": {
+    "owned_native_model_processes": 0,
+    "baseline_agent_states_preserved": 392,
+    "agent_snapshot_count": 420,
+    "protected_container_ids_preserved": 27,
+    "remote_processes_stopped_or_unloaded": 0
+  },
+  "limitations": [
+    "Windows本机管理员默认核验GPU",
+    "每阶段冷启动并退出，安全驻留未完成",
+    "没有独立ASR/内容与听感质量通过",
+    "没有新整片生产或发布回执"
+  ]
+}

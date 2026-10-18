@@ -136,3 +136,7 @@ uv run python -m apps.deep_dub.cli --transport http --endpoint http://127.0.0.1:
 ## 原声参考准备与详情试听
 
 `runs prepare-reference <运行UUID> <段UUID> voice|emotion` 已连接默认本地 CLI、HTTP 和同一业务服务。实际 CPU 租约中准备 24 kHz PCM16、保存原/处理音频与技术证据；音色使用同角色段内 3–20 秒，情绪精确取本段原声。详情的音色 Sheet 显示真实波形、互斥试听、前后指标表及折叠证据；媒体失效后可重新按当前身份连接。21 项工具检查、1 项真实服务/两种 CLI 集成、类型与构建通过，浏览器两版音色重连恢复通过。Web 的提取按钮已连接但尚未正向写入验收；身份/听感保持未测，没有 TTS 或整片生产。详见 [原声参考准备](../../docs/deep_dub原声参考准备.md)。
+
+## 真实 GPU 配音候选
+
+`runs speech <运行UUID> <段UUID> <译稿UUID> <音色参考UUID> <情绪参考UUID>` 接本地/HTTP CLI 与同一业务服务，正式详情已实际点击生成、保存私有新 WAV、显示波形并同步试听。受控本机进程持有 GPU/旧路由锁与数据库租约，取消要确认实际退出再释放；不停止远端或未知模型。20 项工具、2 项真实 GPU 集成、类型与构建通过；Langfuse 实际读回 PCM 契约与三个未测质量项。私有 `[deep_dub].tts_config` 已配置，公开模板为 `tts.local.example.json`。当前每次冷启动，只有 Windows NVIDIA 本机默认设备管理员执行路径，未完成云/远端、安全驻留、独立质量、整片生产/RTF 或发布。详见 [真实配音生成](../../docs/deep_dub真实配音生成.md)。

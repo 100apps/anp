@@ -1,6 +1,6 @@
 # deep_dub 数据关系与流程草案
 
-状态：**仅完成旧项目只读取证与设计，尚未创建业务模块、数据库表或迁移。平台完整验收通过后才实施。**
+状态：**已开始实现。平台 GHCR 制品本机实启与 85 项回归已通过；apps/deep_dub 首批 7 张基础表、受限项目 RPC 和项目服务已落地，独立库 8 项检查及真实 Supabase 项目契约通过。其余关系、完整图/CLI/Web 和整片生产均未完成。**
 
 ## 已核对的参考
 
@@ -13,7 +13,7 @@
 
 ## 业务代码边界
 
-未来业务目录为 `apps/deep_dub/`，包含 `api/`、`services/`、`nodes/`、`flow/`、`ui/`、`migrations/`、`evaluators.py` 和 `app.toml`；业务不烘焙进平台镜像。
+业务目录为 `apps/deep_dub/`，目标包含 `api/`、`services/`、`nodes/`、`flow/`、`ui/`、`migrations/`、`evaluators.py` 和 `app.toml`；当前只落地关系基础与项目契约，业务不烘焙进平台镜像。
 
 - API、HTTP CLI 和 Web 调用同一组业务服务。
 - 本地 CLI 默认直接调用这些服务和节点，不要求启动业务 Web/API/Worker；仍连接平台身份、存储及模型依赖。

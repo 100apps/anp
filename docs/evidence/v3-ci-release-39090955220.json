@@ -4,7 +4,7 @@
   "url": "https://github.com/100apps/anp/actions/runs/39090955220",
   "status": "queued",
   "conclusion": null,
-  "checked_at_utc": "2026-10-18T02:51:46.078331+00:00",
+  "checked_at_utc": "2026-10-18T03:15:17.762541+00:00",
   "actual_upstream_manifest": {
     "recorded_at": "2026-10-18T02:42:06.056650+00:00",
     "updated_to_remote_head": true,
@@ -134,8 +134,8 @@
     {
       "id": 117567627822,
       "name": "component (litellm)",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 117567627871,
@@ -229,5 +229,92 @@
       "reuse_log_line": "2026-10-18T02:46:26.3576515Z 已复用同一源码与配方的组件： postgrest 922f635dc19edc1abdcc614c22535763dc7d4669",
       "official_job_log_redacted_sha256": "773ed2c55336385d6f0158567e08d5763087d162971d5a4d65d9b7d34e3bcc35"
     }
-  ]
+  ],
+  "litellm_source_build": {
+    "job": 117567627822,
+    "status": "completed",
+    "conclusion": "success",
+    "actual_upstream_commit": "a6245c1bbbea9f75d0eae532b8815c71c011b07a",
+    "image": "ghcr.io/100apps/anp-build-litellm:run-39090955220",
+    "registry_digest": "sha256:6477cc0e4f64a984f9bce2fb250c50fa1b91ff57fe8a432aa141ee6a76491615",
+    "official_job_log_redacted_sha256": "8a3a90719c0b5eca76bd9e4b39647b43529d971d6e07b07c38ee839072205b54",
+    "all_job_steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/setup-python@v5",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "复原同一份构建清单",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run python scripts/checkout_dependencies.py .local/ci/dependencies.json",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run docker/login-action@v3",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "检查可复用的同源码组件",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "记录实际运行器资源，辅助区分编译错误和资源问题",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "为源码编译准备托管运行器磁盘",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "从记录的最新源码构建组件",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "保存本次构建的中间制品",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run docker/login-action@v3",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run actions/setup-python@v5",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "runtime_verified": false
+  }
 }

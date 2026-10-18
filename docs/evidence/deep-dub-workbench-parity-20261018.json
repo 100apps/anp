@@ -1,0 +1,61 @@
+{
+  "checked_at_utc": "2026-10-18T01:49:19.409270+00:00",
+  "scope": "旧源码只读取证及功能/数据关系设计；不是旧 UI 运行验收或新业务实现",
+  "reference_root": "D:\\github\\dub-bench-zh\\dubbing-studio-an",
+  "files": [
+    {
+      "path": "web/index.html",
+      "bytes": 18296,
+      "sha256": "f66164956b13798d971c5347ccb382d0e60718b74352075ab55d98da928d6f65"
+    },
+    {
+      "path": "web/workbench.html",
+      "bytes": 93075,
+      "sha256": "954ba46f9f65cd29e2bc2fb1fece09fd655a9e576837eb5b09c0df2be4248176"
+    },
+    {
+      "path": "workbench.py",
+      "bytes": 41185,
+      "sha256": "519827c38677c138f0b7c8ab3667431cf8c38fa549e8532a3178378dedcd9ffd"
+    },
+    {
+      "path": "studio.py",
+      "bytes": 88718,
+      "sha256": "6a9cb1161edd08902dad04fbf0bddb06efaeca8e860510210603dd58982d5259"
+    },
+    {
+      "path": "quality_profiles.py",
+      "bytes": 3454,
+      "sha256": "e28771f8d860e48dcdcde1e77723164375a2ea7ba56ecf782d85d7155b526595"
+    },
+    {
+      "path": "config/quality-profiles.json",
+      "bytes": 2123,
+      "sha256": "dee59bf5927290cc979a01669e6af05da5f67f0ce6e2ab2d34aafd9b5ed55f2f"
+    }
+  ],
+  "old_post_actions": [
+    "quality-profile",
+    "select-version",
+    "translation",
+    "playback",
+    "speaker-name",
+    "voice-candidates",
+    "register-voice",
+    "validate",
+    "synthesize"
+  ],
+  "confirmed_missing_relations_in_previous_draft": [
+    "quality_profile_revision",
+    "segment_emotion_reference",
+    "timeline_revision_and_clip",
+    "render_strategy_input_binding"
+  ],
+  "old_default_quality": "high",
+  "automatic_quality_downgrade": false,
+  "old_source_was_executed": false,
+  "new_business_module_created": false,
+  "new_database_migration_applied": false,
+  "new_ui_runtime_verified": false,
+  "full_video_rtf_verified": false
+}

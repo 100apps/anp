@@ -27,9 +27,10 @@
 | 表 | 主要字段与关系 | 约束重点 |
 | --- | --- | --- |
 | `deep_dub_projects` | `id`、`workspace_id`、名称、语言、`source_id`、当前分段集、`row_version` | 根对象；编辑使用期望版本号，拒绝覆盖他人更新 |
+| `deep_dub_quality_profiles` | 工作空间、档位 key、revision、规则与摘要、来源 | 不可变规则修订；默认 high；run/render 绑定修订，禁止自动降档 |
 | `deep_dub_sources` | 项目、来源 URL、原片 artifact、媒体时长/轨道、来源核验 | 原片与 SHA 不可原地替换；变更建立新来源版本 |
 | `deep_dub_artifacts` | 工作空间、对象路径、SHA256、字节数、媒体类型、采样率/时长、生成 attempt | 工作空间内按摘要去重；对象私有；不得返回宿主机文件路径 |
-| `deep_dub_runs` | 项目、`platform.tasks.id`、执行模式、flow/policy 版本、输入快照摘要、生命周期时间 | 一个真实生产轮次对应一个平台任务；重试不重置最早起点 |
+| `deep_dub_runs` | 项目、`platform.tasks.id`、执行模式、flow/quality_profile 修订、输入快照摘要、生命周期时间 | 一个真实生产轮次对应一个平台任务；重试不重置最早起点 |
 | `deep_dub_stages` | run、节点名、分片键、输入摘要、当前状态、当前 attempt | 唯一 `(run_id,node,partition_key,input_hash)`；整集与逐段阶段统一建账 |
 | `deep_dub_stage_attempts` | stage、attempt_no、设备租约、排队/加载/执行/结束时间、错误、产物清单 | 唯一 `(stage_id,attempt_no)`；每次真实尝试保留，不把返修改成首次成功 |
 | `deep_dub_speakers` | 项目、稳定角色标识、显示名 | 角色身份与可编辑显示名分开；人工身份判断有独立测量状态 |
@@ -39,11 +40,14 @@
 | `deep_dub_segment_cues` | segment、cue、顺序 | 显式多对多来源关系，不能只存一组没有外键的 cue ID |
 | `deep_dub_translations` | segment、revision、中文、模型/提示版本、输入上下文摘要、独审状态 | 不可变候选；区分生成与独立复核，不覆盖当前文本 |
 | `deep_dub_voice_references` | speaker、revision、来源片段、原版/处理版 artifact、滤镜参数摘要、审核 | 本集固定音色；更新参考使相关下游输入摘要变化 |
-| `deep_dub_audio_attempts` | segment、translation、voice_reference、生成/派生关系、参数、WAV artifact、时长 | 生成次数和派生变速次数分别记录；绑定准确文本和参考版本 |
+| `deep_dub_emotion_references` | segment、source 修订、准确原声窗口、artifact、处理摘要 | 与固定音色分开；引用原始窗口而非可编辑配音落点；切段/换源失效 |
+| `deep_dub_audio_attempts` | segment、translation、voice_reference、emotion_reference、生成/派生关系、参数、WAV artifact、时长 | 生成次数和派生变速次数分别记录；绑定准确文本、固定音色和逐段情绪版本 |
 | `deep_dub_audits` | 被审对象、输入摘要、审核器/规则版本、状态、证据 artifact、人工/自动来源 | 内容、数字/专名、时序、原语泄漏等独立记录；未知不当作通过 |
 | `deep_dub_selections` | segment、revision、translation、audio_attempt、审核集合、选择人/时间 | 选择保留历史；原子 RPC 校验候选属于同段、同版本并具备必需审核 |
+| `deep_dub_timeline_revisions` | 项目、分段集、revision、输入摘要、创建人 | 不可变组合；当前指针用期望版本提交，render 引用准确修订 |
+| `deep_dub_timeline_clips` | timeline 修订、segment、selection、播放起点、组合参数 | 复合外键校验空间/项目/分段/选版归属；位移和组合变化触发组合审核 |
 | `deep_dub_backgrounds` | source、revision、分离/净化 artifact、模型/分块计划、泄漏和事件审核 | 区分原版、处理版、诊断 removed 轨；诊断轨不参与成片 |
-| `deep_dub_renders` | run、revision、选版快照摘要、背景版本、对白/混音/字幕/视频 artifact、完整解码回执 | 制品绑定冻结输入快照；禁止后改译文让旧成片看起来仍有效 |
+| `deep_dub_renders` | run、revision、strategy_key、quality_profile/timeline 修订、选版快照摘要、背景版本、对白/混音/字幕/视频 artifact、完整解码回执 | 制品绑定冻结输入快照；禁止后改译文让旧成片看起来仍有效 |
 | `deep_dub_scores` | run、stage_attempt、指标、规则版本、值、测量状态、证据、Langfuse ID | 分数与对应版本绑定；未测值为 null，不能填 0 或默认 1 |
 | `deep_dub_observation_outbox` | stage_attempt/score、稳定事件ID、事件类型、投递状态、重试时间 | 事务内登记，幂等补发；不能因进程重启重复记分或丢失观测 |
 | `deep_dub_publications` | render、平台、发布修订、幂等键、上传/投稿/发布状态、回执、公开地址 | 同一 render 重试不重复投稿；已提交但回执丢失时先查证，不盲重发 |
@@ -138,3 +142,7 @@
 远端采样时 GPU 利用率为零，但四个 audiocpp_server 进程合计已占用大部分显存，GPU 总用量 14917 MiB。尚未核对其任务归属，没有停止进程或卸载模型。实施设备租约时，必须先识别并接管或隔离这些既有进程；不得仅以利用率为零就宣告设备空闲。远端非交互 PATH 可找到 ffmpeg，未找到 uv，不能据此认定 uv 未安装。
 
 只读命令与结果边界见 `docs/evidence/deep-dub-device-preflight-20261018.json`。没有下载、加载模型或启动配音任务；平台完整验收通过后再实施业务。
+
+## 工作台源码功能对齐补充
+
+已进一步只读核对旧页面、九项写操作、媒体/波形接口与底层合成/播放位置规则，详见 [工作台功能对齐](deep_dub工作台功能对齐.md)。本次仅补设计：质量档位、逐段情绪参考、独立时间线修订及策略对照；未创建业务代码或数据库迁移。默认沿用 high 质量档位，不允许为 RTF 自动降档。

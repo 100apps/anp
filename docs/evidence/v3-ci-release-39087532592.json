@@ -1,0 +1,221 @@
+{
+  "run": 39087532592,
+  "source_sha": "c4a0caad676321b1751113dc10de0821df435ccc",
+  "url": "https://github.com/100apps/anp/actions/runs/39087532592",
+  "checked_at_utc": "2026-10-18T01:49:54.240939+00:00",
+  "component_cache_candidate": 39081912265,
+  "actual_upstream_manifest": {
+    "recorded_at": "2026-10-18T01:44:58.448418+00:00",
+    "updated_to_remote_head": true,
+    "dependencies": [
+      {
+        "name": "third_party/supabase",
+        "path": "third_party/supabase",
+        "url": "https://github.com/supabase/supabase.git",
+        "commit": "7425d4930528931400fb3e656e860b1094cb224e"
+      },
+      {
+        "name": "third_party/langfuse",
+        "path": "third_party/langfuse",
+        "url": "https://github.com/langfuse/langfuse.git",
+        "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+      },
+      {
+        "name": "third_party/litellm",
+        "path": "third_party/litellm",
+        "url": "https://github.com/BerriAI/litellm.git",
+        "commit": "7db8fc81f9ce53c3b9b81cf385b2a35cd8f241ad"
+      },
+      {
+        "name": "third_party/dbx",
+        "path": "third_party/dbx",
+        "url": "https://github.com/t8y2/dbx.git",
+        "commit": "de00ff46e437ba00423cd4293119857d508dfef8"
+      },
+      {
+        "name": "third_party/supabase-auth",
+        "path": "third_party/supabase-auth",
+        "url": "https://github.com/supabase/auth.git",
+        "commit": "ce9a8eee0cc042be8c7a42981a7ddae631e41d91"
+      },
+      {
+        "name": "third_party/supabase-storage",
+        "path": "third_party/supabase-storage",
+        "url": "https://github.com/supabase/storage.git",
+        "commit": "c826a70ac6e6f56d3e6033ccb164fb1ff5282570"
+      },
+      {
+        "name": "third_party/postgres-meta",
+        "path": "third_party/postgres-meta",
+        "url": "https://github.com/supabase/postgres-meta.git",
+        "commit": "ecc19497dcfcb4dc6a83d02e49d812f747cbf981"
+      },
+      {
+        "name": "third_party/postgrest",
+        "path": "third_party/postgrest",
+        "url": "https://github.com/PostgREST/postgrest.git",
+        "commit": "922f635dc19edc1abdcc614c22535763dc7d4669"
+      },
+      {
+        "name": "third_party/langgraph",
+        "path": "third_party/langgraph",
+        "url": "https://github.com/langchain-ai/langgraph.git",
+        "commit": "0870f5efcec9d486046ae8abce0735aa7d1f3b79"
+      },
+      {
+        "name": "third_party/lens",
+        "path": "third_party/lens",
+        "url": "https://github.com/BerriAI/lens.git",
+        "commit": "e320cabdf0a67aa52cafe2ede1b4d10ad66dafad"
+      }
+    ]
+  },
+  "changed_upstreams": [
+    {
+      "name": "third_party/litellm",
+      "previous_commit": "75faaeab641e161a3d6bc38a42fcaa71c5602d90",
+      "commit": "7db8fc81f9ce53c3b9b81cf385b2a35cd8f241ad"
+    },
+    {
+      "name": "third_party/dbx",
+      "previous_commit": "3ebaf047e09eb7a2fbd7b63ffc51a8cce24fca65",
+      "commit": "de00ff46e437ba00423cd4293119857d508dfef8"
+    },
+    {
+      "name": "third_party/langgraph",
+      "previous_commit": "0eb194fe6093812243de2249e7092029c87c8820",
+      "commit": "0870f5efcec9d486046ae8abce0735aa7d1f3b79"
+    }
+  ],
+  "completed_component_reuse_evidence": [
+    {
+      "job": 117557359262,
+      "component": "component (auth)",
+      "same_source_and_recipe_reuse_confirmed": true
+    },
+    {
+      "job": 117557359265,
+      "component": "component (storage)",
+      "same_source_and_recipe_reuse_confirmed": true
+    },
+    {
+      "job": 117557359301,
+      "component": "component (postgrest)",
+      "same_source_and_recipe_reuse_confirmed": true
+    },
+    {
+      "job": 117557359310,
+      "component": "component (meta)",
+      "same_source_and_recipe_reuse_confirmed": true
+    },
+    {
+      "job": 117557359328,
+      "component": "component (studio)",
+      "same_source_and_recipe_reuse_confirmed": true
+    }
+  ],
+  "jobs": [
+    {
+      "id": 117557141405,
+      "name": "dependencies",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117557359240,
+      "name": "component (dbx)",
+      "status": "completed",
+      "conclusion": "failure",
+      "current_steps": []
+    },
+    {
+      "id": 117557359261,
+      "name": "component (langfuse-web)",
+      "status": "in_progress",
+      "conclusion": null,
+      "current_steps": [
+        "检查可复用的同源码组件"
+      ]
+    },
+    {
+      "id": 117557359262,
+      "name": "component (auth)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117557359265,
+      "name": "component (storage)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117557359270,
+      "name": "component (litellm)",
+      "status": "in_progress",
+      "conclusion": null,
+      "current_steps": [
+        "Run actions/checkout@v4"
+      ]
+    },
+    {
+      "id": 117557359276,
+      "name": "component (langfuse-worker)",
+      "status": "in_progress",
+      "conclusion": null,
+      "current_steps": [
+        "检查可复用的同源码组件"
+      ]
+    },
+    {
+      "id": 117557359301,
+      "name": "component (postgrest)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117557359310,
+      "name": "component (meta)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117557359328,
+      "name": "component (studio)",
+      "status": "completed",
+      "conclusion": "success",
+      "current_steps": []
+    },
+    {
+      "id": 117557359331,
+      "name": "component (lens)",
+      "status": "queued",
+      "conclusion": null,
+      "current_steps": []
+    }
+  ],
+  "status": "in_progress",
+  "conclusion": null,
+  "repair_verified_by_linux_probe_run": 39087401324,
+  "full_platform_release_verified": false,
+  "local_ghcr_pull_and_start_verified": false,
+  "dbx_terminal_failure": {
+    "job": 117557359240,
+    "conclusion": "failure",
+    "phase": "为源码编译准备托管运行器磁盘",
+    "free_after_cleanup_gib": 42.61,
+    "required_free_gib": 43,
+    "reserved_build_free_gib": 35,
+    "extra_swap_gib": 8,
+    "native_compilation_started": false,
+    "rejected_candidate_kept_on_runner": true,
+    "redacted_log_sha256": "4ff4dbf7ca8c3522d0e8e730c5970d318c952696d41fb348bfa48a4484278ba3",
+    "repair": "临时托管 CI 在候选不匹配时回收该镜像标签，保留原磁盘门槛；实际新构建余量仍待验证",
+    "targeted_local_checks_passed": 23
+  }
+}

@@ -4,8 +4,19 @@ import json
 import os
 import re
 import subprocess
+import sys
 from build_components import RECIPES,fingerprint
 from sync_upstreams import ROOT,git
+
+
+def discard_missed_candidate(image):
+    """只在一次性托管 CI 回收未命中镜像标签，不清理开发机或数据卷。"""
+    if sys.platform!='linux' or os.environ.get('GITHUB_ACTIONS')!='true' or os.environ.get('RUNNER_ENVIRONMENT')!='github-hosted':
+        return
+    if not re.fullmatch(r'ghcr\.io/100apps/anp-build-[a-z0-9-]+:run-[0-9]+',image):
+        raise ValueError('未命中候选镜像身份不匹配，拒绝回收')
+    subprocess.run(['docker','image','rm',image],check=True)
+    print('已回收临时 CI 中未命中的候选镜像：',image)
 
 
 def reuse(component,run):
@@ -33,26 +44,31 @@ def _reuse_from_run(component,run):
     pulled=subprocess.run(['docker','pull',image])
     if pulled.returncode:
         print('候选制品不可用：',component,run);return False
-    actual=json.loads(subprocess.check_output(['docker','image','inspect',image],text=True))[0]
-    source=ROOT/'third_party'/RECIPES[component][0]
-    expected=git('-C',str(source),'rev-parse','HEAD')
-    if actual['Config'].get('Labels',{}).get('org.opencontainers.image.revision')!=expected:
-        print('上游与候选制品不一致：',component,run);return False
-    recorded=actual['Config'].get('Labels',{}).get('dev.anp.build.recipe')
-    if recorded:
-        if recorded!=fingerprint(component):
-            print('组件配方或资源配置不一致：',component,run);return False
-    else:
-        # 兼容早期未写配方摘要的制品，宁可重建也不猜测其构建参数。
-        files=['scripts/build_components.py']
-        if component=='postgrest':files.append('deploy/build/postgrest.Dockerfile')
-        for file in files:
-            previous=subprocess.check_output(['git','show',revision+':'+file],cwd=ROOT)
-            if previous!=(ROOT/file).read_bytes():
-                print('旧制品缺少配方摘要且配方文件已变化，重新构建：',component);return False
-    subprocess.run(['docker','tag',image,f'anp-build/{component}:source'],check=True)
-    print('已复用同一源码与配方的组件：',component,expected)
-    return True
+    accepted=False
+    try:
+        actual=json.loads(subprocess.check_output(['docker','image','inspect',image],text=True))[0]
+        source=ROOT/'third_party'/RECIPES[component][0]
+        expected=git('-C',str(source),'rev-parse','HEAD')
+        if actual['Config'].get('Labels',{}).get('org.opencontainers.image.revision')!=expected:
+            print('上游与候选制品不一致：',component,run);return False
+        recorded=actual['Config'].get('Labels',{}).get('dev.anp.build.recipe')
+        if recorded:
+            if recorded!=fingerprint(component):
+                print('组件配方或资源配置不一致：',component,run);return False
+        else:
+            # 兼容早期未写配方摘要的制品，宁可重建也不猜测其构建参数。
+            files=['scripts/build_components.py']
+            if component=='postgrest':files.append('deploy/build/postgrest.Dockerfile')
+            for file in files:
+                previous=subprocess.check_output(['git','show',revision+':'+file],cwd=ROOT)
+                if previous!=(ROOT/file).read_bytes():
+                    print('旧制品缺少配方摘要且配方文件已变化，重新构建：',component);return False
+        subprocess.run(['docker','tag',image,f'anp-build/{component}:source'],check=True)
+        accepted=True
+        print('已复用同一源码与配方的组件：',component,expected)
+        return True
+    finally:
+        if not accepted:discard_missed_candidate(image)
 
 
 if __name__=='__main__':

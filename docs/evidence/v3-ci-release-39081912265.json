@@ -337,7 +337,8 @@
     "evidence": "原日志明确 cache currently in-use / Timeout(300s)；收尾后 runner 清理两个残留 uv 进程",
     "build_runtime_tests_and_push_failed": false,
     "full_pipeline_success": false,
-    "repair": "后台服务改为锁定虚拟环境 Python 直接启动，Linux 缓存锁实测尚待 CI"
+    "repair": "长驻服务改为 .venv/bin/python 直接启动；Linux 原锁故障与修复对照已实测，完整正式流水线待重跑",
+    "repair_verification_run": 39087401324
   },
   "redacted_platform_log_sha256": "a8b69f9f929bc72a0f7125f31c1b0f87f3928c35b686c62235b0de0277f4df03",
   "actual_upstream_manifest": {

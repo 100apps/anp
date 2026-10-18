@@ -90,7 +90,7 @@
       "status": "in_progress",
       "conclusion": null,
       "current_steps": [
-        "Run pnpm/setup@v1"
+        "Post Run astral-sh/setup-uv@v6"
       ]
     }
   ],
@@ -158,5 +158,27 @@
     "completed_at": "2026-10-18T01:25:00Z",
     "scope": "流水线 prepare --mode docker 实际四存储与单平台健康；业务回归和发布另行验收"
   },
-  "platform_checked_at_utc": "2026-10-18T01:25:27.743945+00:00"
+  "platform_checked_at_utc": "2026-10-18T01:37:12.108094+00:00",
+  "cloud_tests": {
+    "status": "completed",
+    "conclusion": "success",
+    "passed": 74,
+    "pytest_seconds": 73.32,
+    "report": "74 passed in 73.32s (0:01:13)",
+    "live_llm_branch_executed": false,
+    "limitation": "ANP_SKIP_LIVE_LLM=1 仅提前返回最后的真实付费模型调用分支；pytest 没有将该分支报告成 skipped，不应把通过数当作真实模型调用证据"
+  },
+  "registry_publish": {
+    "name": "验收后发布平台镜像",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at": "2026-10-18T01:27:30Z",
+    "completed_at": "2026-10-18T01:32:15Z",
+    "fixed_tag": "ghcr.io/100apps/anp-platform:sha-1c0e2f772d4653431d2a7953c6f80878d5671144",
+    "latest_tag": "ghcr.io/100apps/anp-platform:latest",
+    "fixed_tag_digest": "sha256:dd21080d30dbe94f60197da24eab439cb9dfd7fa9893493082ffda57bcb42d57",
+    "digest_source": "原发布步骤可见的固定源码标签 digest 日志；完整官方日志待作业收尾后取得",
+    "local_pull_verified": false,
+    "local_start_verified": false
+  }
 }

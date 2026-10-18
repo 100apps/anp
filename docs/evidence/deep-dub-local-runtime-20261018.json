@@ -1,0 +1,169 @@
+{
+  "recorded_at_utc": "2026-10-18T09:03:44.154693+00:00",
+  "database_and_tool_suite": {
+    "passed": 81,
+    "seconds": 17.49,
+    "isolated_database_tests": 72,
+    "actual_file_thread_media_process_tests": 9
+  },
+  "live_service_suite": {
+    "passed": 10,
+    "seconds": 35.08,
+    "scope": "真实V3 Supabase/RustFS/Langfuse，CLI/业务HTTP/ASGI及本机CPU运行器"
+  },
+  "targeted_tool_regression": {
+    "passed": 9,
+    "seconds": 0.65
+  },
+  "decode_stage": {
+    "checked_at_utc": "2026-10-18T08:59:53.822048+00:00",
+    "scope": "真实本工作区单并发CPU池与子进程；acceptance，非物理CPU独占、GPU或整片RTF验收",
+    "run_id": "bf762e2b-7023-4dca-9e3a-a2fd0df3adb7",
+    "attempt_id": "f36de0b5-eadc-4def-a60c-a8c835866723",
+    "lease_id": "2ac70f9a-c73f-4296-a373-749fd06a3d22",
+    "device_id": "badad0f6-ea5e-4b12-9900-b31c74005078",
+    "score_id": "175639c1-33a4-4b40-9649-58f97dba37bd",
+    "proof_artifact_id": "8189c424-d95a-4a07-9d56-816b694d33fb",
+    "all_owned_operations_stopped": true,
+    "heartbeat_observed": true,
+    "replay_same_attempt": true,
+    "proof": {
+      "sha256": "d2c32b0eb1eddd327138041f49281b98d95afc6bd4ada42d76c362ecdcad5e3e",
+      "bytes": 1480,
+      "duration_ms": 2000,
+      "streams": [
+        {
+          "index": 0,
+          "codec_type": "video",
+          "codec_name": "mpeg4",
+          "width": 64,
+          "height": 64,
+          "duration": "2.000000",
+          "time_base": "1/10240",
+          "start_time": "0.000000",
+          "avg_frame_rate": "10/1"
+        }
+      ],
+      "rule_key": "full_decode",
+      "method": "technical",
+      "measured": true,
+      "decoded_duration_us": 2000000,
+      "tail_tolerance_us": 100000,
+      "decoder_exit_code": 0,
+      "tool_version": "ffmpeg version 8.0.1-full_build-www.gyan.dev Copyright (c) 2000-2025 the FFmpeg developers",
+      "scope": "全部音视频流；字幕结构、语义、声音身份、自然度与混音质量需要另行验收",
+      "artifact_id": "37831fc6-b35a-4964-b85b-c34684e5bfca"
+    },
+    "langfuse_user_session_and_numeric_score_readback": true
+  },
+  "cancellation": {
+    "checked_at_utc": "2026-10-18T08:59:54.321041+00:00",
+    "scope": "真实本工作区单并发CPU池与子进程；acceptance，非物理CPU独占、GPU或整片RTF验收",
+    "run_id": "78d5be2a-dfa3-460e-b297-1a47dd977758",
+    "attempt_id": "7d8bc2a4-7873-426e-a46d-6c15e8979acd",
+    "lease_id": "ed3090f2-d3ab-4c17-89d9-f99ef73c517e",
+    "stage_status": "cancelled",
+    "stopped_jobs": [
+      {
+        "pid": 45568,
+        "started_at": "2026-10-18T08:59:54.003537+00:00",
+        "exit_code": 1,
+        "command_sha256": "682a7de91808d87e41d3ba63ca51d9068986a32bc7520e9b1de044c53a958433",
+        "finished_at": "2026-10-18T08:59:54.228990+00:00"
+      }
+    ],
+    "lease_released": true
+  },
+  "permission_revocation": {
+    "checked_at_utc": "2026-10-18T08:59:59.947410+00:00",
+    "scope": "真实本工作区单并发CPU池与子进程；acceptance，非物理CPU独占、GPU或整片RTF验收",
+    "run_id": "5d2fad00-7e71-424e-b0c4-65100a5eb04f",
+    "attempt_id": "bd1bc503-09d1-4535-afee-8f68e49dbb15",
+    "lease_id": "befab033-99f3-46e4-b9e5-9bc8dfb615d3",
+    "test_user_id": "15c28260-95da-4463-9c98-625114671372",
+    "permission_revocation_observed": true,
+    "stopped_jobs": [
+      {
+        "pid": 47760,
+        "started_at": "2026-10-18T08:59:54.790702+00:00",
+        "exit_code": 1,
+        "command_sha256": "682a7de91808d87e41d3ba63ca51d9068986a32bc7520e9b1de044c53a958433",
+        "finished_at": "2026-10-18T08:59:55.021518+00:00"
+      }
+    ],
+    "unacknowledged_lease_not_implicitly_released": true,
+    "operator_reconciliation_after_expiry": true
+  },
+  "cli_local_http": {
+    "checked_at_utc": "2026-10-18T08:59:41.976860+00:00",
+    "local_default_without_test_http_process": true,
+    "projects_equal": true,
+    "runs_equal": true,
+    "local_and_http_upload_same_artifact": true,
+    "artifact_bytes": 2228224,
+    "local_and_http_decode_same_attempt": true,
+    "decode_attempt_id": "ea8940f7-55cc-4f55-bc47-4413107ea21f",
+    "viewer_forbidden_in_both_transports": true,
+    "scope": "真实 CLI 子进程 + 临时业务 HTTP + V3 Supabase；尚未注册工作台或生产图"
+  },
+  "first_failed_verification_cleanup": {
+    "device_id": "badad0f6-ea5e-4b12-9900-b31c74005078",
+    "lease_ids": [
+      "6c3d6693-6e1a-423a-8db0-23533841ccab"
+    ],
+    "stopped_jobs": [
+      {
+        "pid": 54148,
+        "started_at": "2026-10-18T08:39:39.069975+00:00",
+        "exit_code": 1,
+        "command_sha256": "682a7de91808d87e41d3ba63ca51d9068986a32bc7520e9b1de044c53a958433",
+        "finished_at": "2026-10-18T08:39:39.301923+00:00"
+      }
+    ],
+    "state": "ready"
+  },
+  "business_counts": {
+    "runs": 68,
+    "devices": 1,
+    "device_leases": 30,
+    "audio_attempts": 0,
+    "backgrounds": 0,
+    "renders": 0,
+    "publications": 0,
+    "audits": 0
+  },
+  "run_purposes": {
+    "acceptance": 68
+  },
+  "run_statuses": {
+    "cancelled": 68
+  },
+  "lease_statuses": {
+    "released": 30
+  },
+  "devices": [
+    {
+      "id": "badad0f6-ea5e-4b12-9900-b31c74005078",
+      "kind": "cpu",
+      "state": "ready",
+      "capacity": "1"
+    }
+  ],
+  "outbox_statuses": {
+    "sent": 108
+  },
+  "yale_project_source_count": 0,
+  "threads_preserved": 305,
+  "all_thread_values_identical": true,
+  "protected_container_ids_preserved": 27,
+  "platform_container_unchanged": true,
+  "platform_image": "ghcr.io/100apps/anp-platform@sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3",
+  "limitations": [
+    "本机Windows单并发媒体CPU逻辑池，不代表物理CPU独占或GPU空闲；Linux分支未实测",
+    "异常启动/崩溃遗留日志拒绝自动接管，尚无完整崩溃恢复/跨主机接管能力",
+    "首次登记与刷新需要设备管理权限，普通业务用户只能使用已核验device_id",
+    "撤权测试使用专门测试账号，结束保持viewer；未变更其他用户角色",
+    "真实阶段只对小型合成视频解码，技术评分不能当语义/音色/自然度或RTF通过",
+    "没有实际TTS、背景分离、成片、生产run、Yale来源或B站投稿；完整图/工作台/远端授权仍待完成"
+  ]
+}

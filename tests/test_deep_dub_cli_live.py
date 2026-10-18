@@ -22,6 +22,7 @@ from apps.deep_dub.services.execution import service as execution
 from apps.deep_dub.services.observations import deliver_one
 from apps.deep_dub.services.versions import service as versions
 from tests.test_deep_dub_contracts_live import PROFILE
+from apps.deep_dub.nodes.media import executable
 from tests.test_deep_dub_contracts_live import context
 
 pytestmark=pytest.mark.skipif(os.environ.get('ANP_DEEP_DUB_LIVE')!='1',reason='需显式开启真实 V3 CLI 验收')
@@ -83,14 +84,28 @@ def test_default_local_cli_without_business_web_matches_http_cli(context,monkeyp
                     uploaded=cli('upload-artifact',attempt,str(file))
                     replayed=cli('--transport','http','--endpoint',endpoint,'upload-artifact',attempt,str(file))
                     assert uploaded==replayed
+                    movie=Path(folder)/'fixture.mp4'
+                    subprocess.run([executable('ffmpeg'),'-v','error','-f','lavfi','-i','color=c=gray:s=64x64:r=10:d=2',
+                        '-c:v','mpeg4',str(movie)],check=True,capture_output=True,timeout=20)
+                    media=cli('upload-artifact',attempt,str(movie),'--media-type','video/mp4','--duration-ms','2000')
                 async def finish_upload():
-                    await execution.finish_stage(actor,attempt,{'status':'succeeded','outputs':[uploaded['id']],
+                    await execution.finish_stage(actor,attempt,{'status':'succeeded','outputs':[uploaded['id'],media['id']],
                         'elapsed_seconds':time.monotonic()-started,'operation_stopped':True})
                     for _ in range(20):
                         item=await deliver_one(actor)
                         if not item['claimed']:break
                         assert item['sent']
                 asyncio.run(finish_upload())
+                key=str(uuid4())
+                decoded=cli('runs','decode',run_id,media['id'],'--request-key',key)
+                replayed_decode=cli('--transport','http','--endpoint',endpoint,'runs','decode',run_id,media['id'],'--request-key',key)
+                assert decoded==replayed_decode and decoded['status']=='succeeded'
+                async def flush_decode():
+                    for _ in range(20):
+                        item=await deliver_one(actor)
+                        if not item['claimed']:return
+                        assert item['sent']
+                asyncio.run(flush_decode())
             finally:
                 asyncio.run(execution.cancel(actor,run_id))
             # 真实账号降为 viewer 会话，确认两入口均由服务端拒绝，不靠 UI 隐藏按钮。
@@ -102,6 +117,7 @@ def test_default_local_cli_without_business_web_matches_http_cli(context,monkeyp
                 'checked_at_utc':datetime.now(timezone.utc).isoformat(),
                 'local_default_without_test_http_process':True,'projects_equal':True,'runs_equal':True,
                 'local_and_http_upload_same_artifact':True,'artifact_bytes':uploaded['bytes'],
+                'local_and_http_decode_same_attempt':True,'decode_attempt_id':decoded['attempt']['id'],
                 'viewer_forbidden_in_both_transports':True,
                 'scope':'真实 CLI 子进程 + 临时业务 HTTP + V3 Supabase；尚未注册工作台或生产图'},
                 ensure_ascii=False,indent=2)+'\n').encode())

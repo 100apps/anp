@@ -9,6 +9,7 @@ from anp.config import secret, value
 from anp.errors import BusinessError
 from anp.sdk.http import async_client
 from apps.deep_dub.services.versions import identifier, Contract
+from apps.deep_dub.services.blocking import await_blocking,file_identity
 
 
 class ArtifactMetadata(Contract):
@@ -51,12 +52,9 @@ class ArtifactService:
         attempt=await self.authorize_upload(actor,attempt_id)
         file = Path(file)
         # 先散列，上传和回读均流式处理；不把整片视频加载到内存。
-        digest, size = sha256(), 0
-        with file.open('rb') as source:
-            while block := source.read(1024*1024):
-                digest.update(block)
-                size += len(block)
-        path = f"deep-dub/{actor.workspace_id}/{attempt['project_id']}/{attempt_id}/{digest.hexdigest()}"
+        identity=await await_blocking(file_identity,file)
+        digest,size=identity['sha256'],identity['bytes']
+        path = f"deep-dub/{actor.workspace_id}/{attempt['project_id']}/{attempt_id}/{digest}"
         url = object_url(path)
 
         async def blocks():
@@ -75,9 +73,9 @@ class ArtifactService:
                 duplicate = False
             if not duplicate:
                 raise BusinessError('私有产物上传失败',response.status_code,'ARTIFACT_UPLOAD_FAILED')
-        await self.verify(actor,path,digest.hexdigest(),size)
+        await self.verify(actor,path,digest,size)
         return await actor.objects.rpc('deep_dub_register_artifact',p_workspace=actor.workspace_id,
-            p_attempt=attempt_id,p_sha256=digest.hexdigest(),p_bytes=size,p_media_type=meta.media_type,
+            p_attempt=attempt_id,p_sha256=digest,p_bytes=size,p_media_type=meta.media_type,
             p_duration_ms=meta.duration_ms,p_sample_rate=meta.sample_rate)
 
     async def verify(self, actor, path, expected_hash, expected_size):

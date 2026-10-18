@@ -1,7 +1,6 @@
 """本地媒体原语；完整解码与元数据探测分开，不产生主观质量结论。"""
 import asyncio
 from decimal import Decimal,ROUND_HALF_UP
-from hashlib import sha256
 from fractions import Fraction
 from math import ceil
 import json
@@ -10,6 +9,8 @@ import shutil
 import subprocess
 
 from anp.errors import BusinessError
+from apps.deep_dub.services.local_pool import process_observer
+from apps.deep_dub.services.blocking import file_identity,await_blocking
 
 
 def executable(name):
@@ -18,22 +19,23 @@ def executable(name):
     return result
 
 
-def file_identity(path):
-    digest=sha256();size=0
-    with Path(path).open('rb') as source:
-        while block:=source.read(1024*1024):
-            size+=len(block);digest.update(block)
-    return {'sha256':digest.hexdigest(),'bytes':size}
-
-
 async def _run(command,timeout):
     # Windows 宿主为 psycopg 使用 SelectorEventLoop；通过独立通信线程管理本次子进程，
     # 不切换全局事件循环策略，也不把阻塞 communicate 放到业务事件循环。
+    observer=process_observer.get()
+    if observer is not None:observer.starting(command)
     try:
         process=subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
             creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
     except OSError:
+        if observer is not None:observer.spawn_failed()
         raise BusinessError('媒体子进程无法启动',503,'MEDIA_TOOL_UNAVAILABLE') from None
+    if observer is not None:
+        try:observer.started(process.pid)
+        except BaseException:
+            if process.poll() is None:process.kill()
+            await asyncio.to_thread(process.communicate)
+            raise
     communicating=asyncio.create_task(asyncio.to_thread(process.communicate))
     try:
         stdout,_=await asyncio.wait_for(asyncio.shield(communicating),timeout)
@@ -45,6 +47,11 @@ async def _run(command,timeout):
         await asyncio.shield(communicating)
         if isinstance(error,asyncio.CancelledError):raise
         raise BusinessError('媒体处理超时，当前子进程已结束',408,'MEDIA_TIMEOUT') from None
+    finally:
+        if process.poll() is None:
+            process.kill()
+            await asyncio.to_thread(process.wait)
+        if observer is not None and process.poll() is not None:observer.ended(process.pid,process.returncode)
     if process.returncode:
         # 原始错误可能带本机路径或用户元数据，不直接进入公开日志/产物。
         raise BusinessError('媒体处理失败',422,'MEDIA_PROCESS_FAILED')
@@ -73,12 +80,12 @@ async def probe_media(path):
 
 async def full_decode(path,timeout=600):
     file=Path(path).resolve(strict=True)
-    before=await asyncio.to_thread(file_identity,file)
+    before=await await_blocking(file_identity,file)
     probe=await probe_media(file)
     ffmpeg=executable('ffmpeg')
     version=(await _run([ffmpeg,'-version'],10)).decode('utf8',errors='replace').splitlines()[0]
-    output=await _run([ffmpeg,'-v','error','-xerror','-err_detect','explode','-i',str(file),
-        '-map','0:v?','-map','0:a?','-progress','pipe:1','-nostats','-f','null','-'],timeout)
+    output=await _run([ffmpeg,'-v','error','-threads','1','-xerror','-err_detect','explode','-i',str(file),
+        '-map','0:v?','-map','0:a?','-threads','1','-progress','pipe:1','-nostats','-f','null','-'],timeout)
     progress={}
     for line in output.decode('utf8',errors='replace').splitlines():
         if '=' in line:
@@ -97,7 +104,7 @@ async def full_decode(path,timeout=600):
             except (ValueError,ZeroDivisionError):pass
     if decoded_us+tail_tolerance_us<probe['duration_ms']*1000:
         raise BusinessError('解码未覆盖媒体尾部',422,'MEDIA_DECODE_INCOMPLETE')
-    after=await asyncio.to_thread(file_identity,file)
+    after=await await_blocking(file_identity,file)
     if before!=after:raise BusinessError('解码期间媒体内容发生变化',409,'MEDIA_INPUT_CHANGED')
     return {**before,**probe,'rule_key':'full_decode','method':'technical','measured':True,
             'decoded_duration_us':decoded_us,'tail_tolerance_us':tail_tolerance_us,'decoder_exit_code':0,'tool_version':version,

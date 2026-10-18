@@ -42,6 +42,7 @@ def ingestion_batch(item):
     if score is not None:
         measured = score['measurement_status'] == 'measured'
         batch.append(envelope('score-create', {'id': score['id'], 'traceId': trace,
+            'environment':run['purpose'],
             'observationId': span, 'name': score['metric'] if measured else score['metric']+':status',
             'dataType': 'NUMERIC' if measured else 'TEXT',
             'value': score['value'] if measured else 'not_measured',
@@ -59,7 +60,9 @@ def otlp_payload(item, body):
         return (delta.days*86400+delta.seconds)*1_000_000_000+delta.microseconds*1000
 
     attributes = {'user.id':item['user_id'], 'session.id':item['session_id'],
-        'langfuse.trace.name':'deep_dub/整片运行', 'langfuse.observation.type':'span',
+        'langfuse.environment':item['run']['purpose'],
+        'langfuse.trace.name':'deep_dub/验收运行' if item['run']['purpose']=='acceptance' else 'deep_dub/整片运行',
+        'langfuse.observation.type':'span',
         'langfuse.observation.level':body['level'],
         'langfuse.observation.input':json.dumps(body['input']),
         'langfuse.observation.output':json.dumps(body['output']),

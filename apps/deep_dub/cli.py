@@ -18,6 +18,7 @@ from apps.deep_dub.services.versions import service as versions
 from apps.deep_dub.services.artifacts import service as artifacts
 from apps.deep_dub.services.observations import deliver_one
 from apps.deep_dub.services.candidates import service as candidates
+from apps.deep_dub.services.processing import decode_artifact
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -111,6 +112,13 @@ def cancel(ctx:typer.Context,run_id:str):
 @app.command('flush-observation')
 def flush(ctx:typer.Context):
     perform(invoke(ctx,'POST','/observations/flush',deliver_one))
+
+
+@run_commands.command('decode')
+def decode(ctx:typer.Context,run_id:str,artifact_id:str,device_id:str='',request_key:str=''):
+    body={'artifact_id':artifact_id,'device_id':device_id or None}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/decode',
+        lambda actor:decode_artifact(actor,run_id,body,request_key or None),body,request_key))
 
 
 @app.command('candidate')

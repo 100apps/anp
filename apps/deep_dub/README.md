@@ -45,7 +45,7 @@ PostgREST 领域冲突使用 `PT409`，对象不存在使用 `PT404`，避免被
 
 ## 接续范围
 
-继续补候选注册/不可变对象提交、设备与发布服务适配、CLI、工作台和真实业务 nodes/flow。远端 worker 尚未有仅限单个尝试的授权签发，不能把完整用户 JWT 当作该功能已实现；丢失投稿凭据后的人工核对恢复也待接入。随后实际探测两 GPU/两 CPU，发起全新整片生产，验证完整墙钟 RTF≤0.5、内容/声音/字幕/时序/碰撞/解码，最后取得 B 站发布回执。未测项保留未测，不以局部测速或旧成片替代。
+来源、分段和译文候选已有受限登记契约；继续补音色/情绪参考、音频/背景/成片登记、设备与发布服务适配、工作台和真实业务 nodes/flow。远端 worker 尚未有仅限单个尝试的授权签发，不能把完整用户 JWT 当作该功能已实现；丢失投稿凭据后的人工核对恢复也待接入。随后实际探测两 GPU/两 CPU，发起全新整片生产，验证完整墙钟 RTF≤0.5、内容/声音/字幕/时序/碰撞/解码，最后取得 B 站发布回执。未测项保留未测，不以局部测速或旧成片替代。
 
 验收证据：`docs/evidence/deep-dub-foundation-20261018.json`、`docs/evidence/deep-dub-content-contracts-20261018.json`、`docs/evidence/deep-dub-execution-contracts-20261018.json`。旧证据保留当时结构、SHA 和测试范围，不改写为新一轮结果。
 
@@ -74,3 +74,17 @@ uv run python -m apps.deep_dub.cli --transport http --endpoint http://127.0.0.1:
 `projects quality-profile --input 文件.json` 创建不可变规则修订；`runs queue <项目UUID> --input 文件.json --request-key <幂等键>` 排队，输入包含 `quality_profile_id`、`flow_revision`、`expected_version`，默认 `mode=local,purpose=production,reuse_policy=none`。验收应显式使用 `purpose=acceptance`。`runs start/cancel` 当前管理运行状态，尚未驱动完整生产图；不要将状态切换当作媒体生产完成。
 
 `upload-artifact <尝试UUID> <本地文件> --media-type application/json` 提交当前执行者的私有产物；HTTP 模式流式发送文件内容，不向服务器传宿主文件路径。`flush-observation` 每次投递一个 outbox 事件。工作台菜单、统一 `anp deep_dub` 注册及完整生产图仍待接入，不将上述独立开发入口称为整个平台业务验收完成。
+
+## 来源、原文分段与译文候选（已部署、契约已验证）
+
+`009_source_candidates.sql`、`010_translation_candidates.sql` 不增加表或存储服务，补齐执行尝试、上下文产物的复合外键和幂等约束。
+
+- `services/candidates.py` 与 `POST /attempts/{id}/source|transcript|translation` 共用契约。业务 CLI 对应 `candidate source|transcript|translation <尝试UUID> --input 文件.json --request-key <幂等键>`；登记要求原执行者的当前运行中尝试，租约及取消状态重新检查。源和分段集的并发相同请求各返回同一版本。
+- 来源绑定本尝试原片 artifact，媒体类型和时长必须匹配；来源 URL 从排队时冻结的任务输入读取，不能由候选请求替换。一个 run 只绑定一次来源；修改原片需新来源修订/轮次。
+- 原文请求包含 source_id、strategy_revision、完整 cues 与 segments。cue 保留角色、原文、源时间窗；每段只提交 cue_numbers，段文本及时间窗由服务器派生。所有本次 cue 恰好覆盖一次，禁止漏段、重复、乱序和跨角色合并。已有来源修订的 cue 不能被覆盖或省略；重分段只新建封存分段集，不修改原始 cue。
+- 译文包含 segment_id、context_artifact_id、chinese_text、model_id、prompt_revision。段必须属于本轮来源的封存分段集；上下文必须是本尝试的私有 JSON。输入摘要绑定原文、上下文摘要和模型/提示修订；改稿形成新 revision，不覆盖旧文本或自动生成审核通过。
+- 数据库只验证关系与元数据，来源身份、原文覆盖和翻译语义仍需独立复核。`identity_evidence` 是来源描述及证据字段，不是“身份通过”的布尔开关。
+
+61 项独立库联合检查及 7 项真实服务集成检查通过。实际来源测试使用专门的 `[契约验收]` 项目、`example.invalid` URL、2 秒无语音合成视频及人工原文/译文夹具，始终是 acceptance；它们不是 Yale 整片、ASR、翻译模型、媒体质量或 RTF 验收。候选 CLI 适配已实现，本轮候选专用路径直接实测范围为 ASGI/相同服务与真实 Supabase；完整业务 CLI/Web 操作仍待生产图与工作台联调。
+
+最新证据：`docs/evidence/deep-dub-source-candidates-20261018.json`。

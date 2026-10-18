@@ -17,6 +17,7 @@ from apps.deep_dub.services.execution import service as execution
 from apps.deep_dub.services.versions import service as versions
 from apps.deep_dub.services.artifacts import service as artifacts
 from apps.deep_dub.services.observations import deliver_one
+from apps.deep_dub.services.candidates import service as candidates
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -110,6 +111,15 @@ def cancel(ctx:typer.Context,run_id:str):
 @app.command('flush-observation')
 def flush(ctx:typer.Context):
     perform(invoke(ctx,'POST','/observations/flush',deliver_one))
+
+
+@app.command('candidate')
+def candidate(ctx:typer.Context,kind:Literal['source','transcript','translation'],attempt_id:str,
+        input:Path=typer.Option(...,exists=True,dir_okay=False),request_key:str=''):
+    body=input_json(input)
+    operation=getattr(candidates,kind)
+    perform(invoke(ctx,'POST',f'/attempts/{attempt_id}/{kind}',
+        lambda actor:operation(actor,attempt_id,body,request_key or None),body,request_key))
 
 
 @app.command('upload-artifact')

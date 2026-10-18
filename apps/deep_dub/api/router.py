@@ -12,6 +12,7 @@ from typing import Literal
 from anp.errors import BusinessError
 from apps.deep_dub.services.artifacts import service as artifacts, ArtifactMetadata
 from apps.deep_dub.services.observations import deliver_one
+from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 
@@ -115,3 +116,18 @@ async def upload_artifact(attempt_id: str, request: Request, actor=Depends(get_a
 @router.post('/observations/flush')
 async def flush_observation(actor=Depends(get_actor)):
     return await deliver_one(actor)
+
+
+@router.post('/attempts/{attempt_id}/source',status_code=201)
+async def register_source(attempt_id:str,body:SourceInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await candidates.source(actor,attempt_id,body.model_dump(),idempotency_key)
+
+
+@router.post('/attempts/{attempt_id}/transcript',status_code=201)
+async def register_transcript(attempt_id:str,body:TranscriptInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await candidates.transcript(actor,attempt_id,body.model_dump(),idempotency_key)
+
+
+@router.post('/attempts/{attempt_id}/translation',status_code=201)
+async def register_translation(attempt_id:str,body:TranslationInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await candidates.translation(actor,attempt_id,body.model_dump(),idempotency_key)

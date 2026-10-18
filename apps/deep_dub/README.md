@@ -1,5 +1,7 @@
 # deep_dub 译配业务
 
+源稿队列可用 `projects source-review-queue <项目UUID> <来源UUID> --include-secondary` 加入第二套整轨识别差异；Web 的「加入第二套识别差异」调用同一权限契约。两侧候选与原音块粗定位只辅助裁决，不自动改稿或通过审核。分页绑定完整证据摘要；原始不含第二套的队列保持兼容。见 [跨模型源稿复核](../../docs/deep_dub跨模型源稿复核.md)。
+
 ## 第二套整轨识别
 
 `uv run anp deep_dub runs recognize-source-independent <运行UUID> <来源UUID> --request-key <稳定键>` 以不同家族和权重的 Nemotron 对原始完整 PCM 盲识别；`projects source-independent-recognition <项目UUID> <来源UUID>` 读取冻结证据。配置用途为 `[deep_dub].independent_asr_config`，默认留空，须核实执行器/权重摘要、物理 GPU 和原跨应用协调锁。API、两 CLI 与 Web 共用服务和权限，仍禁止自动改稿、登记正式分段或解除待审。87 块真实执行、日志替换失败保留/恢复与验证见 [第二套整轨识别](../../docs/deep_dub第二套整轨识别.md)。

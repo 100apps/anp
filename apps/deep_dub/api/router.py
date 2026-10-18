@@ -60,8 +60,8 @@ async def get_boundary_recheck(project_id:str,source_id:str,actor=Depends(get_ac
 
 @router.get('/projects/{project_id}/sources/{source_id}/review-queue')
 async def get_source_review_queue(project_id:str,source_id:str,offset:int=Query(0,ge=0),limit:int=Query(30,ge=1,le=100),
-        kind:ReviewKind='all',expected_hash:str|None=Query(None,min_length=64,max_length=64),actor=Depends(get_actor)):
-    return await read_source_review(actor,project_id,source_id,offset=offset,limit=limit,kind=kind,expected_hash=expected_hash)
+        kind:ReviewKind='all',expected_hash:str|None=Query(None,min_length=64,max_length=64),include_secondary:bool=False,actor=Depends(get_actor)):
+    return await read_source_review(actor,project_id,source_id,offset=offset,limit=limit,kind=kind,expected_hash=expected_hash,include_secondary=include_secondary)
 
 
 @router.post('/runs/{run_id}/source-preparation-job')

@@ -5,7 +5,9 @@ import {normalizeSnapshot,segmentLabel,text,type StudioSnapshot} from './platfor
 export function platformAdapter(projectId:string,identity:string,permissions:readonly string[]):TaskAdapter {
   let snapshot:StudioSnapshot|undefined
   const keys=new Map<string,string>()
-  const canWrite=(action:string)=>action==='translation'&&permissions.includes('deep_dub.project.edit')
+  const activeRun=()=>snapshot?.runs.filter(r=>r.status==='running'&&r.source_id===snapshot?.source?.id).at(-1)
+  const canWrite=(action:string)=>action==='translation'?permissions.includes('deep_dub.project.edit'):
+    action==='translate'&&permissions.includes('deep_dub.task.run')&&permissions.includes('deep_dub.audit')&&!!activeRun()
   const file=(id:unknown)=>id?'/api/apps/deep_dub/media/artifacts/'+encodeURIComponent(String(id)):''
   return {cacheKey:identity+':'+projectId,canWrite,
     async read(){snapshot=await api<StudioSnapshot>(`/apps/deep_dub/projects/${projectId}/studio`);return normalizeSnapshot(snapshot)},
@@ -40,6 +42,18 @@ export function platformAdapter(projectId:string,identity:string,permissions:rea
       const raw=snapshot,body=input as Record<string,unknown>
       const segment=raw?.segments.find(s=>segmentLabel(s)===body.segmentId)
       if(!raw||!segment)throw Error('段不属于当前快照，请重新加载')
+      if(action==='translate'){
+        const run=activeRun();if(!run)throw Error('需要同来源的执行中运行，请先创建并启动运行')
+        const fingerprint=JSON.stringify(['translate',run.id,segment.id])
+        if(!keys.has(fingerprint))keys.set(fingerprint,crypto.randomUUID())
+        const result=await api<{status:string;attempt:{error?:{code?:string}}}>(`/apps/deep_dub/runs/${run.id}/translate`,{method:'POST',
+          headers:{'Idempotency-Key':keys.get(fingerprint)!},body:JSON.stringify({segment_id:segment.id,timeout_seconds:120})})
+        if(result.status!=='succeeded'){
+          if(result.status==='failed'||result.status==='cancelled')keys.delete(fingerprint)
+          throw Error(result.status==='running'||result.status==='queued'?'此阶段已在执行，请刷新运行状态后查看候选':`译稿阶段未成功：${result.attempt.error?.code||result.status}`)
+        }
+        return result
+      }
       const latest=raw.translations.filter(t=>t.segment_id===segment.id).at(-1)
       const payload={base_translation_id:latest?.id||null,expected_revision:latest?Number(latest.revision):0,
         expected_project_version:Number(raw.project.row_version),chinese_text:text(body.translation)}

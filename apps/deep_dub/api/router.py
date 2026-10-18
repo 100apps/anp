@@ -18,10 +18,16 @@ from apps.deep_dub.services.workbench import RecordKind,service as workbench
 from apps.deep_dub.api.media import router as media_router
 from apps.deep_dub.services.editor import TranslationEdit, service as editor
 from apps.deep_dub.services.waveforms import WaveformInput,prepare as prepare_waveform
+from apps.deep_dub.services.translation import TranslationInput as GenerateTranslationInput,generate as generate_translation
 from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,BackgroundInput,RenderInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 router.include_router(media_router)
+
+
+@router.post('/runs/{run_id}/translate')
+async def translate_segment(run_id:str,body:GenerateTranslationInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await generate_translation(actor,run_id,body.model_dump(),idempotency_key)
 
 
 @router.post('/runs/{run_id}/waveform')

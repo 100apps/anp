@@ -1128,6 +1128,12 @@ export function TaskStudio({
                         <p>{segment.translationCandidateFlags?.join("；")}</p>
                       </div>
                     )}
+                    {adapter.canWrite&&<div className="dd-save-row">
+                      <span>{can('translate')?'同输入复用已有成功候选；不会自动通过审核':'生成需要执行/评分权限及同来源的执行中运行'}</span>
+                      <Button size="sm" variant="outline" disabled={!can('translate')||busy||dirty}
+                        onClick={()=>ask('生成译稿候选','使用配置的真实模型及相邻原文生成候选。旧译稿保留；生成不等于独立语义审核。',
+                          ()=>write('translate',{segmentId:segment.segmentId}))}><Sparkles size={13}/>生成译稿候选</Button>
+                    </div>}
                     <Textarea
                       aria-label="中文译稿"
                       readOnly={!can('translation')}

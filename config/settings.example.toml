@@ -43,6 +43,9 @@ url = "http://127.0.0.1:4224"
 url = "http://127.0.0.1:8124"
 debug_port = 5678
 
+[deep_dub]
+translation_model = "auto"
+
 [development]
 api_port = 8180
 worker_port = 8281

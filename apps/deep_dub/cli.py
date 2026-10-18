@@ -23,6 +23,7 @@ from apps.deep_dub.services.workbench import RecordKind,service as workbench
 from apps.deep_dub.services.media import service as media
 from apps.deep_dub.services.editor import service as editor
 from apps.deep_dub.services import waveforms
+from apps.deep_dub.services.translation import generate as generate_translation
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -31,6 +32,13 @@ media_commands=typer.Typer(help='私有音视频信息；同一用户和工作�
 app.add_typer(project_commands,name='projects')
 app.add_typer(run_commands,name='runs')
 app.add_typer(media_commands,name='media')
+
+
+@run_commands.command('translate')
+def translate_segment(ctx:typer.Context,run_id:str,segment_id:str,timeout_seconds:int=120,request_key:str=''):
+    body={'segment_id':segment_id,'timeout_seconds':timeout_seconds}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/translate',
+        lambda actor:generate_translation(actor,run_id,body,request_key or None),body,request_key))
 
 
 @app.command('edit-translation')

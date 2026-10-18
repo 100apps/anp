@@ -77,8 +77,8 @@ async def create_independent_asr(run_id:str,body:IndependentInput,actor=Depends(
 
 
 @router.get('/projects/{project_id}/sources/{source_id}/independent-recognition')
-async def get_independent_asr(project_id:str,source_id:str,actor=Depends(get_actor)):
-    return await read_independent(actor,project_id,source_id)
+async def get_independent_asr(project_id:str,source_id:str,recognizer:Literal['nemotron','parakeet']='nemotron',actor=Depends(get_actor)):
+    return await read_independent(actor,project_id,source_id,recognizer)
 
 
 @router.post('/runs/{run_id}/recheck-source-boundaries')

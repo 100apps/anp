@@ -4,9 +4,10 @@ from hashlib import sha256
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import UUID
+from typing import Literal
 from pydantic import Field
 from anp.errors import BusinessError
-from apps.deep_dub.nodes.source_independent_asr import RULE,recognize,verify
+from apps.deep_dub.nodes.source_independent_asr import RULE,recognize,verify,rule_for
 from apps.deep_dub.nodes.source_reference import compare_reference
 from apps.deep_dub.nodes.source_review import canonical
 from apps.deep_dub.services import source_recognition,source_reference
@@ -22,6 +23,7 @@ from apps.deep_dub.services.versions import Contract,identifier,operation_key
 class IndependentInput(Contract):
     source_id:UUID
     timeout_seconds:int=Field(default=3600,ge=60,le=7200,strict=True)
+    recognizer:Literal['nemotron','parakeet']='nemotron'
 
 
 async def generate(actor,run_id,payload,request_key=None):
@@ -32,12 +34,12 @@ async def generate(actor,run_id,payload,request_key=None):
         raise BusinessError('第二套识别仅用于本轮待审来源',409,'SOURCE_SECONDARY_INPUT_MISMATCH')
     run=runs[0];primary=await source_recognition.read_latest(actor,run['project_id'],str(body.source_id))
     if not primary:raise BusinessError('缺少第一套原始识别',409,'SOURCE_SECONDARY_INPUT_MISSING')
-    config=configuration('independent_asr')
+    config=configuration('blind_asr' if body.recognizer=='parakeet' else 'independent_asr')
     if config.weights_sha256==primary['recognition']['model']['weights_sha256']:
         raise BusinessError('不能把原识别权重当作独立识别器',409,'SOURCE_SECONDARY_MODEL_INVALID')
     note=(await actor.objects.select('deep_dub_artifacts',workspace_id='eq.'+actor.workspace_id,id='eq.'+primary['evidence_artifact_id']))[0]
     reference=await source_reference.read_latest_reference(actor,run['project_id'],str(body.source_id))
-    inputs={'rule_revision':RULE,'source_id':str(body.source_id),'asr_evidence_artifact_id':note['id'],'asr_evidence_sha256':note['sha256'],
+    inputs={'rule_revision':rule_for(config.family),'source_id':str(body.source_id),'asr_evidence_artifact_id':note['id'],'asr_evidence_sha256':note['sha256'],
         'pcm_artifact_id':primary['pcm_artifact_id'],'reference_evidence_artifact_id':reference['evidence_artifact_id'] if reference else None,
         'model_id':config.model_id,'family':config.family,'weights_sha256':config.weights_sha256,'runtime_sha256':config.executable_sha256,
         'source_revision':config.source_revision,'timeout_seconds':body.timeout_seconds}
@@ -70,7 +72,7 @@ async def checked(actor,attempt):
             assert primary and primary['evidence_artifact_id']==inputs['asr_evidence_artifact_id'] and primary['pcm_artifact_id']==inputs['pcm_artifact_id']
             notes=await actor.objects.select('deep_dub_artifacts',workspace_id='eq.'+actor.workspace_id,id='eq.'+inputs['asr_evidence_artifact_id'])
             stages=await actor.objects.select('deep_dub_stages',workspace_id='eq.'+actor.workspace_id,id='eq.'+attempt['stage_id'])
-            assert notes[0]['sha256']==inputs['asr_evidence_sha256'] and inputs['rule_revision']==RULE
+            assert notes[0]['sha256']==inputs['asr_evidence_sha256'] and inputs['rule_revision']==rule_for(measured['model']['family'])
             assert stages[0]['node']=='source_independent_asr' and stages[0]['partition_key']==inputs['source_id'] and stages[0]['input_hash']==sha256(canonical(inputs)).hexdigest()
             assert all(measured['model'][k]==inputs[k] for k in ('model_id','family','weights_sha256','runtime_sha256','source_revision'))
             assert measured['summary']==await await_blocking(verify,measured,primary['recognition'])
@@ -83,15 +85,20 @@ async def checked(actor,attempt):
     return proof
 
 
-async def read_latest(actor,project_id,source_id):
+async def read_latest(actor,project_id,source_id,recognizer:Literal['nemotron','parakeet']='nemotron'):
     await actor.require('deep_dub.project.read');project_id,source_id=identifier(project_id),identifier(source_id)
     rows=await actor.objects.select('deep_dub_sources',workspace_id='eq.'+actor.workspace_id,project_id='eq.'+project_id,id='eq.'+source_id)
     if not rows:raise BusinessError('来源不存在或无权访问',404,'NOT_FOUND')
     stages=await actor.objects.select('deep_dub_stages',workspace_id='eq.'+actor.workspace_id,project_id='eq.'+project_id,node='eq.source_independent_asr',partition_key='eq.'+source_id)
     if not stages:return None
-    attempts=await actor.objects.select('deep_dub_stage_attempts',workspace_id='eq.'+actor.workspace_id,stage_id='in.('+','.join(s['id'] for s in stages)+')',status='eq.succeeded',order='finished_at.desc,id.desc',limit=1)
+    attempts=await actor.objects.select('deep_dub_stage_attempts',workspace_id='eq.'+actor.workspace_id,stage_id='in.('+','.join(s['id'] for s in stages)+')',status='eq.succeeded',order='finished_at.desc,id.desc',limit=100)
     if not attempts:return None
-    return {'stage_attempt_id':attempts[0]['id'],'evidence_artifact_id':attempts[0]['outputs'][0],'proof':await checked(actor,attempts[0])}
+    family={'nemotron':'nemotron_asr','parakeet':'parakeet_tdt'}[recognizer]
+    for attempt in attempts:
+        proof=await checked(actor,attempt)
+        if proof['measurement']['model']['family']==family:
+            return {'stage_attempt_id':attempt['id'],'evidence_artifact_id':attempt['outputs'][0],'proof':proof}
+    return None
 
 
 async def scores(actor,attempt):
@@ -100,5 +107,5 @@ async def scores(actor,attempt):
         'source_secondary_primary_differences':summary['primary_difference_count'],
         'source_secondary_reference_differences':proof['reference_comparison']['difference_count'] if proof['reference_comparison'] else None,
         'source_secondary_content':None,'source_secondary_subtitle_timing':None}.items():
-        await execution.record_score(actor,attempt['id'],{'metric':metric,'rule_revision':RULE,'measurement_status':'not_measured' if value is None else 'measured','value':value,
+        await execution.record_score(actor,attempt['id'],{'metric':metric,'rule_revision':proof['input']['rule_revision'],'measurement_status':'not_measured' if value is None else 'measured','value':value,
             'evidence_artifact_id':attempt['outputs'][0] if value is not None else None,'details':{'scope':summary['scope']}},metric+':'+attempt['id'])

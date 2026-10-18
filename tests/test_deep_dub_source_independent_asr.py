@@ -4,6 +4,8 @@ import pytest
 from anp.errors import BusinessError
 from apps.deep_dub.nodes.source_independent_asr import verify,RULE
 from apps.deep_dub.nodes.transcribe import NEMOTRON_RULE
+from apps.deep_dub.nodes.transcribe import PARAKEET_RULE,checked_native_words
+from apps.deep_dub.nodes.source_independent_asr import PARAKEET_SOURCE_RULE
 from apps.deep_dub.nodes.source_asr import windows
 from apps.deep_dub.nodes.source_reference import compare_reference
 from tests.test_deep_dub_source_alignment import recognition
@@ -48,3 +50,25 @@ def test_independence_coverage_and_unmeasured_review_are_bound(data,defect):
     if defect=='claimed_quality':proof['semantic_review']='passed'
     if defect=='changed_text':proof['chunks'][0]['recognition']['text']='Different number 25'
     with pytest.raises(BusinessError):verify(proof,primary)
+
+
+def test_parakeet_blind_words_keep_separate_rule_and_unmeasured_timing(data):
+    primary,proof=data;proof['model']['family']='parakeet_tdt';proof['rule_revision']=PARAKEET_SOURCE_RULE
+    for chunk in proof['chunks']:
+        n=chunk['end_sample']-chunk['start_sample'];model=chunk['recognition']
+        model.update(family='parakeet_tdt',rule_revision=PARAKEET_RULE,word_timing_origin='native-tdt-emission-samples',word_timing_review='not_measured',
+            words=[{'word':'hello','start_sample':0,'end_sample':n//2,'confidence':0},
+                {'word':'world','start_sample':n//2,'end_sample':n,'confidence':0}])
+    assert verify(proof,primary)['sample_coverage']==1
+    proof['chunks'][0]['recognition']['word_timing_review']='passed'
+    with pytest.raises(BusinessError):verify(proof,primary)
+
+
+@pytest.mark.parametrize('words',[
+    [{'word':'hello','start_sample':False,'end_sample':3,'confidence':0}],
+    [{'word':'hello','start_sample':0,'end_sample':11,'confidence':0}],
+    [{'word':'wrong','start_sample':0,'end_sample':3,'confidence':0}],
+    [{'word':'hello','start_sample':0,'end_sample':3,'confidence':float('nan')}],
+])
+def test_native_time_must_match_text_and_real_samples(words):
+    with pytest.raises(BusinessError):checked_native_words(words,'hello',10)

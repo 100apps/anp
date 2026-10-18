@@ -85,14 +85,15 @@ def source_speaker_read(ctx:typer.Context,project_id:str,source_id:str):
 
 
 @run_commands.command('recognize-source-independent')
-def source_independent_recognition(ctx:typer.Context,run_id:str,source_id:str,timeout_seconds:int=3600,request_key:str=''):
+def source_independent_recognition(ctx:typer.Context,run_id:str,source_id:str,timeout_seconds:int=3600,request_key:str='',recognizer:Literal['nemotron','parakeet']='nemotron'):
     body={'source_id':source_id,'timeout_seconds':timeout_seconds}
+    if recognizer!='nemotron':body['recognizer']=recognizer
     perform(invoke(ctx,'POST',f'/runs/{run_id}/recognize-source-independent',lambda actor:recognize_independent(actor,run_id,body,request_key or None),body,request_key,timeout_seconds=timeout_seconds+300))
 
 
 @project_commands.command('source-independent-recognition')
-def source_independent_read(ctx:typer.Context,project_id:str,source_id:str):
-    perform(invoke(ctx,'GET',f'/projects/{project_id}/sources/{source_id}/independent-recognition',lambda actor:read_independent(actor,project_id,source_id)))
+def source_independent_read(ctx:typer.Context,project_id:str,source_id:str,recognizer:Literal['nemotron','parakeet']='nemotron'):
+    perform(invoke(ctx,'GET',f'/projects/{project_id}/sources/{source_id}/independent-recognition?'+urlencode({'recognizer':recognizer}),lambda actor:read_independent(actor,project_id,source_id,recognizer)))
 
 
 @run_commands.command('recheck-source-boundaries')

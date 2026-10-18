@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import time
 import wave
+import math
+import unicodedata
 from uuid import uuid4
 
 import httpx
@@ -17,6 +19,24 @@ from apps.deep_dub.services.model_pool import OwnedModelServer
 RULE='qwen3-asr-owned-unprompted-v1'
 ALIGN_RULE='qwen3-forced-word-time-v1'
 NEMOTRON_RULE='nemotron-asr-owned-unprompted-v1'
+PARAKEET_RULE='parakeet-tdt-owned-unprompted-words-v1'
+
+
+def checked_native_words(words,text,samples):
+    try:
+        assert isinstance(words,list) and len(words)<=4096 and (bool(words) or not text.strip())
+        previous=0
+        for word in words:
+            assert isinstance(word,dict) and isinstance(word['word'],str) and 0<len(word['word'])<=1000
+            assert type(word['start_sample']) is int and type(word['end_sample']) is int
+            assert previous<=word['start_sample']<=word['end_sample']<=samples
+            assert type(word['confidence']) in (int,float) and math.isfinite(word['confidence'])
+            previous=word['end_sample']
+        clean=lambda value:''.join(unicodedata.normalize('NFC',value).split())
+        assert clean(''.join(w['word'] for w in words))==clean(text)
+    except (KeyError,TypeError,AssertionError,ValueError):
+        raise BusinessError('原生词时间、文本覆盖或样本边界无效',502,'ASR_NATIVE_WORDS_INVALID') from None
+    return words
 
 
 async def _ready(server,config,client):
@@ -66,7 +86,7 @@ class AudioModelSession:
 
 async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=300,exact_text=None,session=None):
     aligning=exact_text is not None
-    if config.family not in (('qwen3_forced_aligner',) if aligning else ('qwen3_asr','nemotron_asr')) or language not in ('Chinese','English') or not 5<=timeout<=900:
+    if config.family not in (('qwen3_forced_aligner',) if aligning else ('qwen3_asr','nemotron_asr','parakeet_tdt')) or language not in ('Chinese','English') or not 5<=timeout<=900:
         raise BusinessError('ASR模型用途、语言或超时不合法',422,'ASR_INPUT_INVALID')
     if aligning and (not isinstance(exact_text,str) or not exact_text.strip() or len(exact_text)>2000):
         raise BusinessError('强制对齐需要有界且明确的给定文本',422,'ALIGN_INPUT_INVALID')
@@ -102,6 +122,9 @@ async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=
             body={'model':config.model_id,'busy_timeout_ms':1000,'request':{'audio':str(normalized),'text':'',
                 'language':language,'max_tokens':512}}
             if config.family=='nemotron_asr':body['request'].update(language={'English':'en-US','Chinese':'zh-CN'}[language],max_tokens=0)
+            if config.family=='parakeet_tdt':
+                if language!='English':raise BusinessError('当前Parakeet仅验收英语来源',422,'ASR_INPUT_INVALID')
+                body['request'].update(language='en',max_tokens=0)
             if aligning:body['request']={'audio':str(normalized),'text':exact_text,'language':language,'options':{'clamp_timestamps_to_audio':False}}
             async with asyncio.timeout(timeout), client.stream('POST',server.endpoint+'/v1/tasks/run',json=body) as reply:
                 data=bytearray()
@@ -119,6 +142,7 @@ async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=
                 else:
                     text=response['text']
                     if not isinstance(text,str) or len(text)>64000:raise ValueError()
+                    if config.family=='parakeet_tdt':words=checked_native_words(response.get('words',[]),text,frames)
             except (ValueError,KeyError,TypeError):
                 raise BusinessError('ASR响应不是有界文本',502,'ASR_RESPONSE_INVALID') from None
             completed=time.monotonic()
@@ -127,7 +151,7 @@ async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=
             if session is not None:session.requests+=1
     finally:
         if session is None:await await_blocking(server.stop)
-    result={'rule_revision':ALIGN_RULE if aligning else NEMOTRON_RULE if config.family=='nemotron_asr' else RULE,'language_hint':language,
+    result={'rule_revision':ALIGN_RULE if aligning else PARAKEET_RULE if config.family=='parakeet_tdt' else NEMOTRON_RULE if config.family=='nemotron_asr' else RULE,'language_hint':language,
         'model_id':config.model_id,'family':config.family,'weights_sha256':config.weights_sha256,
         'runtime_sha256':config.executable_sha256,'source_revision':config.source_revision,
         'input':before,'normalized_input':prepared,'normalized_samples':frames,
@@ -139,6 +163,7 @@ async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=
         scope='批量中的一个请求；进程退出证明以整批session回执为准，不能单独释放租约')
     if aligning:result.update(words=words,supplied_transcript=exact_text,clamp_timestamps_to_audio=False)
     else:result.update(text=text.strip(),context_prompt='')
+    if config.family=='parakeet_tdt':result.update(words=words,word_timing_origin='native-tdt-emission-samples',word_timing_review='not_measured')
     return result
 
 

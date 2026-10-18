@@ -4,20 +4,25 @@ import time
 
 from anp.errors import BusinessError
 from apps.deep_dub.nodes.source_asr import windows,extract_window,pcm_info,checked_coverage
-from apps.deep_dub.nodes.transcribe import AudioModelSession,transcribe,NEMOTRON_RULE
+from apps.deep_dub.nodes.transcribe import AudioModelSession,transcribe,NEMOTRON_RULE,PARAKEET_RULE,checked_native_words
 from apps.deep_dub.nodes.source_reference import compare_reference
 from apps.deep_dub.services.blocking import await_blocking,file_identity
 
 RULE='source-secondary-nemotron-contiguous-v1'
+PARAKEET_SOURCE_RULE='source-secondary-parakeet-contiguous-words-v1'
+
+
+def rule_for(family):
+    return {'nemotron_asr':RULE,'parakeet_tdt':PARAKEET_SOURCE_RULE}[family]
 
 
 def verify(proof,primary):
     try:
         checked_coverage(primary)
-        assert proof['rule_revision']==RULE and proof['pcm']==primary['pcm']
+        assert proof['rule_revision']==rule_for(proof['model']['family']) and proof['pcm']==primary['pcm']
         assert proof['independent_recognizer'] is True and proof['independent_review'] is False and proof['source_text_modified'] is False
         assert proof['semantic_review']==proof['speaker_review']==proof['subtitle_timing_review']=='not_measured'
-        assert proof['model']['family']=='nemotron_asr' and primary['chunks'][0]['recognition']['family']=='qwen3_asr'
+        assert proof['model']['family'] in ('nemotron_asr','parakeet_tdt') and primary['chunks'][0]['recognition']['family']=='qwen3_asr'
         assert proof['model']['weights_sha256']!=primary['model']['weights_sha256']
         ranges=windows(primary['pcm']['sample_count'],30)
         assert len(proof['chunks'])==len(ranges)
@@ -28,7 +33,10 @@ def verify(proof,primary):
             assert (chunk['index'],chunk['start_sample'],chunk['end_sample'])==(i,start,end)
             assert chunk['pcm_sha256']==chunk['normalized_pcm_sha256']
             model=chunk['recognition']
-            assert model['family']=='nemotron_asr' and model['rule_revision']==NEMOTRON_RULE
+            assert model['family']==proof['model']['family'] and model['rule_revision']==(NEMOTRON_RULE if model['family']=='nemotron_asr' else PARAKEET_RULE)
+            if model['family']=='parakeet_tdt':
+                checked_native_words(model['words'],model['text'],end-start)
+                assert model['word_timing_origin']=='native-tdt-emission-samples' and model['word_timing_review']=='not_measured'
             assert model['context_prompt']=='' and model['language_hint']==primary['language_hint']
             assert model['normalized_samples']==end-start and model['model_session_id']==session['session_id'] and model['operation_stopped'] is False
             assert all(model[k]==proof['model'][k] for k in ('model_id','weights_sha256','runtime_sha256','source_revision'))
@@ -45,7 +53,7 @@ def verify(proof,primary):
 
 async def recognize(config,pool,folder,pcm_file,primary):
     checked_coverage(primary)
-    if config.family!='nemotron_asr' or config.weights_sha256==primary['model']['weights_sha256']:
+    if config.family not in ('nemotron_asr','parakeet_tdt') or config.weights_sha256==primary['model']['weights_sha256']:
         raise BusinessError('第二套识别必须使用不同家族与权重',422,'SOURCE_SECONDARY_MODEL_INVALID')
     folder,pcm_file=Path(folder),Path(pcm_file)
     original=await await_blocking(file_identity,pcm_file)
@@ -62,7 +70,7 @@ async def recognize(config,pool,folder,pcm_file,primary):
             chunks.append({'index':index,'start_sample':start,'end_sample':end,'pcm_sha256':digest,'normalized_pcm_sha256':normalized['pcm_sha256'],'recognition':result})
             pool.data['source_secondary_progress']={'completed_chunks':len(chunks),'total_chunks':len(ranges)};pool.save()
     if original!=await await_blocking(file_identity,pcm_file):raise BusinessError('第二套识别期间完整PCM变化',409,'SOURCE_SECONDARY_INPUT_CHANGED')
-    proof={'rule_revision':RULE,'pcm':primary['pcm'],'model':{'family':config.family,**{k:getattr(config,v) for k,v in [('model_id','model_id'),('weights_sha256','weights_sha256'),('runtime_sha256','executable_sha256'),('source_revision','source_revision')]}},
+    proof={'rule_revision':rule_for(config.family),'pcm':primary['pcm'],'model':{'family':config.family,**{k:getattr(config,v) for k,v in [('model_id','model_id'),('weights_sha256','weights_sha256'),('runtime_sha256','executable_sha256'),('source_revision','source_revision')]}},
         'chunks':chunks,'session':session.receipt(),'elapsed_seconds':time.monotonic()-started,'independent_recognizer':True,'independent_review':False,'source_text_modified':False,
         'semantic_review':'not_measured','speaker_review':'not_measured','subtitle_timing_review':'not_measured'}
     proof['primary_comparison']=await await_blocking(compare_reference,'\n'.join(c['recognition']['text'] for c in primary['chunks']),[{'text':c['recognition']['text']} for c in chunks])

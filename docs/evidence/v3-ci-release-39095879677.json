@@ -2,9 +2,9 @@
   "run": 39095879677,
   "source_sha": "af282f7599b96ff1373b7d6e9a1051c3526ccd70",
   "url": "https://github.com/100apps/anp/actions/runs/39095879677",
-  "status": "in_progress",
-  "conclusion": null,
-  "checked_at_utc": "2026-10-18T04:57:48.376646+00:00",
+  "status": "completed",
+  "conclusion": "success",
+  "checked_at_utc": "2026-10-18T05:26:43.210486+00:00",
   "component_candidates": [
     39090955220
   ],
@@ -144,16 +144,16 @@
     {
       "id": 117590679381,
       "name": "platform",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     }
   ],
   "checkpoint_exports_enabled": true,
-  "full_platform_export_verified": false,
-  "full_platform_release_verified": false,
+  "full_platform_export_verified": true,
+  "full_platform_release_verified": true,
   "local_ghcr_pull_verified": false,
   "runtime_performance_verified": false,
-  "limitation": "运行中的替代正式流水线；完整分阶段导出、服务/业务检查、发布、本机拉取及性能尚待。",
+  "limitation": "云端完整成功并推送同摘要标签；本机固定摘要拉取返回 unauthorized，尚未加载/启动该制品或复测性能。deep_dub 与整片实时率、发布目标均未完成。",
   "completed_component_evidence": [
     {
       "component": "langfuse-worker",
@@ -305,7 +305,8 @@
         "conclusion": "success"
       }
     ],
-    "runtime_verified": false
+    "ci_platform_contract_checks_passed": true,
+    "local_runtime_and_performance_verified": false
   },
   "dbx_source_build": {
     "job": 117582262057,
@@ -392,7 +393,236 @@
         "conclusion": "success"
       }
     ],
-    "runtime_verified": false
+    "ci_platform_contract_checks_passed": true,
+    "local_runtime_and_performance_verified": false
   },
-  "platform_job": 117590679381
+  "platform_job": 117590679381,
+  "ci_services_and_business_checks_passed": true,
+  "ci_real_upstream_llm_call_verified": false,
+  "ci_real_upstream_llm_limitation": "ANP_SKIP_LIVE_LLM=1 仅让 tests/test_v3_platform_live.py 最后的私人上游模型调用分支返回；pytest 报告仍是 85 passed，不将该计数当作真实模型调用证据。",
+  "published_image_tags": [
+    "ghcr.io/100apps/anp-platform:sha-af282f7599b96ff1373b7d6e9a1051c3526ccd70",
+    "ghcr.io/100apps/anp-platform:latest"
+  ],
+  "registry_digest": "sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3",
+  "local_image_started_verified": false,
+  "local_pull_attempt": {
+    "checked_at_utc": "2026-10-18T05:24:44.091601+00:00",
+    "image": "ghcr.io/100apps/anp-platform@sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3",
+    "exit_code": 1,
+    "seconds": 1.527,
+    "success": false,
+    "error_tail": [
+      "Error response from daemon: error from registry: unauthorized",
+      "unauthorized"
+    ]
+  },
+  "platform_job_evidence": {
+    "job": 117590679381,
+    "status": "completed",
+    "conclusion": "success",
+    "all_job_steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "为镜像组装准备托管运行器磁盘",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run astral-sh/setup-uv@v6",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "复原同一份构建清单",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run python scripts/checkout_dependencies.py .local/ci/dependencies.json",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run docker/login-action@v3",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "拉取中间制品并组装唯一平台镜像",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "生成隔离配置并实启四存储与单平台",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run pnpm/setup@v1",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "验证工作台 TypeScript 与生产构建",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "验证前端独立启动、真实 HMR 与退出",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "在镜像外启动示例 API、Worker 与工作台",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "验收真实管理接口、登录、连接与状态交接契约",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "验收后发布平台镜像",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "保存构建清单到作业摘要（镜像内也包含该清单）",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run pnpm/setup@v1",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run docker/login-action@v3",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run astral-sh/setup-uv@v6",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "official_job_log_redacted_sha256": "d7763a796de35ae9b2a71baf037d2f24226562cfcf531aa1870bd65b9db257f4",
+    "pytest_passed": 85,
+    "pytest_seconds": 77.93,
+    "linux_checkpoint_probe": {
+      "checked_at_utc": "2026-10-18T05:03:20.824872+00:00",
+      "file_metadata_and_contents_equal": true,
+      "hardlinks_preserved": true,
+      "entries": 12,
+      "execution_order": [
+        "staged",
+        "direct"
+      ],
+      "fixture_command_unique_per_run": true,
+      "stages": [
+        [
+          {
+            "target": "platform_root_0",
+            "seconds": 8.452
+          },
+          {
+            "target": "platform_root_1",
+            "seconds": 0.999
+          },
+          {
+            "target": "final",
+            "seconds": 1.002
+          }
+        ],
+        [
+          {
+            "target": "final",
+            "seconds": 0.211
+          }
+        ]
+      ],
+      "snapshot_sha256": "202fe959b69ddc28640dc7691e3a9ccb42024c13202eeb1aad42a7b57b8417c0",
+      "scope": "真实小型 Docker 镜像的导出等价检查；不等于完整平台低内存导出或运行验收通过"
+    },
+    "checkpoint_exports": {
+      "checkpoint_exports": true,
+      "build_stages": [
+        {
+          "target": "platform_root_0",
+          "seconds": 26.178
+        },
+        {
+          "target": "platform_root_1",
+          "seconds": 12.056
+        },
+        {
+          "target": "platform_root_2",
+          "seconds": 4.352
+        },
+        {
+          "target": "platform_root_3",
+          "seconds": 47.219
+        },
+        {
+          "target": "platform_root_4",
+          "seconds": 17.222
+        },
+        {
+          "target": "platform_root_5",
+          "seconds": 8.175
+        },
+        {
+          "target": "platform_root_6",
+          "seconds": 31.204
+        },
+        {
+          "target": "platform_root_7",
+          "seconds": 49.989
+        },
+        {
+          "target": "platform_root_8",
+          "seconds": 41.004
+        },
+        {
+          "target": "platform_root_9",
+          "seconds": 21.447
+        },
+        {
+          "target": "final",
+          "seconds": 474.682
+        }
+      ]
+    },
+    "resource_sample_count": 25,
+    "resource_bounds": {
+      "mem_total_kib": 8127864,
+      "swap_total_kib": 11534328,
+      "min_free_swap_kib": 5079072,
+      "min_available_memory_kib": 715880,
+      "min_disk_free_gib": 20.04
+    },
+    "resource_limitation": "仍观察到最终导出阶段资源压力，但本轮导出、服务、业务与缓存收尾成功。相比失败轮上游与层图均有变化，不单独归因某个参数，也不是平台运行性能。"
+  }
 }

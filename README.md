@@ -2,7 +2,7 @@
 
 默认用本地 CLI 直接运行业务代码，Web、HTTP CLI 与本地 CLI 共用业务服务、Supabase 身份和权限。
 
-**V3 仍在验收。** 四存储、单容器平台、真实任务与两种 Qoder F5 均已通过本机检查，包含前后端与平台源码热更新后再次命中断点。WSL 和返回 Docker 各 76 项回归通过，293 条跨模式线程状态完整保留。最新云端镜像的构建、发布、私有 GHCR 拉取与启动尚未全部完成；deep_dub、整片 RTF≤0.5 和 B 站发布仍待完成。[完整验收账本](docs/重构实施与验收.md)保留全部目标。
+**V3 仍在验收。** 四存储、单容器平台、真实任务与两种 Qoder F5 均已通过本机检查，包含前后端与平台源码热更新后再次命中断点。WSL 和返回 Docker 各 76 项回归通过，293 条跨模式线程状态完整保留。最新云端流水线已完整成功并发布（85 项检查通过），但本机固定摘要拉取返回 unauthorized，加载、启动和性能复测尚未完成；deep_dub、整片 RTF≤0.5 和 B 站发布仍待完成。[完整验收账本](docs/重构实施与验收.md)保留全部目标。
 
 仓库：[100apps/anp](https://github.com/100apps/anp)（私有）。旧 anp2 服务与数据保留，[V2 操作说明](docs/旧版V2操作说明.md)仅用于旧环境。
 
@@ -54,14 +54,25 @@ uv run anp init
 
 编辑 `config/deployment.local.toml`，配置平台镜像/URL、本地存储选择、云资源、业务端口和卷前缀。宿主 URL 给 CLI/F5 使用，容器 URL 给平台使用；不能把容器 localhost 当作宿主地址。
 
-**默认 GHCR 镜像尚未发布。** 本机已有测试镜像；新机器必须先构建。构建先运行 `uv run python scripts/sync_upstreams.py`，按 `scripts/build_components.py --help` 构建十项源码组件，再运行 `uv run python scripts/bundle_platform.py --tag anp/platform:v3`，将配置中的 `platform.image` 改成实际标签。
+**GHCR 镜像已发布，仍待本机拉取与启动验收。** 私有镜像为 `ghcr.io/100apps/anp-platform:latest`，本轮固定源码标签为 `sha-af282f7599b96ff1373b7d6e9a1051c3526ccd70`；两个标签的已推送摘要均为 `sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3`。当前本机实际拉取返回 unauthorized，需要有效包读取权限及 Docker 登录，不能据云端成功称本机已通过。
+
+完成 GitHub 本人验证并取得仓库/包读取权限后，可通过标准输入登录；不要把令牌写入公开配置或仓库：
+
+```powershell
+gh auth refresh --hostname github.com --scopes read:packages
+$githubLogin = gh api user --jq .login
+gh auth token | docker login ghcr.io --username $githubLogin --password-stdin
+docker pull ghcr.io/100apps/anp-platform@sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3
+```
+
+也可自行源码构建：先运行 `uv run python scripts/sync_upstreams.py`，构建十项源码组件，再执行 `uv run python scripts/bundle_platform.py --tag anp/platform:v3 --checkpoint-exports`。切换前保留现有状态备份，并将 `platform.image` 设置为实际验收的标签或摘要。
 
 ```powershell
 uv run anp platform up
 uv run anp platform check
 ```
 
-GitHub Actions 支持手动运行和 `v*` 标签触发：拉取最新上游、记录 SHA，各作业复现同一清单，组装并验收后发布。流水线尚未实跑成功。CI 不持有私人模型密钥，仅跳过最后一项真实上游模型调用，本机另行验证。
+GitHub Actions 支持手动运行和 `v*` 标签触发：拉取最新上游、记录 SHA，各作业复现同一清单，组装并验收后发布。[39095879677](https://github.com/100apps/anp/actions/runs/39095879677) 已终态成功，85 项检查通过（77.93 秒），导出与服务/业务检查、两个标签推送及缓存收尾均通过。CI 不持有私人模型密钥，最后的真实上游模型调用分支提前返回；本机仍须使用真实模型补验。
 
 ## 默认本地 CLI
 
@@ -127,7 +138,7 @@ RustFS 控制台属于存储层，地址由宿主端口配置。LangSmith Studio
 
 ## 更新前的数据备份
 
-最新源码可能带来数据库迁移，切换正式镜像前应保留各数据库的逻辑备份。新平台五库已逐库实际还原验证，备份位于 Git 忽略的 `.local/backups/v3-postgres-before-ci-20261017T211306Z/`，私有备份不要提交仓库。Supabase 镜像中完整还原所有权需要 `supabase_admin` 管理角色，普通 `postgres` 角色会因不能 `SET ROLE supabase_admin` 失败。
+最新源码可能带来数据库迁移，切换前保留现有数据。已完成五库逐库逻辑恢复、RustFS 当前对象、Redis RDB，以及 ClickHouse/Keeper 和 Agent/DBX 的同版本隔离恢复验证；私有归档位于 Git 忽略的 `.local/backups/`，最近指针为 `.local/v3-latest-*-backup.json`。各备份时间不同，不是跨存储原子快照，也不是跨版本迁移通过。切换前须重新核对忙碌线程和状态变化；见[完整备份证据与限制](docs/重构实施与验收.md)。
 
 本次验证保留所有权和 ACL，但依赖当前实例已有角色；不代表跨库原子备份或四种存储的完整灾难恢复。后续新写入不在该快照内，正式升级前需要按当时数据重新备份。实际范围见 [备份与还原证据](docs/evidence/v3-postgres-backup-restore-20261018.json)。
 

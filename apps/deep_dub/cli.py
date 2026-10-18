@@ -19,6 +19,7 @@ from apps.deep_dub.services.artifacts import service as artifacts
 from apps.deep_dub.services.observations import deliver_one
 from apps.deep_dub.services.candidates import service as candidates
 from apps.deep_dub.services.processing import decode_artifact
+from apps.deep_dub.services.source_acquisition import acquire as acquire_source,read as read_source_acquisition
 from apps.deep_dub.services.workbench import RecordKind,service as workbench
 from apps.deep_dub.services.media import service as media
 from apps.deep_dub.services.editor import service as editor
@@ -67,6 +68,17 @@ def audio_review(ctx:typer.Context,run_id:str,audio_attempt_id:str,timeout_secon
 def source_recognition(ctx:typer.Context,run_id:str,source_id:str,language:str='English',chunk_seconds:int=60,timeout_seconds:int=3600,request_key:str=''):
     body={'source_id':source_id,'language':language,'chunk_seconds':chunk_seconds,'timeout_seconds':timeout_seconds}
     perform(invoke(ctx,'POST',f'/runs/{run_id}/recognize-source',lambda actor:recognize_source(actor,run_id,body,request_key or None),body,request_key))
+
+
+@run_commands.command('acquire-source')
+def source_acquisition(ctx:typer.Context,run_id:str,timeout_seconds:int=3600,request_key:str=''):
+    body={'timeout_seconds':timeout_seconds}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/acquire-source',lambda actor:acquire_source(actor,run_id,body,request_key or None),body,request_key,timeout_seconds=timeout_seconds+300))
+
+
+@run_commands.command('source-acquisition')
+def source_acquisition_result(ctx:typer.Context,run_id:str):
+    perform(invoke(ctx,'GET',f'/runs/{run_id}/source-acquisition',lambda actor:read_source_acquisition(actor,run_id)))
 
 
 @run_commands.command('align-source')
@@ -170,13 +182,13 @@ def input_json(file:Path):
         raise typer.BadParameter('无法读取 JSON 输入文件') from None
 
 
-async def invoke(ctx, method, path, local, payload=None, request_key=None):
+async def invoke(ctx, method, path, local, payload=None, request_key=None, *, timeout_seconds=300):
     actor=await current_actor()
     if ctx.obj['transport']=='local':
         return await local(actor)
     request_headers={'Authorization':'Bearer '+actor.token,'X-Workspace-ID':actor.workspace_id}
     if request_key:request_headers['Idempotency-Key']=request_key
-    async with async_client(timeout=300,trust_env=False) as client:
+    async with async_client(timeout=timeout_seconds,trust_env=False) as client:
         response=await client.request(method,ctx.obj['endpoint']+'/api/apps/deep_dub'+path,
                                       headers=request_headers,json=payload)
     if not response.is_success:

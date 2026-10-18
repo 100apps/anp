@@ -1,5 +1,13 @@
 # deep_dub 译配业务
 
+## 新来源获取入口
+
+来源获取已接入 `runs acquire-source <运行UUID>`，结果读取为 `runs source-acquisition <运行UUID>`；HTTP CLI 和 Web 调用相同服务。只接受 run 排队时冻结的 HTTPS YouTube 单视频地址，不替换已绑定的其他来源。`config/settings.local.toml` 的 `[deep_dub] source_fetch_config` 指向管理员本机配置，格式见 `source-fetch.local.example.json`；零摘要、示例用户路径和UA须先按本机实际配置替换，不能原样运行。下载器摘要变化时拒绝执行。
+
+每次创建独立的下载临时目录，最高可用画质与音轨无损合并，按真实SHA上传Docker私有对象存储后清理宿主暂存；使用所选Firefox实时会话，不写入公开浏览器配置或业务证据。Windows Job Object约束本次下载器/Node/FFmpeg子孙，停止确认后释放租约；遇到站点限流/本人验证不自动轮换账号或网络。当前只实现Windows本机，其他站点/系统不能凭模板存在称为已支持。
+
+这是完整生产的来源阶段，不能把获取与元数据核对当作内容、听感、字幕、整片RTF或发布通过。最新实际验证及限制见 `docs/deep_dub新来源获取.md`。
+
 状态：**实现中。正式 shadcn/ui 详情、私有媒体/波形、人工译稿版本与真实网关候选生成已实测接入；配音/选版写入、独立质量审核与整片生产未完成。** 业务始终位于本目录，不打进平台镜像。
 
 ## 已运行验证

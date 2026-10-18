@@ -27,6 +27,7 @@ from apps.deep_dub.services.source_recognition import SourceRecognitionInput,rec
 from apps.deep_dub.services.source_reference import SourceReferenceInput,compare as compare_source_reference,read as read_source_reference,read_latest_reference
 from apps.deep_dub.services.source_alignment import SourceAlignmentInput,align as align_source,read_latest as read_source_alignment
 from apps.deep_dub.services.source_review import read as read_source_review,ReviewKind
+from apps.deep_dub.services.source_recheck import RecheckInput,generate as recheck_source,read_latest as read_source_recheck
 from apps.deep_dub.services.source_acquisition import AcquisitionInput,acquire as acquire_source,read as read_source_acquisition
 from apps.deep_dub.services.source_jobs import PreparationInput,issue as issue_source_preparation
 from apps.deep_dub.services.source_orchestration import launch as launch_source_preparation,read as read_source_preparation,prepare_local,latest as latest_source_preparation
@@ -34,6 +35,16 @@ from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,Transl
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 router.include_router(media_router)
+
+
+@router.post('/runs/{run_id}/recheck-source-boundaries')
+async def recheck_source_boundaries(run_id:str,body:RecheckInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await recheck_source(actor,run_id,body.model_dump(),idempotency_key)
+
+
+@router.get('/projects/{project_id}/sources/{source_id}/boundary-recheck')
+async def get_boundary_recheck(project_id:str,source_id:str,actor=Depends(get_actor)):
+    return await read_source_recheck(actor,project_id,source_id)
 
 
 @router.get('/projects/{project_id}/sources/{source_id}/review-queue')

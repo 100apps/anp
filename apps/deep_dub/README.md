@@ -1,5 +1,9 @@
 # deep_dub 译配业务
 
+## 来源接缝返修
+
+`uv run anp deep_dub runs recheck-source-boundaries <运行UUID> <来源UUID> --request-key <稳定键>` 在本轮待审来源上改窗重识别全部 ASR 块接缝；`--boundary 18` 可指定接缝。`projects source-boundary-recheck <项目UUID> <来源UUID>` 读取冻结证据。默认本地、HTTP CLI 与 Web 共用权限和服务，不改稿或解除待审门禁。真实 43 窗口、停止回执、评分、三入口和失败保留见 [接缝返修](../../docs/deep_dub来源接缝返修.md)。
+
 ## 源稿复核队列
 
 `uv run anp deep_dub projects source-review-queue <项目UUID> <来源UUID>` 默认直接读取相同业务服务；加根选项 `--transport http` 走冻结业务 API。`--kind numbers` 筛选数字，分页 `--expected-hash` 绑定同一份输入证据。正式工作台可展开队列、查看上下文并查听私有 PCM 窗口；不会自动通过源稿、说话人或字幕审核。已运行验证和未完成边界见 [源稿复核队列](../../docs/deep_dub源稿复核队列.md)。

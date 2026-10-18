@@ -35,6 +35,7 @@ from apps.deep_dub.services.source_recognition import recognize as recognize_sou
 from apps.deep_dub.services.source_reference import compare as compare_source_reference,read as read_source_reference
 from apps.deep_dub.services.source_alignment import align as align_source,read_latest as read_source_alignment
 from apps.deep_dub.services.source_review import read as read_source_review,ReviewKind
+from apps.deep_dub.services.source_recheck import generate as recheck_source,read_latest as read_source_recheck
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -43,6 +44,17 @@ media_commands=typer.Typer(help='私有音视频信息；同一用户和工作�
 app.add_typer(project_commands,name='projects')
 app.add_typer(run_commands,name='runs')
 app.add_typer(media_commands,name='media')
+
+
+@run_commands.command('recheck-source-boundaries')
+def source_recheck(ctx:typer.Context,run_id:str,source_id:str,boundary:list[int]=typer.Option(None),timeout_seconds:int=1800,request_key:str=''):
+    body={'source_id':source_id,'boundaries':boundary or None,'timeout_seconds':timeout_seconds}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/recheck-source-boundaries',lambda actor:recheck_source(actor,run_id,body,request_key or None),body,request_key,timeout_seconds=timeout_seconds+300))
+
+
+@project_commands.command('source-boundary-recheck')
+def source_recheck_read(ctx:typer.Context,project_id:str,source_id:str):
+    perform(invoke(ctx,'GET',f'/projects/{project_id}/sources/{source_id}/boundary-recheck',lambda actor:read_source_recheck(actor,project_id,source_id)))
 
 
 @project_commands.command('source-review-queue')

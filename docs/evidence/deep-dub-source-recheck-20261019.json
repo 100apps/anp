@@ -1,0 +1,313 @@
+{
+  "checked_at_utc": "2026-10-18T19:50:12.568257+00:00",
+  "scope": "当前整片的43个接缝真实改窗重识别及待审返修契约，不是源稿独审或整片生产通过",
+  "project_id": "4f9b0466-356f-4288-be67-4980f676399b",
+  "source_id": "279b2007-7aa4-46b0-add4-facd219757e9",
+  "run_id": "a067cfa8-41ed-4ee6-a4c5-69996512736d",
+  "stage_attempt_id": "1aca84a4-144a-4bf0-9f94-fcddf33f0f7c",
+  "evidence_artifact_id": "39b2749f-6286-4072-9824-66d98548b658",
+  "input": {
+    "asr_evidence_artifact_id": "facdcf23-e669-4f41-a19f-10e60208e28f",
+    "asr_evidence_sha256": "0f35be49a4d2875e2d2e06bc093e2e9a226e70ce0c7946a0f3ee82f98507224d",
+    "boundaries": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43
+    ],
+    "model_id": "anp-qwen3-asr-1-7b-q8",
+    "pcm_artifact_id": "ba4e59a2-c609-439f-b30c-647e6a31f583",
+    "rule_revision": "source-boundary-unprompted-recheck-v1",
+    "runtime_sha256": "be820dd89b644b7179614a0444b0be5ad123e81c7794add19619e4cf6a95c81d",
+    "source_id": "279b2007-7aa4-46b0-add4-facd219757e9",
+    "source_revision": "f16f23abf9732b1904fed1f15bddbe9909d21146",
+    "timeout_seconds": 1800,
+    "weights_sha256": "da4fc2ac7f24dee784d1684eb1f35836cdbf559519452ae11777670734c0a4f8"
+  },
+  "measurement": {
+    "summary": {
+      "empty_windows": 0,
+      "scope": "改窗且无文本提示的同模型重识别，仅提供额外声学候选，不自动修改原稿或通过独立审核",
+      "submitted_samples": 8256000,
+      "window_count": 43
+    },
+    "session": {
+      "initially_unloaded": true,
+      "operation_stopped": true,
+      "owned_server_exit_code": 1,
+      "process_lifecycle_seconds": 23.656000000002678,
+      "requests": 43,
+      "scope": "同一阶段租约内的批量模型进程；不是跨作业后台常驻服务",
+      "session_id": "57f12d11602243308a4f2ed9c9a2b1ec",
+      "startup_seconds": 0.5149999999994179,
+      "warm_cache_checks": 42
+    },
+    "model": {
+      "model_id": "anp-qwen3-asr-1-7b-q8",
+      "runtime_sha256": "be820dd89b644b7179614a0444b0be5ad123e81c7794add19619e4cf6a95c81d",
+      "source_revision": "f16f23abf9732b1904fed1f15bddbe9909d21146",
+      "weights_sha256": "da4fc2ac7f24dee784d1684eb1f35836cdbf559519452ae11777670734c0a4f8"
+    },
+    "elapsed_seconds": 23.71900000000096,
+    "source_text_modified": false,
+    "independent_review": false,
+    "semantic_review": "not_measured",
+    "subtitle_timing_review": "not_measured"
+  },
+  "boundary_18_example": {
+    "window_samples": [
+      17184000,
+      17376000
+    ],
+    "preceding_tail": "e about any history course. It doesn't matter what the subject is. It can be social history, political history, intellectual history, any history. It can be the history of ancient Rome. It could be post-1945 United States history.",
+    "following_head": "States it could be any history, but any history course ought to do the two things that Herodotus named in the opening sentence of the oldest history book we have. This is Herodotus",
+    "candidate": "Any history—it can be the history of ancient Rome. It could be post-1945 United States. It could be any history. But any history course.",
+    "scope": "候选差异，没有判哪方完全正确或改稿"
+  },
+  "identity": {
+    "trace_task_user_id": "0e51df86-7d4c-4bc5-8958-34219cc921d4",
+    "attempt_actor_user_id": "9cd607c0-ba2d-4f36-b5cf-0e2c5a0307be",
+    "session_id": "a067cfa8-41ed-4ee6-a4c5-69996512736d",
+    "scope": "trace user保留任务原发起者；attempt关联本次操作人",
+    "langfuse_verified": true,
+    "score_ids": [
+      "6b175c2d-6460-42ab-a796-824d275fab91",
+      "7e8e7206-ffd9-4551-a7b1-ff827159a20a",
+      "50b288fb-46cb-458f-9a85-8d6207ed1f14",
+      "47a64412-70f3-4775-8327-4505a76d6864"
+    ]
+  },
+  "owned_resources": {
+    "lease": {
+      "id": "9892fc3d-7b8c-4080-8213-d553a542f227",
+      "device_id": "f1e196c9-f7be-486c-b69a-ee98042d0a06",
+      "status": "released",
+      "operation_stopped": true
+    },
+    "gpu_probe": {
+      "scope": "物理UUID、完整进程路径白名单及旧路由锁；允许桌面图形进程共用，不代表整卡独占",
+      "free_mib": 13799,
+      "gpu_uuid": "GPU-bcd59026-ec5e-1907-e440-f0d5579c1279",
+      "gpu_index": 0,
+      "external_model_processes": 0,
+      "allowed_desktop_processes": 21
+    },
+    "probe_time": "2026-10-18T19:40:23.974472+00:00",
+    "coordination_locks": 1,
+    "tracked_operations": 87,
+    "all_exit_codes_recorded": true,
+    "web_replay_journal_unchanged": true
+  },
+  "checks": {
+    "original_run_unchanged": true,
+    "source_not_modified": true,
+    "no_source_audit_or_segments": true,
+    "two_cli_replay_and_read": true,
+    "new_model_in_recovery": false
+  },
+  "tests": {
+    "tools": {
+      "passed": 16,
+      "seconds": 0.32
+    },
+    "database_regression": {
+      "passed": 42,
+      "seconds": 21.37
+    },
+    "initial_real_test": {
+      "status": "failed-after-model-completed",
+      "seconds": 46.81,
+      "reason": "错误将Langfuse运行发起者userId与此次管理员执行者混为一谈；按任务原身份核对并保留执行尝试关联"
+    },
+    "same_attempt_recovery": {
+      "passed": 1,
+      "seconds": 7.37,
+      "new_model_requests": 0
+    },
+    "production_regression": {
+      "passed": 27,
+      "seconds": 85.16
+    },
+    "typescript_and_build": true
+  },
+  "backup": {
+    "directory": ".local/backups/v3-postgres-before-cloud-20261018T193744Z",
+    "all_restore_checks_passed": true,
+    "databases": [
+      {
+        "name": "_supabase",
+        "bytes": 870,
+        "sha256": "88e237fc08d100d298db4d056e52d39c7fef6736a0f84231b2b8187e9984573f",
+        "restore_passed": true
+      },
+      {
+        "name": "agent_local",
+        "bytes": 125688,
+        "sha256": "ac5a16c83b1f07c181c920fb708d67a5694389e3f0342a340b4fb8883df414d5",
+        "restore_passed": true
+      },
+      {
+        "name": "langfuse",
+        "bytes": 383290,
+        "sha256": "7712266f5abd1b316e5d7ebf252b537c966b978332c1e1a91ec9a92c9c39af66",
+        "restore_passed": true
+      },
+      {
+        "name": "litellm",
+        "bytes": 487249,
+        "sha256": "2ae2fa8c6aa1cf7249bdb4ed2afd33405c344de2302ae89244118c4a842defb5",
+        "restore_passed": true
+      },
+      {
+        "name": "postgres",
+        "bytes": 2269822,
+        "sha256": "c10cc16532598476d8e557ea3013487615c861f2579da2016250c4528cb95c38",
+        "restore_passed": true
+      }
+    ]
+  },
+  "state_protection": {
+    "original_thread_values_preserved": 446,
+    "current_threads": 448,
+    "full_parent_and_child_checkpoint_identical": true,
+    "protected_container_ids_preserved": 27
+  },
+  "production": {
+    "build": "20261018193745-74633d00",
+    "platform": {
+      "tag": "anp/platform:production-20261018193745-74633d00",
+      "id": "sha256:0c12c3547b0caaa92223839bbedd3290724e4f3479b23ab8244577095498c9d1",
+      "base_image": "sha256:a5ddb9b758634ff2b4e50d5e65c3865cecc61ca9ac61bdf999d29557613edee2",
+      "upstreams": [
+        {
+          "name": "studio",
+          "commit": "7425d4930528931400fb3e656e860b1094cb224e"
+        },
+        {
+          "name": "dbx",
+          "commit": "c511c90a7cb5165b7847d5a46dc55f0050e7272b"
+        },
+        {
+          "name": "auth",
+          "commit": "ce9a8eee0cc042be8c7a42981a7ddae631e41d91"
+        },
+        {
+          "name": "storage",
+          "commit": "c826a70ac6e6f56d3e6033ccb164fb1ff5282570"
+        },
+        {
+          "name": "meta",
+          "commit": "ecc19497dcfcb4dc6a83d02e49d812f747cbf981"
+        },
+        {
+          "name": "postgrest",
+          "commit": "922f635dc19edc1abdcc614c22535763dc7d4669"
+        },
+        {
+          "name": "langfuse-web",
+          "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+        },
+        {
+          "name": "langfuse-worker",
+          "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+        },
+        {
+          "name": "litellm",
+          "commit": "c143954493baa810e2704917b9cdeb8fb3523718"
+        },
+        {
+          "name": "lens",
+          "commit": "e320cabdf0a67aa52cafe2ede1b4d10ad66dafad"
+        },
+        {
+          "name": "agent",
+          "commit": "41c9c22fdc83d68a2859d0c9a2b627c8615a792f"
+        }
+      ]
+    },
+    "source_sha256": {
+      "nodes/source_recheck.py": "e1d2fbf1905329b440e346986d893072b8fa1f2de2c1d3a5b36854abbb32a204",
+      "services/source_recheck.py": "208518f5928ae992d6731c14ff450a390afafba67d8fcee8e9cea0743b0c6a9d",
+      "api/router.py": "84d43db9033c23073175196e3b4e307f3b5d8ec09dc3e0ce07ba5c4d0e43a790",
+      "cli.py": "84cec0cca1e8e4f7f786ae97d7bd4b9ff1f604350df0881b041326813b742297",
+      "migrations/016_source_boundary_recheck.sql": "924edefe9f1c01fedf4656833e66c5d7edde9d2b6adaa1e7827ff40cea118937"
+    },
+    "running_image_matches": true,
+    "components": {
+      "auth": "ready",
+      "storage": "ready",
+      "postgrest": "ready",
+      "meta": "ready",
+      "studio": "ready",
+      "dbx": "ready",
+      "langfuse-web": "ready",
+      "langfuse-worker": "ready",
+      "lens": "ready",
+      "litellm": "ready",
+      "agent": "ready"
+    },
+    "source_dirty": true,
+    "new_ghcr_pull": false
+  },
+  "browser": {
+    "same_origin_workbench": true,
+    "windows_shown": 43,
+    "empty_windows": 0,
+    "stopped_receipt_visible": true,
+    "boundary_18_comparison_expanded": true,
+    "web_confirm_and_replay": true,
+    "mobile": {
+      "document_width": 390,
+      "viewport": 390
+    },
+    "screenshot": "deep-dub-source-recheck-browser-20261019.png"
+  },
+  "not_completed": [
+    "独立源稿/角色复核及原文改正",
+    "可信语义分段、词时间及字幕时钟",
+    "完整生产图、V100真实业务执行",
+    "整片质量、RTF≤0.5",
+    "真实B站发布回执",
+    "新GHCR发布拉取",
+    "本轮未重新实测IDE F5"
+  ]
+}

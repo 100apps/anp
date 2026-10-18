@@ -1,0 +1,25 @@
+{
+  "run": 39088077132,
+  "job": 117558760267,
+  "source_sha": "d53032b73936adc70ff5a1850a191b2ee9e0e56b",
+  "url": "https://github.com/100apps/anp/actions/runs/39088077132",
+  "checked_at_utc": "2026-10-18T01:58:05.408476+00:00",
+  "status": "in_progress",
+  "conclusion": null,
+  "resource_preparation": {
+    "conclusion": "success",
+    "free_after_cleanup_gib": 43.06,
+    "extra_swap_enabled_gib": 8,
+    "required_build_headroom_gib": 35,
+    "rejected_candidate_pulled": false,
+    "sample_source": "原 job 可见的磁盘准备日志；正式终态后再保留完整官方日志"
+  },
+  "current_steps": [
+    "从实际源码构建指定组件"
+  ],
+  "actual_upstream_manifest_pending": true,
+  "native_build_success_verified": false,
+  "full_platform_release_verified": false,
+  "new_dbx_runtime_performance_verified": false,
+  "limitation": "独立组件构建；资源门槛通过不代表编译、整合、发布或本机运行验收成功"
+}

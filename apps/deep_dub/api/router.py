@@ -22,10 +22,21 @@ from apps.deep_dub.services.translation import TranslationInput as GenerateTrans
 from apps.deep_dub.services.references import ReferencePreparation,prepare as prepare_reference
 from apps.deep_dub.services.speech import SpeechInput,generate as generate_speech
 from apps.deep_dub.services.audio_review import AudioReviewInput,review as review_audio,read_latest as read_audio_review
+from apps.deep_dub.services.audio_timing import AudioTimingInput,analyze as analyze_audio_timing,read_latest as read_audio_timing
 from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,BackgroundInput,RenderInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 router.include_router(media_router)
+
+
+@router.post('/runs/{run_id}/align-audio')
+async def create_audio_timing(run_id:str,body:AudioTimingInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await analyze_audio_timing(actor,run_id,body.model_dump(),idempotency_key)
+
+
+@router.get('/projects/{project_id}/audio/{audio_id}/timing')
+async def get_audio_timing(project_id:str,audio_id:str,actor=Depends(get_actor)):
+    return await read_audio_timing(actor,project_id,audio_id)
 
 
 @router.post('/runs/{run_id}/review-audio')

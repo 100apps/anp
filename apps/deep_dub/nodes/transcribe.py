@@ -14,11 +14,15 @@ from apps.deep_dub.services.blocking import await_blocking,file_identity
 from apps.deep_dub.services.model_pool import OwnedModelServer
 
 RULE='qwen3-asr-owned-unprompted-v1'
+ALIGN_RULE='qwen3-forced-word-time-v1'
 
 
-async def transcribe(config,pool,folder,source,language='Chinese',timeout=300):
-    if config.family!='qwen3_asr' or language not in ('Chinese','English') or not 5<=timeout<=900:
+async def _run_audio_model(config,pool,folder,source,language='Chinese',timeout=300,exact_text=None):
+    aligning=exact_text is not None
+    if config.family!=('qwen3_forced_aligner' if aligning else 'qwen3_asr') or language not in ('Chinese','English') or not 5<=timeout<=900:
         raise BusinessError('ASR模型用途、语言或超时不合法',422,'ASR_INPUT_INVALID')
+    if aligning and (not isinstance(exact_text,str) or not exact_text.strip() or len(exact_text)>2000):
+        raise BusinessError('强制对齐需要有界且明确的给定文本',422,'ALIGN_INPUT_INVALID')
     source=Path(source).resolve(strict=True);folder=Path(folder)
     before=await await_blocking(file_identity,source);probe=await probe_media(source)
     if not 0<probe['duration_ms']<=120000 or not any(s['codec_type']=='audio' for s in probe['streams']):
@@ -51,6 +55,7 @@ async def transcribe(config,pool,folder,source,language='Chinese',timeout=300):
             ready=time.monotonic()
             body={'model':config.model_id,'busy_timeout_ms':1000,'request':{'audio':str(normalized),'text':'',
                 'language':language,'max_tokens':512}}
+            if aligning:body['request']={'audio':str(normalized),'text':exact_text,'language':language,'options':{'clamp_timestamps_to_audio':False}}
             async with asyncio.timeout(timeout), client.stream('POST',server.endpoint+'/v1/tasks/run',json=body) as reply:
                 data=bytearray()
                 async for block in reply.aiter_bytes():
@@ -60,15 +65,20 @@ async def transcribe(config,pool,folder,source,language='Chinese',timeout=300):
                     (pool.directory/'model-logs'/(pool.history_name+'.upstream-error')).write_bytes(data[:16384])
                     raise BusinessError('ASR模型未成功完成识别',502,'ASR_UPSTREAM_FAILED')
             try:
-                response=json.loads(data);text=response['text']
-                if not isinstance(text,str) or len(text)>64000:raise ValueError()
+                response=json.loads(data)
+                if aligning:
+                    words=response['words']
+                    if not isinstance(words,list) or len(words)>4096:raise ValueError()
+                else:
+                    text=response['text']
+                    if not isinstance(text,str) or len(text)>64000:raise ValueError()
             except (ValueError,KeyError,TypeError):
                 raise BusinessError('ASR响应不是有界文本',502,'ASR_RESPONSE_INVALID') from None
             completed=time.monotonic()
             if before!=await await_blocking(file_identity,source) or prepared!=await await_blocking(file_identity,normalized):
                 raise BusinessError('识别期间输入音频变化',409,'ASR_INPUT_CHANGED')
     finally:await await_blocking(server.stop)
-    return {'rule_revision':RULE,'text':text.strip(),'language_hint':language,'context_prompt':'',
+    result={'rule_revision':ALIGN_RULE if aligning else RULE,'language_hint':language,
         'model_id':config.model_id,'family':config.family,'weights_sha256':config.weights_sha256,
         'runtime_sha256':config.executable_sha256,'source_revision':config.source_revision,
         'input':before,'normalized_input':prepared,'normalized_samples':frames,
@@ -76,3 +86,16 @@ async def transcribe(config,pool,folder,source,language='Chinese',timeout=300):
         'process_lifecycle_seconds':time.monotonic()-started,'reported_timing':response.get('timing'),
         'owned_server_exit_code':server.exit_code,'operation_stopped':pool.stopped(),
         'semantic_review':'not_measured','speaker_identity':'not_measured','naturalness':'not_measured'}
+    if aligning:result.update(words=words,supplied_transcript=exact_text,clamp_timestamps_to_audio=False)
+    else:result.update(text=text.strip(),context_prompt='')
+    return result
+
+
+async def transcribe(config,pool,folder,source,language='Chinese',timeout=300):
+    return await _run_audio_model(config,pool,folder,source,language,timeout)
+
+
+async def align_words(config,pool,folder,source,text,language='Chinese',timeout=300):
+    try:return await _run_audio_model(config,pool,folder,source,language,timeout,exact_text=text)
+    except BusinessError as error:
+        raise BusinessError(error.message.replace('ASR','词对齐'),error.status,error.code.replace('ASR_','ALIGN_')) from None

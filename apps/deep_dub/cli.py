@@ -27,6 +27,7 @@ from apps.deep_dub.services.translation import generate as generate_translation
 from apps.deep_dub.services.references import prepare as prepare_reference
 from apps.deep_dub.services.speech import generate as generate_speech
 from apps.deep_dub.services.audio_review import review as review_audio
+from apps.deep_dub.services.audio_timing import analyze as analyze_timing
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -57,6 +58,12 @@ def speech(ctx:typer.Context,run_id:str,segment_id:str,translation_id:str,voice_
 def audio_review(ctx:typer.Context,run_id:str,audio_attempt_id:str,timeout_seconds:int=300,request_key:str=''):
     body={'audio_attempt_id':audio_attempt_id,'timeout_seconds':timeout_seconds}
     perform(invoke(ctx,'POST',f'/runs/{run_id}/review-audio',lambda actor:review_audio(actor,run_id,body,request_key or None),body,request_key))
+
+
+@run_commands.command('align-audio')
+def audio_timing(ctx:typer.Context,run_id:str,audio_attempt_id:str,playback_start_ms:int|None=None,timeout_seconds:int=300,request_key:str=''):
+    body={'audio_attempt_id':audio_attempt_id,'playback_start_ms':playback_start_ms,'timeout_seconds':timeout_seconds}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/align-audio',lambda actor:analyze_timing(actor,run_id,body,request_key or None),body,request_key))
 
 
 @run_commands.command('translate')

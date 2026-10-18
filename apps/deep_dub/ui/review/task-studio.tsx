@@ -1474,6 +1474,14 @@ export function TaskStudio({
                             <Search />独立回转录
                           </Button>
                         </>}
+                        {adapter.audioTiming && <>
+                          <AudioTimingPanel adapter={adapter} segment={segment.segmentId} attempt={v.attempt} refresh={query.dataUpdatedAt} />
+                          <Button variant="outline" size="sm" disabled={busy||!can('align-audio')} onClick={()=>ask(
+                            '测量当前声音的词级时序','按当前显示落点分析词时间戳和PCM能量，不裁剪越界时间，不保存落点、选版或质量审核。',
+                            ()=>write('align-audio',{segmentId:segment.segmentId,attempt:v.attempt,playback_start_ms:Math.round(segment.playbackStartSec*1000)}))}>
+                            <Clock3 />测量词级时序
+                          </Button>
+                        </>}
                         {!v.selected && (
                           <Button
                             size="sm"
@@ -1929,6 +1937,33 @@ function AudioReviewPanel({adapter,segment,attempt,refresh}:{adapter:TaskAdapter
     <p><strong>绑定译稿：</strong>{data.expected_text}</p>
     <p className="dd-small-note">{data.scope}</p>
     <details><summary>模型与证据版本</summary><p className="dd-small-note break-all">权重 SHA256：{data.weights_sha256}</p><p className="dd-small-note break-all">证据：{data.evidence_artifact_id}</p></details>
+  </section>
+}
+
+function AudioTimingPanel({adapter,segment,attempt,refresh}:{adapter:TaskAdapter;segment:string;attempt:number;refresh:number}){
+  const data=useQuery({queryKey:['dd-audio-timing',adapter.cacheKey,segment,attempt],queryFn:()=>adapter.audioTiming!(segment,attempt),staleTime:60000})
+  const lastRefresh=useRef(refresh),[open,setOpen]=useState(false),[limit,setLimit]=useState(40)
+  useEffect(()=>{if(lastRefresh.current!==refresh){lastRefresh.current=refresh;void data.refetch()}},[refresh,data.refetch])
+  if(data.error)return <p role="alert" className="dd-error">时序证据载入失败：{data.error.message}<Button variant="ghost" size="sm" onClick={()=>data.refetch()}>重新载入</Button></p>
+  if(data.data===null)return <p className="dd-small-note">尚无词对齐与能量测量证据。</p>
+  if(!data.data)return <p className="dd-small-note">正在载入当前声音的时序证据…</p>
+  const item=data.data,p=item.placement,a=item.alignment
+  const delta=(ms:number|null)=>ms==null?'未测':`${ms>0?'+':''}${(ms/1000).toFixed(3)}s`
+  return <section className="dd-evidence" aria-label="词级时序测量">
+    <div className="dd-text-label"><span>词级时序</span><Badge variant="outline">仅技术测量</Badge></div>
+    <p>{a.word_count} 词 · 时间戳结构{a.valid_timestamps?'无异常':'需检查'} · 给定文本词覆盖{a.transcript_token_coverage?'齐全':'不齐全'}</p>
+    <p>WAV {(p.audio_duration_ms/1000).toFixed(3)}s / 原声窗 {((p.source_window_ms[1]-p.source_window_ms[0])/1000).toFixed(3)}s（{(p.source_window_duration_ratio*100).toFixed(1)}%）</p>
+    <p>能量起点差 {delta(p.energy_onset_delta_ms)} · 末端差 {delta(p.energy_offset_delta_ms)}</p>
+      <p className="dd-small-note">相对原声窗口：正值表示更晚，负值表示更早。能量边界不等于语音边界。</p>
+    <p className="dd-small-note">分析落点 {(p.playback_start_ms/1000).toFixed(3)}s · 视频边界{p.video_bounds_ok?'内':'外'} · 提前边界{p.start_within_advance_bound?'内':'外'}</p>
+    <p className="dd-small-note">{p.scope} · 强制给定文本不是实际识别，不代替独立ASR或听感复核。</p>
+    <details onToggle={e=>setOpen(e.currentTarget.open)}><summary>词时间戳与模型证据</summary>{open&&<>
+      <p className="dd-small-note break-all">{item.model_id} · 证据 {item.evidence_artifact_id}</p>
+        <p className="dd-small-note">下表以此 WAV 开头为 0 秒；全片时间还需加上分析落点。</p>
+      <Table aria-label="实际模型词时间戳"><TableHeader><TableRow><TableHead>词</TableHead><TableHead>起始秒</TableHead><TableHead>结束秒</TableHead></TableRow></TableHeader>
+        <TableBody>{a.words.slice(0,limit).map((w,i)=><TableRow key={i}><TableCell>{w.word}</TableCell><TableCell className="dd-mono">{(w.start_sample/16000).toFixed(3)}</TableCell><TableCell className="dd-mono">{(w.end_sample/16000).toFixed(3)}</TableCell></TableRow>)}</TableBody></Table>
+      {limit<a.words.length&&<Button variant="ghost" size="sm" onClick={()=>setLimit(n=>n+40)}>再显示40词（{Math.min(limit,a.words.length)}/{a.words.length}）</Button>}
+    </>}</details>
   </section>
 }
 

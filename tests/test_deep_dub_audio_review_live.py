@@ -105,10 +105,15 @@ def test_actual_new_wav_backtranscription_private_evidence_and_three_entry_repla
                 assert p.returncode==0,'ASR CLI重放失败，响应不公开';return json.loads(p.stdout)
             assert await asyncio.to_thread(cli,'--endpoint','http://127.0.0.1:1')==stage
             assert await asyncio.to_thread(cli,'--transport','http','--endpoint',waveform_api)==stage
+            alignment=None
+            if os.environ.get('ANP_DEEP_DUB_ALIGN_LIVE')=='1':
+                from tests.deep_dub_alignment_live_checks import verify_alignment
+                alignment=await verify_alignment(actor,queued,audio,waveform_api,identities,tmp_path)
             await flush(actor)
             return {'project_id':project['id'],'run_id':queued['id'],'new_audio_attempt_id':audio['id'],'asr_stage_attempt_id':stage['attempt']['id'],
                 'evidence_artifact_id':stage['attempt']['outputs'][0],'readback':result,'recognition':proof['recognition'],'comparison':proof['comparison'],
-                'same_stage_three_entry_replay':True,'viewer_read_only':True,'anonymous_outside_denied':True,'no_quality_audit':True,'lease_released':True}
+                'same_stage_three_entry_replay':True,'viewer_read_only':True,'anonymous_outside_denied':True,'no_quality_audit':True,'lease_released':True,
+                'alignment':alignment}
         finally:await execution.cancel(actor,queued['id']);await flush(actor)
     try:
         record=asyncio.run(run());record.update({'checked_at_utc':datetime.now(timezone.utc).isoformat(),'run_cancelled':True,'purpose':'acceptance'})

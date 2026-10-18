@@ -34,7 +34,7 @@ class ModelConfig(BaseModel):
     gpu_index:int=Field(ge=0,le=32)
     port:int=Field(default=18110,ge=1024,le=65535)
     model_id:str=Field(default='anp-index-tts2-5-q8',min_length=1,max_length=200)
-    family:Literal['index_tts2','qwen3_asr']='index_tts2'
+    family:Literal['index_tts2','qwen3_asr','qwen3_forced_aligner']='index_tts2'
     minimum_free_mib:int=Field(default=11000,ge=1024)
     coordination_locks:list[str]=Field(min_length=1)
     allowed_graphics_executables:list[str]=Field(default_factory=list)
@@ -48,11 +48,12 @@ class ModelConfig(BaseModel):
 
 
 def configuration(kind='tts'):
-    if kind not in ('tts','asr'):raise ValueError('未知模型用途')
+    families={'tts':'index_tts2','asr':'qwen3_asr','aligner':'qwen3_forced_aligner'}
+    if kind not in families:raise ValueError('未知模型用途')
     filename=value('deep_dub',kind+'_config')
     if not filename:raise BusinessError('尚未配置本机受控模型执行器',503,'MODEL_UNCONFIGURED')
     config=ModelConfig.model_validate_json(Path(filename).read_bytes())
-    if config.family!=('index_tts2' if kind=='tts' else 'qwen3_asr'):
+    if config.family!=families[kind]:
         raise BusinessError('模型家族与用途不符',409,'MODEL_FAMILY_MISMATCH')
     return config
 
@@ -145,7 +146,7 @@ class OwnedModelServer:
         with socket.socket() as probe:probe.bind(('127.0.0.1',c.port))
         settings={'host':'127.0.0.1','port':c.port,'backend':'cuda','device':c.gpu_index,'threads':4,
             'lazy_load':True,'max_loaded_models':1,'log_request_body':False,'max_request_body_bytes':16*1024**2,
-            'models':[{'id':c.model_id,'family':c.family,'path':c.weights,'task':'tts' if c.family=='index_tts2' else 'asr','mode':'offline',
+            'models':[{'id':c.model_id,'family':c.family,'path':c.weights,'task':{'index_tts2':'tts','qwen3_asr':'asr','qwen3_forced_aligner':'align'}[c.family],'mode':'offline',
                 'session_options':{'index_tts2.conv_weight_type':'f16','index_tts2.speaker_cache_slots':'8','index_tts2.emotion_cache_slots':'8'} if c.family=='index_tts2' else {}}]}
         path=self.folder/'server.json';path.write_bytes(json.dumps(settings).encode())
         log_dir=self.pool.directory/'model-logs';log_dir.mkdir(parents=True,exist_ok=True)

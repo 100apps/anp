@@ -33,6 +33,11 @@ export type AudioVersion = {
 };
 export type AudioReview = {recognized_text:string;expected_text:string;model_id:string;weights_sha256:string;
   character_error_rate:number;edit_distance:number;performed_at:string;scope:string;semantic_review:string;evidence_artifact_id:string};
+export type AudioTiming = {model_id:string;evidence_artifact_id:string;semantic_review:string;timing_review:string;
+  alignment:{word_count:number;valid_timestamps:boolean;transcript_token_coverage:boolean;words:{word:string;start_sample:number;end_sample:number;reported_confidence:number|null}[]};
+  signal:{onset_ms:number|null;offset_ms:number|null};
+  placement:{audio_duration_ms:number;source_window_ms:number[];source_window_duration_ratio:number;playback_start_ms:number;
+    energy_onset_delta_ms:number|null;energy_offset_delta_ms:number|null;video_bounds_ok:boolean;start_within_advance_bound:boolean;scope:string}};
 export type Segment = {
   emotionReady?: boolean;
   segmentId: string;
@@ -140,6 +145,7 @@ export function decision(s: Segment) {
 }
 export interface TaskAdapter {
   audioReview?(segment:string,attempt:number):Promise<AudioReview|null>;
+  audioTiming?(segment:string,attempt:number):Promise<AudioTiming|null>;
   reconnectMedia?(): Promise<unknown>;
   cacheKey?: string;
   canWrite?(action:string):boolean;

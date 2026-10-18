@@ -1,0 +1,377 @@
+{
+  "checked_at_utc": "2026-10-18T19:08:10.196627+00:00",
+  "scope": "真实平台来源准备子图至独立复核门禁；不是完整译配、整片RTF或发布通过",
+  "project_id": "4f9b0466-356f-4288-be67-4980f676399b",
+  "run_id": "a067cfa8-41ed-4ee6-a4c5-69996512736d",
+  "source_id": "279b2007-7aa4-46b0-add4-facd219757e9",
+  "procedure_id": "de2ac74c-2f03-56b5-8ce3-ef638b096a41",
+  "state": {
+    "run_id": "a067cfa8-41ed-4ee6-a4c5-69996512736d",
+    "procedure_id": "de2ac74c-2f03-56b5-8ce3-ef638b096a41",
+    "thread_id": "9e3187ab-18d4-5e9f-8321-b91baa2aad70",
+    "business_status": "waiting_review",
+    "engine_status": "interrupted",
+    "native_run_status": "success",
+    "next": [
+      "source_preparation"
+    ],
+    "source_steps": {
+      "acquire": {
+        "status": "succeeded",
+        "attempt_id": "d977079f-e9fc-42b4-84c2-5e3151deebf9",
+        "outputs": [
+          "88e2cfbd-ff57-4c4e-916f-80841838810e",
+          "a72d89cf-3af7-4b01-b3c6-3fa8b17f33ed"
+        ]
+      },
+      "decode": {
+        "status": "succeeded",
+        "attempt_id": "1b6a2918-8760-4df6-81ab-81ec30e57ebe",
+        "outputs": [
+          "01ada5a1-2797-4921-b359-a382a90332d3"
+        ]
+      },
+      "recognize": {
+        "status": "succeeded",
+        "attempt_id": "a71948d9-f6bf-40c8-8088-03c547a016d7",
+        "outputs": [
+          "ba4e59a2-c609-439f-b30c-647e6a31f583",
+          "facdcf23-e669-4f41-a19f-10e60208e28f"
+        ]
+      },
+      "align": {
+        "status": "succeeded",
+        "attempt_id": "11124390-9376-4647-88b6-cb2968075cb0",
+        "outputs": [
+          "49584d07-35e5-467e-b027-5f409528fac6"
+        ]
+      },
+      "reference": {
+        "status": "succeeded",
+        "attempt_id": "28caecfd-2a7f-42fc-a9d1-ff73457d60d8",
+        "outputs": [
+          "210a0c8e-a973-4798-96bd-971988b47de1",
+          "deb5b846-4c4b-4fce-ace2-c5e83c73bccc"
+        ]
+      }
+    },
+    "technical_verified_at": null,
+    "request_key": "463c3d50bec74fb49dce700e74d89fa3",
+    "parameters": {
+      "reference_url": "https://oyc.yale.edu/history/hist-119/lecture-1",
+      "language": "English",
+      "chunk_seconds": 60
+    }
+  },
+  "stage_attempt_ids": [
+    "11124390-9376-4647-88b6-cb2968075cb0",
+    "1b6a2918-8760-4df6-81ab-81ec30e57ebe",
+    "28caecfd-2a7f-42fc-a9d1-ff73457d60d8",
+    "53c44a6c-df30-4057-86cf-bbd946422f01",
+    "a71948d9-f6bf-40c8-8088-03c547a016d7",
+    "d977079f-e9fc-42b4-84c2-5e3151deebf9"
+  ],
+  "source_input": {
+    "sha256": "13915fe69d6c2d81dddb366e6d840457f26c22783964d35004dd0f79816cf162",
+    "bytes": 58123938
+  },
+  "source_media": {
+    "duration_ms": 2586328,
+    "streams": [
+      {
+        "index": 0,
+        "codec_type": "video",
+        "codec_name": "av1",
+        "width": 640,
+        "height": 360,
+        "time_base": "1/1000",
+        "start_time": "0.000000",
+        "avg_frame_rate": "30000/1001"
+      },
+      {
+        "index": 1,
+        "codec_type": "audio",
+        "codec_name": "opus",
+        "sample_rate": "48000",
+        "channels": 2,
+        "time_base": "1/1000",
+        "start_time": "0.000000",
+        "avg_frame_rate": "0/0"
+      }
+    ]
+  },
+  "download_process": {
+    "exit_code": 0,
+    "job": {
+      "total_processes": 13,
+      "active_processes": 0,
+      "terminated_processes": 0
+    },
+    "operation_stopped": true,
+    "elapsed_seconds": 44.10900000000038
+  },
+  "asr": {
+    "evidence_artifact_id": "facdcf23-e669-4f41-a19f-10e60208e28f",
+    "pcm_artifact_id": "ba4e59a2-c609-439f-b30c-647e6a31f583",
+    "coverage": {
+      "sample_coverage": 1.0,
+      "chunk_count": 44,
+      "empty_chunks": 0,
+      "model_sessions": 1,
+      "scope": "仅证明连续PCM样本被提交到识别器，非词边界、语义、事实或字幕通过"
+    },
+    "pcm": {
+      "sample_rate": 16000,
+      "sample_count": 41380932,
+      "pcm_sha256": "dd37708c36e42a9ec1076b8ed8ef9130136b9aa1aef36faf9658e00294986383"
+    },
+    "model": {
+      "model_id": "anp-qwen3-asr-1-7b-q8",
+      "weights_sha256": "da4fc2ac7f24dee784d1684eb1f35836cdbf559519452ae11777670734c0a4f8",
+      "runtime_sha256": "be820dd89b644b7179614a0444b0be5ad123e81c7794add19619e4cf6a95c81d",
+      "source_revision": "f16f23abf9732b1904fed1f15bddbe9909d21146"
+    },
+    "session": {
+      "session_id": "af6a89a85e5e4962986cacaeaf3e2ae8",
+      "requests": 44,
+      "warm_cache_checks": 43,
+      "initially_unloaded": true,
+      "startup_seconds": 0.5160000000032596,
+      "process_lifecycle_seconds": 89.78200000000288,
+      "owned_server_exit_code": 1,
+      "operation_stopped": true,
+      "scope": "同一阶段租约内的批量模型进程；不是跨作业后台常驻服务"
+    },
+    "elapsed_with_normalization_seconds": 93.43699999999808
+  },
+  "word_timing": {
+    "evidence_artifact_id": "49584d07-35e5-467e-b027-5f409528fac6",
+    "summary": {
+      "chunk_count": 44,
+      "model_requests": 44,
+      "empty_asr_chunks": 0,
+      "word_count": 5654,
+      "invalid_timestamp_chunks": 1,
+      "uncovered_transcript_chunks": 17,
+      "zero_length_content_words": 0,
+      "internal_overlap_samples": 0,
+      "global_start_order_issues": 0,
+      "cross_chunk_overlap_samples": 2560,
+      "scope": "仅给定ASR候选的词边界测量，不证明正文正确、说话人、语义边界或字幕落点通过"
+    },
+    "model": {
+      "model_id": "anp-qwen3-aligner-0-6b-f16",
+      "weights_sha256": "d0a96fb96de17686766688b622394877ee5e89b193be7f53de8715d99151a000",
+      "runtime_sha256": "be820dd89b644b7179614a0444b0be5ad123e81c7794add19619e4cf6a95c81d",
+      "source_revision": "f16f23abf9732b1904fed1f15bddbe9909d21146"
+    },
+    "session": {
+      "session_id": "0e2b9245a3d54a5ab662daf6e3e3c1ef",
+      "requests": 44,
+      "warm_cache_checks": 43,
+      "initially_unloaded": true,
+      "startup_seconds": 0.5159999999996217,
+      "process_lifecycle_seconds": 17.7029999999977,
+      "owned_server_exit_code": 1,
+      "operation_stopped": true,
+      "scope": "同一阶段租约内的批量模型进程；不是跨作业后台常驻服务"
+    },
+    "elapsed_seconds": 17.76599999999962
+  },
+  "official_reference": {
+    "evidence_artifact_id": "deb5b846-4c4b-4fce-ace2-c5e83c73bccc",
+    "difference_count": 152,
+    "scope": "差异候选，不判定正文、角色或字幕通过"
+  },
+  "checks": {
+    "real_new_download": true,
+    "real_asr_and_aligner": true,
+    "real_decode_and_official_reference": true,
+    "client_approval_cannot_bypass": true,
+    "no_extra_stage_after_resume": true,
+    "local_cli_without_business_web_or_agent_replay": true,
+    "http_cli_direct_replay": true,
+    "all_five_leases_released_and_stopped": true,
+    "no_source_adoption_or_quality_audit": true,
+    "langfuse_read_back": true,
+    "proof_column_error_fixed_without_permission_change": true
+  },
+  "score_ids": [
+    "10ebca57-0087-4d42-ae08-3bdde2d7b77a",
+    "e7ff81dd-f1ab-4ef7-b4ad-6aace9e0330c",
+    "a5ba7c94-0a76-43b9-9fab-01d8e62f9b6c",
+    "5dee7856-75b9-4d90-8e4a-46171f9d2fd2",
+    "36133a6e-c7e8-4001-8e39-76240903d973",
+    "7030a06d-3f9e-4b6a-a776-f918dc5fe040",
+    "69cdcb93-c417-4b05-a5cc-b0f60cd93992",
+    "23868bd8-91de-49dd-a314-752686b80a18",
+    "1f2c3850-a15e-44fc-967d-368358007e07",
+    "7a9a39d2-3977-4f80-a75e-efe96a33dbbc",
+    "119a09ad-13d2-47c8-ae90-c562eafebc87",
+    "b939ffb9-8d9c-4cb1-a3c3-e20c6bc15352",
+    "742fb12e-e71d-42f4-aa09-5ac8f146d46b",
+    "910f9557-7a0d-45c0-9fe7-77a1f775ffe6",
+    "769d9d36-e436-44a3-a991-debc9bba5911",
+    "2f747f5a-7966-4b19-8a5c-f46d8c8641e1",
+    "b38e7597-c5de-411d-af10-a70e94edc054",
+    "85521091-8574-4e9a-bb71-7f502eb1d344",
+    "cfb1336b-67fb-4b2c-9f25-2619cf73f232",
+    "33c1a455-602b-479d-ac31-6cca65314e35",
+    "3d40fb42-151a-4090-afcd-1f98db80c327"
+  ],
+  "lease_ids": [
+    "09a938b9-191f-4206-9392-ef02701e31c0",
+    "b29d7f20-c432-4a2c-98ae-6caa121150df",
+    "9c6d4b56-5bf2-48d9-b0d1-2a6eafd3ecdf",
+    "67374958-5d61-44d6-9ec1-2440aa693470",
+    "39373b47-ec5b-40e0-b0a6-6dcbaf9e81db"
+  ],
+  "owned_gpu_operations": [
+    {
+      "attempt_id": "a71948d9-f6bf-40c8-8088-03c547a016d7",
+      "owned_operations": 91,
+      "all_exit_codes_recorded": true
+    },
+    {
+      "attempt_id": "11124390-9376-4647-88b6-cb2968075cb0",
+      "owned_operations": 89,
+      "all_exit_codes_recorded": true
+    }
+  ],
+  "checkpoint_restart": {
+    "full_parent_and_child_identical": true,
+    "native_thread_status": "interrupted",
+    "checkpoint_sha256": "03cf2a36c01db36af2778d0ff61553837801e6b653331f2156b56f1835fc1873",
+    "prior_thread_values_preserved": 442,
+    "no_automatic_resume": true,
+    "scope": "重建前后完整检查点读回比较；恢复输入门禁在重建前真实验证"
+  },
+  "tests": {
+    "tools": {
+      "passed": 24,
+      "seconds": 3.39
+    },
+    "wait_rpc_contract": {
+      "passed": 1,
+      "seconds": 2.48
+    },
+    "same_run_remaining_acceptance": {
+      "passed": 1,
+      "seconds": 18.15,
+      "new_download_in_this_recovery_test": false
+    },
+    "frozen_production_regression": {
+      "passed": 29,
+      "seconds": 70.23
+    },
+    "typescript_and_build": true
+  },
+  "retained_failed_acceptances": [
+    {
+      "seconds": 34.83,
+      "reason": "原生Agent保留run_id元数据，业务归属检查拒绝"
+    },
+    {
+      "seconds": 248.14,
+      "reason": "待审RPC使用cardinality(jsonb)类型错误"
+    },
+    {
+      "seconds": 244.05,
+      "reason": "调用success被观察器误当整图完成，真实检查点已中断"
+    },
+    {
+      "seconds": 272.38,
+      "reason": "阶段、恢复和CLI已到待审，验收查询敏感租约列被正确拒绝；同一运行保留并继续验收"
+    }
+  ],
+  "state_protection": {
+    "all_original_thread_values_preserved": 438,
+    "current_threads": 444,
+    "protected_container_ids_preserved": 27
+  },
+  "production": {
+    "workflow_runtime_build": "20261018184555-1e80b0f1",
+    "final_ui_and_checkpoint_restart_build": "20261018185748-42a8b892",
+    "platform": {
+      "tag": "anp/platform:production-20261018185748-42a8b892",
+      "id": "sha256:fb31e04bfc4082cead9a82be456071ff652b73951eac461c94bfe257895c70ba",
+      "base_image": "sha256:a5ddb9b758634ff2b4e50d5e65c3865cecc61ca9ac61bdf999d29557613edee2",
+      "upstreams": [
+        {
+          "name": "studio",
+          "commit": "7425d4930528931400fb3e656e860b1094cb224e"
+        },
+        {
+          "name": "dbx",
+          "commit": "c511c90a7cb5165b7847d5a46dc55f0050e7272b"
+        },
+        {
+          "name": "auth",
+          "commit": "ce9a8eee0cc042be8c7a42981a7ddae631e41d91"
+        },
+        {
+          "name": "storage",
+          "commit": "c826a70ac6e6f56d3e6033ccb164fb1ff5282570"
+        },
+        {
+          "name": "meta",
+          "commit": "ecc19497dcfcb4dc6a83d02e49d812f747cbf981"
+        },
+        {
+          "name": "postgrest",
+          "commit": "922f635dc19edc1abdcc614c22535763dc7d4669"
+        },
+        {
+          "name": "langfuse-web",
+          "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+        },
+        {
+          "name": "langfuse-worker",
+          "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+        },
+        {
+          "name": "litellm",
+          "commit": "c143954493baa810e2704917b9cdeb8fb3523718"
+        },
+        {
+          "name": "lens",
+          "commit": "e320cabdf0a67aa52cafe2ede1b4d10ad66dafad"
+        },
+        {
+          "name": "agent",
+          "commit": "41c9c22fdc83d68a2859d0c9a2b627c8615a792f"
+        }
+      ]
+    },
+    "running_image_matches": true,
+    "both_builds_python_and_migration_sources_identical": true,
+    "source_sha256": {
+      "flow/decode.py": "2468080225c64451af9af7c9aacb24b7077ea667365fad7f5b9a49cba5144b3e",
+      "flow/source_preparation.py": "e3d8b71566ff7251aefa3f2b1e965ea9286f6e277ae94674862f12317e497c98",
+      "services/source_jobs.py": "0b44731d2adaa8bab48a1455833209bd98be13b3b90f778c5e19c7aa6488b1fe",
+      "services/source_orchestration.py": "124a75da52b23a5636b3f4552064e0711630bed43faa7e7e7df0e0fb20e686d9",
+      "api/router.py": "a3378499785e6c56c6c8cd9a575ebe4b199c8e7c8b4210e5bafdb1267ff0448f",
+      "api/worker.py": "43ca956f854d4974994ade652cfbd2bda6a59635972623b90f7bcce72cd73530",
+      "api/source_worker.py": "67c0e4f4f2349defe5e9a399c652e33564f8cd07663a481444788124d5475c91",
+      "cli.py": "c10934f5ac6f7a86e448ca052d635ec57665c7ab3dde8f91083b4b260b79da4a",
+      "migrations/015_source_preparation_wait.sql": "12774586ae5bf12ce529829f27005b4154c285ecfdbf05ea28ec85021565be77"
+    }
+  },
+  "browser": {
+    "same_origin_workbench": true,
+    "five_completed_source_nodes": true,
+    "independent_review_pending": true,
+    "launch_disabled": true,
+    "screenshot": "deep-dub-source-preparation-browser-20261019.png"
+  },
+  "not_completed": [
+    "完整生产图及可信正文/角色/语义分段",
+    "词时间160ms越界、17块严格覆盖差异及字幕时钟",
+    "独立内容/声音/字幕/成片质量",
+    "整片RTF≤0.5",
+    "V100真实业务执行",
+    "B站发布回执",
+    "新GHCR发布拉取",
+    "本轮重新实测两种IDE F5"
+  ]
+}

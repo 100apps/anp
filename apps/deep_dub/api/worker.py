@@ -35,3 +35,5 @@ async def engine_execute(attempt_id:UUID,body:DecodeJobRequest,authorization:str
 
 
 router.include_router(engine_router)
+from apps.deep_dub.api.source_worker import router as source_router
+router.include_router(source_router)

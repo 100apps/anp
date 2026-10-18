@@ -25,7 +25,8 @@ def test_normal_output_and_failed_tool_are_reaped(tmp_path):
                     with pytest.raises(BusinessError,match='来源获取失败'):await task
                 else:
                     proof=await task
-                    assert proof['job']['total_processes']==2 and proof['job']['active_processes']==0
+                    # Job回执可能含工具派生的额外子孙；安全门禁是全部停止，不是假定固定个数。
+                    assert proof['job']['total_processes']>=2 and proof['job']['active_processes']==0
                 assert pool.stopped() and len(pool.data['jobs'])==1
             assert (folder/'tool.stdout').read_text().strip()=='fixture'
     asyncio.run(run())

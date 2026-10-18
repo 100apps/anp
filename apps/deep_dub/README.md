@@ -1,5 +1,11 @@
 # deep_dub 译配业务
 
+## 来源准备编排
+
+`runs prepare-source <运行UUID> --request-key <稳定键>` 默认在本机直接执行相同业务节点，无需启动业务Web、Worker或Agent；HTTP模式调用同一服务。`runs launch-source-preparation` 是显式平台Agent编排入口，`runs source-preparation <运行UUID> <流程UUID>` 读取其持久化状态。可用 `--reference-url` 传入耶鲁官方课程页。
+
+平台已真实串联新原片获取、完整解码、整轨识别、词时间和参考比对，随后停在独立复核；用户会话只存业务主机私有授权目录，图内只有ID和轻量回执。原生调用success不代表业务完成；线程中断和业务waiting_review分别保留。完整父/子检查点经Compose重建读回相同，客户端approve不能通过门禁。具体新执行、CLI重放、失败记录和未完成范围见 `docs/deep_dub来源准备编排.md`；尚不是完整译配生产或RTF通过。
+
 ## 新来源获取入口
 
 来源获取已接入 `runs acquire-source <运行UUID>`，结果读取为 `runs source-acquisition <运行UUID>`；HTTP CLI 和 Web 调用相同服务。只接受 run 排队时冻结的 HTTPS YouTube 单视频地址，不替换已绑定的其他来源。`config/settings.local.toml` 的 `[deep_dub] source_fetch_config` 指向管理员本机配置，格式见 `source-fetch.local.example.json`；零摘要、示例用户路径和UA须先按本机实际配置替换，不能原样运行。下载器摘要变化时拒绝执行。

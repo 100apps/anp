@@ -27,10 +27,37 @@ from apps.deep_dub.services.source_recognition import SourceRecognitionInput,rec
 from apps.deep_dub.services.source_reference import SourceReferenceInput,compare as compare_source_reference,read as read_source_reference,read_latest_reference
 from apps.deep_dub.services.source_alignment import SourceAlignmentInput,align as align_source,read_latest as read_source_alignment
 from apps.deep_dub.services.source_acquisition import AcquisitionInput,acquire as acquire_source,read as read_source_acquisition
+from apps.deep_dub.services.source_jobs import PreparationInput,issue as issue_source_preparation
+from apps.deep_dub.services.source_orchestration import launch as launch_source_preparation,read as read_source_preparation,prepare_local,latest as latest_source_preparation
 from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,BackgroundInput,RenderInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 router.include_router(media_router)
+
+
+@router.post('/runs/{run_id}/source-preparation-job')
+async def authorize_source_preparation(run_id:str,body:PreparationInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await issue_source_preparation(actor,run_id,body.model_dump(),idempotency_key)
+
+
+@router.post('/runs/{run_id}/prepare-source')
+async def prepare_source_direct(run_id:str,body:PreparationInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await prepare_local(actor,run_id,body.model_dump(),idempotency_key)
+
+
+@router.post('/runs/{run_id}/source-preparation')
+async def start_source_preparation(run_id:str,body:PreparationInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await launch_source_preparation(actor,run_id,body.model_dump(),idempotency_key)
+
+
+@router.get('/runs/{run_id}/source-preparation/{procedure_id}')
+async def get_source_preparation(run_id:str,procedure_id:str,actor=Depends(get_actor)):
+    return await read_source_preparation(actor,run_id,procedure_id)
+
+
+@router.get('/runs/{run_id}/source-preparation')
+async def get_latest_source_preparation(run_id:str,actor=Depends(get_actor)):
+    return await latest_source_preparation(actor,run_id)
 
 
 @router.post('/runs/{run_id}/acquire-source')

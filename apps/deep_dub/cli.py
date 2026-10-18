@@ -20,6 +20,7 @@ from apps.deep_dub.services.observations import deliver_one
 from apps.deep_dub.services.candidates import service as candidates
 from apps.deep_dub.services.processing import decode_artifact
 from apps.deep_dub.services.source_acquisition import acquire as acquire_source,read as read_source_acquisition
+from apps.deep_dub.services.source_orchestration import launch as launch_source_preparation,read as read_source_preparation,prepare_local
 from apps.deep_dub.services.workbench import RecordKind,service as workbench
 from apps.deep_dub.services.media import service as media
 from apps.deep_dub.services.editor import service as editor
@@ -79,6 +80,23 @@ def source_acquisition(ctx:typer.Context,run_id:str,timeout_seconds:int=3600,req
 @run_commands.command('source-acquisition')
 def source_acquisition_result(ctx:typer.Context,run_id:str):
     perform(invoke(ctx,'GET',f'/runs/{run_id}/source-acquisition',lambda actor:read_source_acquisition(actor,run_id)))
+
+
+@run_commands.command('prepare-source')
+def source_preparation(ctx:typer.Context,run_id:str,reference_url:str|None=None,ttl_seconds:int=600,request_key:str=''):
+    body={'reference_url':reference_url,'ttl_seconds':ttl_seconds}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/prepare-source',lambda actor:prepare_local(actor,run_id,body,request_key or None),body,request_key,timeout_seconds=ttl_seconds+300))
+
+
+@run_commands.command('launch-source-preparation')
+def source_preparation_agent(ctx:typer.Context,run_id:str,reference_url:str|None=None,ttl_seconds:int=600,request_key:str=''):
+    body={'reference_url':reference_url,'ttl_seconds':ttl_seconds}
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/source-preparation',lambda actor:launch_source_preparation(actor,run_id,body,request_key or None),body,request_key))
+
+
+@run_commands.command('source-preparation')
+def source_preparation_result(ctx:typer.Context,run_id:str,procedure_id:str):
+    perform(invoke(ctx,'GET',f'/runs/{run_id}/source-preparation/{procedure_id}',lambda actor:read_source_preparation(actor,run_id,procedure_id)))
 
 
 @run_commands.command('align-source')

@@ -11,7 +11,9 @@ from anp.sdk.http import async_client
 
 class DecodeState(TypedDict):
     run_id:str
-    attempt_id:str
+    attempt_id:NotRequired[str]
+    source_preparation_id:NotRequired[str]
+    source_steps:NotRequired[dict]
     result:NotRequired[dict]
 
 
@@ -34,5 +36,12 @@ def build_decode_graph(worker_url,checkpointer=None,*,engine_token=None):
         return {'result':result}
     builder=StateGraph(DecodeState)
     builder.add_node('full_decode',worker)
-    builder.add_edge(START,'full_decode');builder.add_edge('full_decode',END)
+    from apps.deep_dub.flow.source_preparation import build_source_preparation_graph
+    builder.add_node('source_preparation',build_source_preparation_graph(worker_url,engine_token=engine_token))
+    def route(state):
+        if bool(state.get('attempt_id'))==bool(state.get('source_preparation_id')):
+            raise BusinessError('必须指定单次解码或来源准备ID中的一种',422,'FLOW_INPUT_INVALID')
+        return 'source_preparation' if state.get('source_preparation_id') else 'full_decode'
+    builder.add_conditional_edges(START,route,{'source_preparation':'source_preparation','full_decode':'full_decode'})
+    builder.add_edge('full_decode',END)
     return builder.compile(checkpointer=checkpointer)

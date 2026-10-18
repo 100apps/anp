@@ -46,6 +46,50 @@
     "新版 DBX 下 PostgreSQL NOTICE 先于表格结果时，结束后回到结果/配置的摘要视图",
     "用户主动选择消息视图后，执行结束不被自动抢回结果视图；错误和仅消息场景可见",
     "原三种只读查询、并发 1/4 基线复测；不同源码 SHA 的差异不单独归因于 LTO",
-    "新版镜像完整登录/连接/图执行/SSE/权限回归仍须执行；不能由静态差异推定通过"
-  ]
+    "新版镜像完整登录/连接/图执行/SSE/权限回归仍须执行；不能由静态差异推定通过",
+    "DBX 8b4d1fc 新增：长文本单元格编辑保存后刷新保留截断标记，展开读取完整值；失败刷新不覆盖原网格。仅隔离临时数据，不修改业务对象。"
+  ],
+  "additional_review_39090955220": {
+    "checked_at_utc": "2026-10-18T02:44:26.862188+00:00",
+    "scope": "只 fetch 精确对象并静态核对，未 checkout 或运行新源码",
+    "components": [
+      {
+        "component": "litellm",
+        "previous_commit": "7db8fc81f9ce53c3b9b81cf385b2a35cd8f241ad",
+        "new_commit": "a6245c1bbbea9f75d0eae532b8815c71c011b07a",
+        "changed_files": [
+          "tests/e2e/perf/UI_QUERIES.md",
+          "tests/e2e/perf/setup/ui_queries.py",
+          "tests/e2e/perf/setup/ui_query_cases.py",
+          "tests/e2e/perf/setup/ui_query_fixture.py",
+          "tests/e2e/perf/setup/ui_query_fixture.sql",
+          "tests/e2e/perf/setup/ui_query_isolation.py",
+          "tests/e2e/perf/test_ui_queries.py",
+          "tests/e2e_harness/perf/setup/test_ui_queries.py",
+          "tests/e2e_harness/perf/setup/test_ui_query_isolation.py"
+        ],
+        "diff_sha256": "3ea1d7b9445057f29d5c713d2abd57892ed5b99b83bd95712d83295a39ff09bf",
+        "working_tree_unchanged": true,
+        "summary": "新增九个 SpendLog 界面查询性能测试文件；运行时代码与 Dockerfile 未变化。"
+      },
+      {
+        "component": "dbx",
+        "previous_commit": "de00ff46e437ba00423cd4293119857d508dfef8",
+        "new_commit": "8b4d1fc930fb7bcdf13f03fe1291e89c136e0dc4",
+        "changed_files": [
+          "agents/drivers/access/build.gradle",
+          "agents/drivers/kingbase-go/kingbase_metadata.go",
+          "agents/drivers/kingbase-go/main_test.go",
+          "apps/desktop/src/components/grid/DataGrid.vue",
+          "apps/desktop/src/lib/__tests__/dataGrid/dataGridSavedRowRefresh.spec.ts",
+          "apps/desktop/src/lib/dataGrid/dataGridSavedRowRefresh.ts",
+          "crates/dbx-sql-data/src/query_result_sql.rs"
+        ],
+        "diff_sha256": "bb20deaefc239c74626a4dccb243a4f543f3212fc2ee3667e1582aaf4a67f02b",
+        "working_tree_unchanged": true,
+        "summary": "七个文件变化：大值单元格保存后刷新改用表格预览路径、GoldenDB 排序兼容、Kingbase 空 schema 处理及 Access 驱动版本更新。Dockerfile 未变化。"
+      }
+    ],
+    "runtime_verified": false
+  }
 }

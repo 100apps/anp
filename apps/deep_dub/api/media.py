@@ -3,12 +3,14 @@ import time
 from math import ceil
 
 from fastapi import APIRouter,Depends,Header,Request,Response
+from fastapi import Query
 from fastapi.responses import StreamingResponse
 from starlette.background import BackgroundTask
 
 from anp.auth.dependencies import get_actor
 from anp.auth.identity import actor_from_token
 from apps.deep_dub.services.media import COOKIE_NAME,COOKIE_PATH,sessions,service
+from apps.deep_dub.services import waveforms
 
 router=APIRouter(prefix='/media',tags=['deep_dub_media'])
 
@@ -40,6 +42,13 @@ async def media_actor(request:Request,authorization:str|None=Header(None),x_work
 async def media_info(artifact_id:str,response:Response,actor=Depends(media_actor)):
     response.headers['Cache-Control']='private, no-store'
     return await service.info(actor,artifact_id)
+
+
+@router.get('/artifacts/{artifact_id}/waveform')
+async def waveform_data(artifact_id:str,response:Response,start:float=Query(0,ge=0),
+        end:float|None=Query(None,gt=0),points:int=Query(640,ge=16,le=2048),actor=Depends(media_actor)):
+    response.headers['Cache-Control']='private, no-store'
+    return await waveforms.read(actor,artifact_id,start=start,end=end,points=points)
 
 
 @router.get('/artifacts/{artifact_id}')

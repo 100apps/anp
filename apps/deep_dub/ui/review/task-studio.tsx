@@ -1075,15 +1075,15 @@ export function TaskStudio({
                       {(segment.endSec - segment.startSec).toFixed(2)}s
                       <span>同步画面</span>
                     </Button>
-                    {segment.emotionReady!==false&&<WavePlayer
+                    {task.sourceReady!==false&&<WavePlayer
                       key={segment.segmentId + ":source"}
                       adapter={adapter}
                       segment={segment.segmentId}
                       kind="source"
                       src={adapter.media("emotion", {
                         segment: segment.segmentId,
-                      })}
-                      title="原声与情绪参考"
+                      }) || adapter.media('source')}
+                      title={segment.emotionReady===false?'原声窗口':'原声与情绪参考'}
                       sync={{
                         position: transport.position,
                         playing: transport.playing,

@@ -1,0 +1,58 @@
+{
+  "checked_at_utc": "2026-10-18T12:54:33.478530+00:00",
+  "purpose": "acceptance",
+  "project_id": "082e2fe5-47d0-4285-9c13-de81f147692e",
+  "run_id": "b047dfae-66de-40ba-9a67-c6cfbf7c873c",
+  "artifact_id": "1f700be0-96ae-456d-a9e9-31b7ed6238c9",
+  "stage_attempt_id": "7125cb13-7b37-4270-8ca4-90c497a36ca2",
+  "waveform_artifact_id": "7b1b507f-c007-4483-a820-599a8d02a16f",
+  "rule_revision": "pcm-mono16k-100hz-max-v1",
+  "points": 64,
+  "window_seconds": 2,
+  "max_peak": 0.125153,
+  "http_equals_local_and_http_cli": true,
+  "same_key_replay": true,
+  "viewer_read_allowed_write_denied": true,
+  "anonymous_foreign_denied": true,
+  "cpu_lease_released": true,
+  "run_cancelled": true,
+  "generated_tone_only": true,
+  "no_tts_or_audit": true,
+  "browser": {
+    "wave_peak_rectangles": 200,
+    "source_window_start_seconds": 0.5,
+    "source_window_duration_seconds": 2,
+    "click_midpoint_video_seconds": 1.499053,
+    "segment_slider_seconds": 1,
+    "segment_slider_max_seconds": 2,
+    "fixture_only": true
+  },
+  "thread_protection": {
+    "before": 337,
+    "after": 358,
+    "all_before_preserved": true,
+    "protected_container_ids_preserved": 27,
+    "note": "同期其他工作也创建验收线程；不将新增数量当作本轮生产结果"
+  },
+  "test_logs": {
+    "deep-dub-waveform-tools-final.log": {
+      "passed": 12,
+      "sha256": "c8f3b27c9e12ed988386f8aa59cb5c4a2138b05d62ed2e8c4312cb9399f6217b"
+    },
+    "deep-dub-waveform-live-final.log": {
+      "passed": 1,
+      "sha256": "f08b912e6c06d7572587e78e0d54878e84dc8cdd60c4e5d7db73abe281109391"
+    }
+  },
+  "first_live_attempt": {
+    "failed": 1,
+    "reason": "验收器错误地用业务身份直读受限租约表；改为独立只读审计连接，不放宽权限",
+    "log_sha256": "85874c3f7d2d9464023dfc5e30fb113169da78b97eda93960f3778d2e8f48f6a"
+  },
+  "limitations": [
+    "固定单声道16kHz、100Hz绝对峰值，最多三小时；10ms桶边界不作为精确音素对齐证据",
+    "准备走运行阶段和CPU租约，读取不会触发解码；需要现有运行处于可执行状态",
+    "只是合成正弦与人工分段验收，不代表TTS、语义、听感或整片RTF/发布通过",
+    "声音/背景/音色仍须按具体输入另行生成派生波形；当前页面接原声与已有声音版本"
+  ]
+}

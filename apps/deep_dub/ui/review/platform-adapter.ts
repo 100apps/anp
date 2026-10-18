@@ -9,7 +9,20 @@ export function platformAdapter(projectId:string,identity:string,permissions:rea
   const file=(id:unknown)=>id?'/api/apps/deep_dub/media/artifacts/'+encodeURIComponent(String(id)):''
   return {cacheKey:identity+':'+projectId,canWrite,
     async read(){snapshot=await api<StudioSnapshot>(`/apps/deep_dub/projects/${projectId}/studio`);return normalizeSnapshot(snapshot)},
-    async wave(){throw Error('当前版本的波形尚未计算，仍可使用同步试听与播放进度')},
+    async wave(label,kind){
+      const raw=snapshot,segment=raw?.segments.find(s=>segmentLabel(s)===label)
+      if(!raw||!segment)throw Error('段不属于当前快照')
+      let artifact=raw.source?.artifact_id,start=Number(segment.start_ms)/1000,end=Number(segment.end_ms)/1000
+      if(kind==='tts'||kind.startsWith('tts-')){
+        const audio=raw.audio_attempts.filter(a=>a.segment_id===segment.id)
+        const current=normalizeSnapshot(raw).segments.find(s=>s.segmentId===label)?.tts?.attempt
+        const selected=audio[(kind==='tts'?(current||0):Number(kind.slice(4)))-1]
+        if(!selected)throw Error('当前声音版本不存在')
+        artifact=selected.artifact_id;start=0;end=Number(selected.duration_ms)/1000
+      }
+      if(!artifact)throw Error('此版本尚未登记音频产物')
+      return api(`/apps/deep_dub/media/artifacts/${artifact}/waveform?`+new URLSearchParams({start:String(start),end:String(end),points:'640'}))
+    },
     media(kind,query={}){
       const raw=snapshot;if(!raw)return ''
       const segment=raw.segments.find(s=>segmentLabel(s)===query.segment)

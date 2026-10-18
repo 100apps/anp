@@ -112,13 +112,14 @@ export function WavePlayer({
   });
   const end =
     axis || duration || data?.durationSec || wave.data?.durationSec || 1;
+  const playbackDuration=sync ? axis || wave.data?.durationSec || duration : duration;
   const now = sync
-    ? Math.max(0, Math.min(duration, sync.position - sync.start))
+    ? Math.max(0, Math.min(playbackDuration, sync.position - sync.start))
     : time;
   const running = sync
     ? sync.playing &&
       sync.position >= sync.start &&
-      sync.position < sync.start + duration
+      sync.position < sync.start + playbackDuration
     : playing;
   function seek(local: number) {
     if (sync) sync.seek(sync.start + local);
@@ -153,7 +154,7 @@ export function WavePlayer({
         </Button>
         <span>{title}</span>
         <small className="dd-mono">
-          {clock(now)} / {clock(duration)}
+          {clock(now)} / {clock(playbackDuration)}
         </small>
       </div>
       <button
@@ -166,7 +167,7 @@ export function WavePlayer({
               Math.max(
                 0,
                 Math.min(
-                  duration,
+                  playbackDuration,
                   ((e.clientX - rect.left) / rect.width) * end - offset,
                 ),
               ),
@@ -184,7 +185,7 @@ export function WavePlayer({
         className="dd-range"
         type="range"
         min="0"
-        max={duration || 1}
+        max={playbackDuration || 1}
         step="0.01"
         value={now}
         onChange={(e) => {

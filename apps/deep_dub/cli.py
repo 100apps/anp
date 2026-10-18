@@ -22,6 +22,7 @@ from apps.deep_dub.services.processing import decode_artifact
 from apps.deep_dub.services.workbench import RecordKind,service as workbench
 from apps.deep_dub.services.media import service as media
 from apps.deep_dub.services.editor import service as editor
+from apps.deep_dub.services import waveforms
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -43,6 +44,23 @@ def edit_translation(ctx:typer.Context,project_id:str,segment_id:str,
 @media_commands.command('info')
 def media_info(ctx:typer.Context,artifact_id:str):
     perform(invoke(ctx,'GET','/media/artifacts/'+artifact_id+'/info',lambda actor:media.info(actor,artifact_id)))
+
+
+@media_commands.command('waveform')
+def read_waveform(ctx:typer.Context,artifact_id:str,start:float=0,end:float|None=None,points:int=640):
+    from urllib.parse import urlencode
+    query={'start':start,'points':points}
+    if end is not None:query['end']=end
+    perform(invoke(ctx,'GET','/media/artifacts/'+artifact_id+'/waveform?'+urlencode(query),
+        lambda actor:waveforms.read(actor,artifact_id,start=start,end=end,points=points)))
+
+
+@run_commands.command('waveform')
+def prepare_waveform(ctx:typer.Context,run_id:str,artifact_id:str,device_id:str='',timeout_seconds:int=600,request_key:str=''):
+    body={'artifact_id':artifact_id,'timeout_seconds':timeout_seconds}
+    if device_id:body['device_id']=device_id
+    perform(invoke(ctx,'POST',f'/runs/{run_id}/waveform',
+        lambda actor:waveforms.prepare(actor,run_id,body,request_key or None),body,request_key))
 
 
 @app.callback()

@@ -81,6 +81,14 @@ def test_private_immutable_object_identity_range_and_expiry(context):
                 await artifacts.verify(actor,result['object_path'],'0'*64,len(content))
             assert corrupt.value.code=='ARTIFACT_INTEGRITY_FAILED'
             verified=await artifacts.verify(actor,result['object_path'],sha256(content).hexdigest(),len(content))
+            with tempfile.TemporaryDirectory(prefix='anp-verified-download-') as folder:
+                destination=Path(folder)/'private.json'
+                downloaded=await artifacts.download(actor,result['id'],destination)
+                assert destination.read_bytes()==content and downloaded['sha256']==result['sha256']
+                with pytest.raises(BusinessError) as existing:
+                    await artifacts.download(actor,result['id'],destination)
+                assert existing.value.code=='ARTIFACT_TARGET_EXISTS'
+                assert not list(Path(folder).glob('*.part'))
             receipt=await execution.finish_stage(actor,attempt,{'status':'succeeded','outputs':[result['id']],
                 'elapsed_seconds':time.monotonic()-started,'operation_stopped':True})
             assert receipt['committed']
@@ -96,6 +104,7 @@ def test_private_immutable_object_identity_range_and_expiry(context):
                 'range_206':True,'anonymous_denied':True,'cross_workspace_denied':True,
                 'viewer_upload_denied':True,'overwrite_denied':True,'delete_denied':True,
                 'signed_url_expiry_verified':True,'bad_hash_rejected':True,
+                'download_verified_and_atomic':True,'existing_download_target_preserved':True,
                 'replay_same_artifact':True},ensure_ascii=False,indent=2)+'\n').encode())
         finally:
             await execution.cancel(actor,queued['id'])

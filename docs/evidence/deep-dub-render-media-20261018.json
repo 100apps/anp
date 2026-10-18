@@ -1,0 +1,135 @@
+{
+  "checked_at_utc": "2026-10-18T08:19:41.809704+00:00",
+  "backup_directory": ".local/backups/v3-postgres-before-cloud-20261018T081937Z",
+  "postgres_container_id": "627452dce9ce667ce855e996047a6ebac1fe6e669976845a37d39bad903bde56",
+  "migration": "apps/deep_dub/migrations/012_render_candidates.sql",
+  "sha256": "461dcc802eb7db27b7ff80914d9e761ab977d08342cce2d741a8848dc4e8b34d",
+  "existing_task_count_unchanged": 966,
+  "recorded_at_utc": "2026-10-18T08:25:51.806261+00:00",
+  "database_and_media_suite": {
+    "passed": 77,
+    "seconds": 16.77,
+    "isolated_database_tests": 72,
+    "actual_media_process_tests": 5,
+    "scope": "数据库使用合成设备/产物元数据；工具测试使用2秒合成视频与静音音轨"
+  },
+  "live_service_tests": {
+    "passed": 7,
+    "seconds": 19.18,
+    "scope": "真实Supabase/RustFS/Langfuse+CLI/HTTP/ASGI；下载正向与背景/成片无设备拒绝"
+  },
+  "decode_tool_proof": {
+    "checked_at_utc": "2026-10-18T08:23:17.395734+00:00",
+    "scope": "独立媒体原语实测：2秒合成视频+静音音轨，不是业务设备/整片生产或质量验收",
+    "result": {
+      "sha256": "255b9e2fbd9e7c4d4ff3c331c8c98d29a23d13b68550249229fb26037af7b5ef",
+      "bytes": 2774,
+      "duration_ms": 2000,
+      "streams": [
+        {
+          "index": 0,
+          "codec_type": "video",
+          "codec_name": "mpeg4",
+          "width": 64,
+          "height": 64,
+          "duration": "2.000000",
+          "time_base": "1/10240",
+          "start_time": "0.000000",
+          "avg_frame_rate": "10/1"
+        },
+        {
+          "index": 1,
+          "codec_type": "audio",
+          "codec_name": "aac",
+          "sample_rate": "24000",
+          "channels": 1,
+          "duration": "2.000000",
+          "time_base": "1/24000",
+          "start_time": "0.000000",
+          "avg_frame_rate": "0/0"
+        }
+      ],
+      "rule_key": "full_decode",
+      "method": "technical",
+      "measured": true,
+      "decoded_duration_us": 2000000,
+      "tail_tolerance_us": 100000,
+      "decoder_exit_code": 0,
+      "tool_version": "ffmpeg version 8.0.1-full_build-www.gyan.dev Copyright (c) 2000-2025 the FFmpeg developers",
+      "scope": "全部音视频流；字幕结构、语义、声音身份、自然度与混音质量需要另行验收"
+    }
+  },
+  "artifact_download_proof": {
+    "checked_at_utc": "2026-10-18T08:20:34.407938+00:00",
+    "purpose": "acceptance",
+    "scope": "真实 Supabase Storage/RustFS 的私有 JSON，非生产媒体",
+    "run_id": "586c385e-dd78-4a54-9cd7-7faf2e3dcc62",
+    "attempt_id": "7ab97f28-3383-4d24-acb5-aae7f0be358f",
+    "artifact_id": "0404a590-a911-49f3-a2d9-975d5e7e3eee",
+    "sha256": "ff012abcc40f8d00de7362ad554e8b29576d5a547562b5185d45de421e9c18a8",
+    "bytes": 122,
+    "range_206": true,
+    "anonymous_denied": true,
+    "cross_workspace_denied": true,
+    "viewer_upload_denied": true,
+    "overwrite_denied": true,
+    "delete_denied": true,
+    "signed_url_expiry_verified": true,
+    "bad_hash_rejected": true,
+    "download_verified_and_atomic": true,
+    "existing_download_target_preserved": true,
+    "replay_same_artifact": true
+  },
+  "candidate_rejection_proof": {
+    "checked_at_utc": "2026-10-18T08:20:35.915968+00:00",
+    "scope": "真实Supabase/RustFS+ASGI；2秒无语音合成视频及人工夹具原文/译文，不是生产或媒体质量验收",
+    "purpose": "acceptance",
+    "run_id": "62997238-34a9-4dad-a056-2e9cc3f3fef8",
+    "source_id": "72842a1a-d419-43fe-8f12-b78a721a5cdc",
+    "segment_set_id": "b8ce3f30-fd8c-4b32-ac57-c540466267ea",
+    "translation_id": "6222ab21-f3a6-4618-b392-9ee0b1a334f1",
+    "voice_reference_id": "d93dcb52-8fae-4118-abfb-6aecc8f78aa9",
+    "emotion_reference_id": "2e94cddf-943c-4b7f-8e5b-744f319d0490",
+    "reference_fixture": "1秒静音PCM，仅验证参考关系，不是人物音色或情绪质量",
+    "audio_without_device_rejected": true,
+    "background_without_device_rejected": true,
+    "render_without_device_rejected": true,
+    "video_duration_ms": 2000,
+    "source_replay_same": true,
+    "transcript_replay_same": true,
+    "translation_replay_same": true,
+    "viewer_write_forbidden": true,
+    "incomplete_transcript_rejected": true,
+    "no_automatic_quality_audits": true
+  },
+  "business_counts": {
+    "backgrounds": 0,
+    "renders": 0,
+    "audio_attempts": 0,
+    "audits": 0,
+    "devices": 0,
+    "device_leases": 0,
+    "publications": 0
+  },
+  "run_purposes": {
+    "acceptance": 26
+  },
+  "run_statuses": {
+    "cancelled": 26
+  },
+  "outbox_statuses": {
+    "sent": 34
+  },
+  "threads_preserved": 305,
+  "all_thread_values_identical": true,
+  "protected_container_ids_preserved": 27,
+  "platform_container_unchanged": true,
+  "platform_image": "ghcr.io/100apps/anp-platform@sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3",
+  "limitations": [
+    "背景/成片正向登记仅在独立库使用合成设备及元数据，未实际分离背景或整片渲染",
+    "FFmpeg工具原语尚未接入业务设备运行器、心跳和审核证据登记，不是业务任务/RTF验收",
+    "全流解码仅技术检查，字幕结构/语义/身份/自然度/混音质量另行验收",
+    "远端模型任务的取消/超时/接管尚未实现，不能用本机子进程测试代替",
+    "无实际生产run、音频生成候选、设备租约、成片或B站投稿"
+  ]
+}

@@ -99,6 +99,27 @@ class AudioInput(Contract):
         return self
 
 
+class BackgroundInput(Contract):
+    original_artifact_id: UUID
+    processed_artifact_id: UUID
+    removed_artifact_id: UUID|None=None
+    evidence_artifact_id: UUID
+    model_id: str=Field(min_length=1,max_length=200)
+    parameters: dict=Field(default_factory=dict)
+
+
+class RenderInput(Contract):
+    timeline_id: UUID
+    background_id: UUID|None=None
+    strategy_key: str=Field(min_length=1,max_length=200)
+    parameters: dict=Field(default_factory=dict)
+    dialogue_artifact_id: UUID
+    mix_artifact_id: UUID
+    subtitle_artifact_id: UUID
+    video_artifact_id: UUID
+    evidence_artifact_id: UUID
+
+
 class CandidateService:
     async def source(self,actor,attempt_id,payload,request_key=None):
         await actor.require('deep_dub.task.run')
@@ -140,6 +161,24 @@ class CandidateService:
             p_evidence=str(body.evidence_artifact_id),p_kind=body.kind,p_parent=str(body.parent_id) if body.parent_id else None,
             p_generation_factor=body.generation_factor,p_pcm_tempo_factor=body.pcm_tempo_factor,
             p_parameters=body.parameters,p_request_key=operation_key(request_key))
+
+    async def background(self,actor,attempt_id,payload,request_key=None):
+        await actor.require('deep_dub.task.run')
+        body=BackgroundInput.model_validate(payload)
+        return await actor.objects.rpc('deep_dub_register_background',p_workspace=actor.workspace_id,
+            p_attempt=identifier(attempt_id),p_original=str(body.original_artifact_id),p_processed=str(body.processed_artifact_id),
+            p_removed=str(body.removed_artifact_id) if body.removed_artifact_id else None,
+            p_evidence=str(body.evidence_artifact_id),p_model=body.model_id,p_parameters=body.parameters,
+            p_request_key=operation_key(request_key))
+
+    async def render(self,actor,attempt_id,payload,request_key=None):
+        await actor.require('deep_dub.task.run')
+        body=RenderInput.model_validate(payload)
+        return await actor.objects.rpc('deep_dub_register_render',p_workspace=actor.workspace_id,
+            p_attempt=identifier(attempt_id),p_timeline=str(body.timeline_id),
+            p_background=str(body.background_id) if body.background_id else None,p_strategy=body.strategy_key,p_parameters=body.parameters,
+            p_dialogue=str(body.dialogue_artifact_id),p_mix=str(body.mix_artifact_id),p_subtitle=str(body.subtitle_artifact_id),
+            p_video=str(body.video_artifact_id),p_evidence=str(body.evidence_artifact_id),p_request_key=operation_key(request_key))
 
 
 service=CandidateService()

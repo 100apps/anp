@@ -108,6 +108,18 @@ def test_source_transcript_and_translation_via_real_identity_and_same_service(co
                     denied=await client.post(f'/api/apps/deep_dub/attempts/{attempt}/audio',json=audio_body,
                         headers={'Authorization':'Bearer '+tokens['viewer']})
                     assert denied.status_code==403
+                    background_body={'original_artifact_id':reference_artifact['id'],'processed_artifact_id':reference_artifact['id'],
+                        'evidence_artifact_id':context_artifact['id'],'model_id':'acceptance-only-no-separation'}
+                    render_body={'timeline_id':str(uuid4()),'strategy_key':'acceptance-only-no-render',
+                        'dialogue_artifact_id':reference_artifact['id'],'mix_artifact_id':reference_artifact['id'],
+                        'subtitle_artifact_id':context_artifact['id'],'video_artifact_id':original['id'],
+                        'evidence_artifact_id':context_artifact['id']}
+                    for kind,body in [('background',background_body),('render',render_body)]:
+                        rejected=await client.post(f'/api/apps/deep_dub/attempts/{attempt}/{kind}',json=body)
+                        assert rejected.status_code==400 and rejected.json()['error']['code']=='23514'
+                        denied=await client.post(f'/api/apps/deep_dub/attempts/{attempt}/{kind}',json=body,
+                            headers={'Authorization':'Bearer '+tokens['viewer']})
+                        assert denied.status_code==403
                     invalid={**transcript_body,'segments':[{'cue_numbers':[0]}]}
                     assert (await client.post(f'/api/apps/deep_dub/attempts/{attempt}/transcript',json=invalid)).status_code==422
                     receipt=await execution.finish_stage(actor,attempt,{'status':'succeeded',
@@ -126,6 +138,7 @@ def test_source_transcript_and_translation_via_real_identity_and_same_service(co
                     'voice_reference_id':voice['id'],'emotion_reference_id':emotion['id'],
                     'reference_fixture':'1秒静音PCM，仅验证参考关系，不是人物音色或情绪质量',
                     'audio_without_device_rejected':True,
+                    'background_without_device_rejected':True,'render_without_device_rejected':True,
                     'video_duration_ms':duration,'source_replay_same':True,'transcript_replay_same':True,
                     'translation_replay_same':True,'viewer_write_forbidden':True,
                     'incomplete_transcript_rejected':True,'no_automatic_quality_audits':True},ensure_ascii=False,indent=2)+'\n').encode())

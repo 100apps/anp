@@ -12,7 +12,7 @@ from typing import Literal
 from anp.errors import BusinessError
 from apps.deep_dub.services.artifacts import service as artifacts, ArtifactMetadata
 from apps.deep_dub.services.observations import deliver_one
-from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,service as candidates
+from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,TranslationInput,ReferenceInput,AudioInput,BackgroundInput,RenderInput,service as candidates
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 
@@ -141,3 +141,13 @@ async def register_reference(attempt_id:str,body:ReferenceInput,actor=Depends(ge
 @router.post('/attempts/{attempt_id}/audio',status_code=201)
 async def register_audio(attempt_id:str,body:AudioInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
     return await candidates.audio(actor,attempt_id,body.model_dump(),idempotency_key)
+
+
+@router.post('/attempts/{attempt_id}/background',status_code=201)
+async def register_background(attempt_id:str,body:BackgroundInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await candidates.background(actor,attempt_id,body.model_dump(),idempotency_key)
+
+
+@router.post('/attempts/{attempt_id}/render',status_code=201)
+async def register_render(attempt_id:str,body:RenderInput,actor=Depends(get_actor),idempotency_key:str|None=Header(None)):
+    return await candidates.render(actor,attempt_id,body.model_dump(),idempotency_key)

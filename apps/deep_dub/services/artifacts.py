@@ -1,6 +1,8 @@
 """内容寻址的私有产物：仅新增对象，读取时始终验证 SHA256 和字节数。"""
 from hashlib import sha256
 from pathlib import Path
+import os
+import tempfile
 from pydantic import Field
 
 from anp.config import secret, value
@@ -79,6 +81,9 @@ class ArtifactService:
             p_duration_ms=meta.duration_ms,p_sample_rate=meta.sample_rate)
 
     async def verify(self, actor, path, expected_hash, expected_size):
+        return await self._read_verified(actor,path,expected_hash,expected_size)
+
+    async def _read_verified(self, actor, path, expected_hash, expected_size, target=None):
         await actor.require('deep_dub.project.read')
         url = object_url(path).replace('/storage/v1/object/','/storage/v1/object/authenticated/',1)
         digest, size = sha256(), 0
@@ -91,9 +96,32 @@ class ArtifactService:
                     if size > expected_size:
                         raise BusinessError('产物字节数不匹配',409,'ARTIFACT_INTEGRITY_FAILED')
                     digest.update(block)
+                    if target is not None:target.write(block)
         if size != expected_size or digest.hexdigest() != expected_hash:
             raise BusinessError('产物内容摘要不匹配',409,'ARTIFACT_INTEGRITY_FAILED')
         return {'verified':True,'sha256':digest.hexdigest(),'bytes':size}
+
+    async def download(self, actor, artifact_id, destination):
+        await actor.require('deep_dub.project.read')
+        rows=await actor.objects.select('deep_dub_artifacts',workspace_id='eq.'+actor.workspace_id,id='eq.'+identifier(artifact_id))
+        if not rows:raise BusinessError('产物不存在或无权访问',404,'NOT_FOUND')
+        item=rows[0]
+        destination=Path(destination).absolute()
+        parent=destination.parent.resolve(strict=True)
+        if destination.exists():raise BusinessError('下载目标已存在，拒绝覆盖',409,'ARTIFACT_TARGET_EXISTS')
+        # 本地工作副本先写同目录临时文件，核验后以硬链接原子发布，避免覆盖竞态或半文件。
+        temporary=None
+        try:
+            with tempfile.NamedTemporaryFile(prefix='.anp-artifact-',suffix='.part',dir=parent,delete=False) as target:
+                temporary=Path(target.name)
+                verified=await self._read_verified(actor,item['object_path'],item['sha256'],item['bytes'],target)
+            await actor.require('deep_dub.project.read')
+            try:os.link(temporary,destination)
+            except FileExistsError:
+                raise BusinessError('下载目标已存在，拒绝覆盖',409,'ARTIFACT_TARGET_EXISTS') from None
+        finally:
+            if temporary is not None:temporary.unlink(missing_ok=True)
+        return {'artifact_id':item['id'],**verified}
 
 
 service = ArtifactService()

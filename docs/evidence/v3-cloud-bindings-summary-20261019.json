@@ -1,0 +1,54 @@
+{
+  "configuration_sha256": "99541d7871814fb87458502158793cf8bbfefd7b68e46d92d91be779775eeb9d",
+  "local_storage_kinds": [
+    "postgres",
+    "redis",
+    "clickhouse",
+    "rustfs"
+  ],
+  "endpoint_kinds": {
+    "postgres_host_url": {
+      "endpoint_kind": "local-or-docker",
+      "scheme": "postgresql"
+    },
+    "postgres_container_url": {
+      "endpoint_kind": "local-or-docker",
+      "scheme": "postgresql"
+    },
+    "redis_host_url": {
+      "endpoint_kind": "local-or-docker",
+      "scheme": "redis"
+    },
+    "redis_container_url": {
+      "endpoint_kind": "local-or-docker",
+      "scheme": "redis"
+    },
+    "clickhouse_host_url": {
+      "endpoint_kind": "local-or-docker",
+      "scheme": "http"
+    },
+    "clickhouse_container_url": {
+      "endpoint_kind": "local-or-docker",
+      "scheme": "http"
+    },
+    "clickhouse_host_migration_url": {
+      "endpoint_kind": "local-or-docker",
+      "scheme": "clickhouse"
+    },
+    "clickhouse_container_migration_url": {
+      "endpoint_kind": "local-or-docker",
+      "scheme": "clickhouse"
+    },
+    "s3_host_url": {
+      "endpoint_kind": "local-or-docker",
+      "scheme": "http"
+    },
+    "s3_container_url": {
+      "endpoint_kind": "local-or-docker",
+      "scheme": "http"
+    }
+  },
+  "explicit_postgres_cloud_overrides": [],
+  "cloud_connection_verified": false,
+  "scope": "只读当前配置分类，不输出DSN、账号或密钥，也不触发云迁移/建库"
+}

@@ -144,7 +144,7 @@ async def transcribe(config,pool,folder,source,language='Chinese',timeout=300,*,
     return await _run_audio_model(config,pool,folder,source,language,timeout,session=session)
 
 
-async def align_words(config,pool,folder,source,text,language='Chinese',timeout=300):
-    try:return await _run_audio_model(config,pool,folder,source,language,timeout,exact_text=text)
+async def align_words(config,pool,folder,source,text,language='Chinese',timeout=300,*,session=None):
+    try:return await _run_audio_model(config,pool,folder,source,language,timeout,exact_text=text,session=session)
     except BusinessError as error:
         raise BusinessError(error.message.replace('ASR','词对齐'),error.status,error.code.replace('ASR_','ALIGN_')) from None

@@ -7,6 +7,7 @@ import { Input } from '@console/components/ui/input'
 import { Badge } from '@console/components/ui/badge'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@console/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@console/components/ui/table'
+import { SourceWordTiming } from './source-word-timing'
 
 type Result={stage_attempt_id:string;evidence_artifact_id:string;proof:{input:{reference_url:string;binding_scope:string};
   reference:{video_id:string;chapters:{title:string;reported_start_ms:number}[]};comparison:{reference_token_count:number;asr_token_count:number;
@@ -47,5 +48,6 @@ export function SourceReference({projectId,runId,sourceId,status,canRun,identity
       <Button size="sm" variant="outline" disabled={!canRun||status!=='running'||!source||!referenceUrl||compare.isPending} onClick={()=>compare.mutate()}>{compare.isPending?'正在获取并比对…':'获取官方参考并比对'}</Button>
       <p className="text-xs text-muted-foreground">执行需要运行、评分和设备权限。同输入复用已保存证据；原始 HTML 保存在私有对象库中。</p>
     </div>
+    {source&&<SourceWordTiming key={source} projectId={projectId} runId={runId} sourceId={source} status={status} canRun={canRun} identity={identity}/>}
   </section>
 }

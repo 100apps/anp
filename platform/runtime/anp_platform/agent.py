@@ -16,6 +16,8 @@ def job_concurrency(value):
 
 
 def main():
+    from anp_platform.agent_persistence import install
+    install()
     from langgraph_api.cli import run_server
     state=Path(os.environ.get('ANP_AGENT_STATE','/state/agent'))
     state.mkdir(parents=True,exist_ok=True)

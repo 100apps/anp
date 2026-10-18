@@ -1,5 +1,9 @@
 # deep_dub 译配业务
 
+## 源稿复核队列
+
+`uv run anp deep_dub projects source-review-queue <项目UUID> <来源UUID>` 默认直接读取相同业务服务；加根选项 `--transport http` 走冻结业务 API。`--kind numbers` 筛选数字，分页 `--expected-hash` 绑定同一份输入证据。正式工作台可展开队列、查看上下文并查听私有 PCM 窗口；不会自动通过源稿、说话人或字幕审核。已运行验证和未完成边界见 [源稿复核队列](../../docs/deep_dub源稿复核队列.md)。
+
 ## 来源准备编排
 
 `runs prepare-source <运行UUID> --request-key <稳定键>` 默认在本机直接执行相同业务节点，无需启动业务Web、Worker或Agent；HTTP模式调用同一服务。`runs launch-source-preparation` 是显式平台Agent编排入口，`runs source-preparation <运行UUID> <流程UUID>` 读取其持久化状态。可用 `--reference-url` 传入耶鲁官方课程页。

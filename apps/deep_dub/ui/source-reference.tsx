@@ -8,6 +8,7 @@ import { Badge } from '@console/components/ui/badge'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@console/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@console/components/ui/table'
 import { SourceWordTiming } from './source-word-timing'
+import { SourceReview } from './source-review'
 
 type Result={stage_attempt_id:string;evidence_artifact_id:string;proof:{input:{reference_url:string;binding_scope:string};
   reference:{video_id:string;chapters:{title:string;reported_start_ms:number}[]};comparison:{reference_token_count:number;asr_token_count:number;
@@ -44,6 +45,7 @@ export function SourceReference({projectId,runId,sourceId,status,canRun,identity
         <p className="text-xs font-mono text-muted-foreground break-all mt-3">证据 {item.evidence_artifact_id}</p>
         <p className="text-xs text-muted-foreground mt-2">附近音轨块从 1 开始编号，只用于找原音，不是精确词时间或字幕落点。表格两列都不自动判定为正确。</p>
       </>}</details></>}
+    {source&&item&&<SourceReview key={source} projectId={projectId} sourceId={source} identity={identity}/>}
     <div className="space-y-2"><label className="text-xs" htmlFor="official-reference-url">耶鲁官方课程页 URL</label><Input id="official-reference-url" value={referenceUrl} placeholder="https://oyc.yale.edu/history/hist-119/lecture-1" disabled={compare.isPending} onChange={e=>{setUrl(e.target.value);key.current=crypto.randomUUID()}}/>
       <Button size="sm" variant="outline" disabled={!canRun||status!=='running'||!source||!referenceUrl||compare.isPending} onClick={()=>compare.mutate()}>{compare.isPending?'正在获取并比对…':'获取官方参考并比对'}</Button>
       <p className="text-xs text-muted-foreground">执行需要运行、评分和设备权限。同输入复用已保存证据；原始 HTML 保存在私有对象库中。</p>

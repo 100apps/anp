@@ -1,0 +1,163 @@
+{
+  "checked_at_utc": "2026-10-18T19:32:20.886028+00:00",
+  "scope": "实际整片源稿复核队列读取和查听功能，非内容/角色/字幕审核通过",
+  "live": {
+    "project_id": "4f9b0466-356f-4288-be67-4980f676399b",
+    "source_id": "279b2007-7aa4-46b0-add4-facd219757e9",
+    "run_id": "a067cfa8-41ed-4ee6-a4c5-69996512736d",
+    "packet_sha256": "eb5cc090a24a4ca88ca43c948807b3db311165646dd1624388b25c4718202e92",
+    "counts": {
+      "invalid_word_time": 1,
+      "reference_difference": 152,
+      "word_coverage": 17,
+      "chunk_boundary": 43
+    },
+    "total": 213,
+    "numeric_differences": 20,
+    "same_local_http_contract": true,
+    "cross_workspace_rejected": true,
+    "private_pcm_range": 206,
+    "stage_audit_run_unchanged": true,
+    "source_review": "not_measured"
+  },
+  "tests": {
+    "tools": {
+      "passed": 32,
+      "seconds": 5.38
+    },
+    "first_frozen_live": {
+      "passed": 1,
+      "seconds": 16.89
+    },
+    "first_frozen_regression": {
+      "passed": 30,
+      "seconds": 84.72
+    },
+    "final_frozen_live": {
+      "passed": 1,
+      "seconds": 18.31,
+      "log": "deep-dub-source-review-final-live.log"
+    },
+    "typescript_and_production_build": true
+  },
+  "production": {
+    "build": "20261018192716-766f54f1",
+    "platform": {
+      "tag": "anp/platform:production-20261018192716-766f54f1",
+      "id": "sha256:d778f28018a04d34cdf5fc08c147f2f2b6bdd03d733c8c7773533cc5f38b92b1",
+      "base_image": "sha256:a5ddb9b758634ff2b4e50d5e65c3865cecc61ca9ac61bdf999d29557613edee2",
+      "upstreams": [
+        {
+          "name": "studio",
+          "commit": "7425d4930528931400fb3e656e860b1094cb224e"
+        },
+        {
+          "name": "dbx",
+          "commit": "c511c90a7cb5165b7847d5a46dc55f0050e7272b"
+        },
+        {
+          "name": "auth",
+          "commit": "ce9a8eee0cc042be8c7a42981a7ddae631e41d91"
+        },
+        {
+          "name": "storage",
+          "commit": "c826a70ac6e6f56d3e6033ccb164fb1ff5282570"
+        },
+        {
+          "name": "meta",
+          "commit": "ecc19497dcfcb4dc6a83d02e49d812f747cbf981"
+        },
+        {
+          "name": "postgrest",
+          "commit": "922f635dc19edc1abdcc614c22535763dc7d4669"
+        },
+        {
+          "name": "langfuse-web",
+          "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+        },
+        {
+          "name": "langfuse-worker",
+          "commit": "e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3"
+        },
+        {
+          "name": "litellm",
+          "commit": "c143954493baa810e2704917b9cdeb8fb3523718"
+        },
+        {
+          "name": "lens",
+          "commit": "e320cabdf0a67aa52cafe2ede1b4d10ad66dafad"
+        },
+        {
+          "name": "agent",
+          "commit": "41c9c22fdc83d68a2859d0c9a2b627c8615a792f"
+        }
+      ]
+    },
+    "running_image_matches": true,
+    "services": {
+      "auth": "ready",
+      "storage": "ready",
+      "postgrest": "ready",
+      "meta": "ready",
+      "studio": "ready",
+      "dbx": "ready",
+      "langfuse-web": "ready",
+      "langfuse-worker": "ready",
+      "lens": "ready",
+      "litellm": "ready",
+      "agent": "ready"
+    },
+    "business_source_sha256": {
+      "nodes/source_review.py": "83992ef028e4d56e34c20658572304cd4fc85468f93328329e1d9f6ccc04be94",
+      "services/source_review.py": "490f6078c5de5d22576f8825e4c46aa4b4a98b32991dc791e36ade0a6c2c6047",
+      "api/router.py": "2e1722662d32d948c39ba1def7280209928cf46c4fd8949a06e16e1481740738",
+      "cli.py": "fb686942716d2a2f9e07fba78190f32ca68bd395f15ee3b838fc68b0d63cc450"
+    },
+    "both_frozen_builds_python_identical": true,
+    "source_dirty": true,
+    "new_ghcr_pull": false
+  },
+  "state_protection": {
+    "original_thread_values_preserved": 444,
+    "current_threads": 446,
+    "protected_container_ids_preserved": 27,
+    "full_parent_and_child_checkpoint_unchanged": true,
+    "native_thread_status": "interrupted"
+  },
+  "browser": {
+    "same_origin_workbench": true,
+    "queue_items": 213,
+    "number_differences": 20,
+    "detached_previous_audio_paused": true,
+    "detached_previous_audio_time": 1024.212625,
+    "pcm_duration_seconds": 2586.30825,
+    "initial_window_start_seconds": 1018,
+    "word_candidate_window": {
+      "start": 765.44,
+      "end": 770
+    },
+    "window_end_paused": true,
+    "observed_audio": {
+      "error": null,
+      "paused": true,
+      "ready": 4,
+      "time": 770
+    },
+    "numeric_filter_matched": 20,
+    "second_page_label": "209feca3fe12a16941741\n\n上一页问题\n11–20 / 20\n下一页问题",
+    "mobile": {
+      "document_width": 390,
+      "viewport": 390
+    },
+    "screenshot": "deep-dub-source-review-browser-20261019.png"
+  },
+  "not_completed": [
+    "源稿独立内容/角色/词时间审核与放行",
+    "可信语义分段与字幕时钟",
+    "完整生产图及V100真实业务执行",
+    "整片质量与RTF≤0.5",
+    "B站投稿回执",
+    "新GHCR制品发布拉取",
+    "本轮未重新实测IDE F5"
+  ]
+}

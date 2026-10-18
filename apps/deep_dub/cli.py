@@ -3,6 +3,7 @@ import asyncio
 import json
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlencode
 
 import httpx
 from pydantic import ValidationError
@@ -33,6 +34,7 @@ from apps.deep_dub.services.audio_timing import analyze as analyze_timing
 from apps.deep_dub.services.source_recognition import recognize as recognize_source,read_latest as read_source_recognition
 from apps.deep_dub.services.source_reference import compare as compare_source_reference,read as read_source_reference
 from apps.deep_dub.services.source_alignment import align as align_source,read_latest as read_source_alignment
+from apps.deep_dub.services.source_review import read as read_source_review,ReviewKind
 
 app=typer.Typer(help='deep_dub：默认本地执行，复用 anp auth login 会话。',no_args_is_help=True)
 project_commands=typer.Typer(help='项目')
@@ -41,6 +43,14 @@ media_commands=typer.Typer(help='私有音视频信息；同一用户和工作�
 app.add_typer(project_commands,name='projects')
 app.add_typer(run_commands,name='runs')
 app.add_typer(media_commands,name='media')
+
+
+@project_commands.command('source-review-queue')
+def source_review_queue(ctx:typer.Context,project_id:str,source_id:str,offset:int=0,limit:int=30,kind:ReviewKind='all',expected_hash:str|None=None):
+    params={'offset':offset,'limit':limit,'kind':kind}
+    if expected_hash is not None:params['expected_hash']=expected_hash
+    perform(invoke(ctx,'GET',f'/projects/{project_id}/sources/{source_id}/review-queue?'+urlencode(params),
+        lambda actor:read_source_review(actor,project_id,source_id,**params)))
 
 
 @run_commands.command('prepare-reference')

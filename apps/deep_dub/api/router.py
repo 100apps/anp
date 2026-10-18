@@ -26,6 +26,7 @@ from apps.deep_dub.services.audio_timing import AudioTimingInput,analyze as anal
 from apps.deep_dub.services.source_recognition import SourceRecognitionInput,recognize as recognize_source,read_latest as read_source_recognition
 from apps.deep_dub.services.source_reference import SourceReferenceInput,compare as compare_source_reference,read as read_source_reference,read_latest_reference
 from apps.deep_dub.services.source_alignment import SourceAlignmentInput,align as align_source,read_latest as read_source_alignment
+from apps.deep_dub.services.source_review import read as read_source_review,ReviewKind
 from apps.deep_dub.services.source_acquisition import AcquisitionInput,acquire as acquire_source,read as read_source_acquisition
 from apps.deep_dub.services.source_jobs import PreparationInput,issue as issue_source_preparation
 from apps.deep_dub.services.source_orchestration import launch as launch_source_preparation,read as read_source_preparation,prepare_local,latest as latest_source_preparation
@@ -33,6 +34,12 @@ from apps.deep_dub.services.candidates import SourceInput,TranscriptInput,Transl
 
 router = APIRouter(prefix='/api/apps/deep_dub', tags=['deep_dub'])
 router.include_router(media_router)
+
+
+@router.get('/projects/{project_id}/sources/{source_id}/review-queue')
+async def get_source_review_queue(project_id:str,source_id:str,offset:int=Query(0,ge=0),limit:int=Query(30,ge=1,le=100),
+        kind:ReviewKind='all',expected_hash:str|None=Query(None,min_length=64,max_length=64),actor=Depends(get_actor)):
+    return await read_source_review(actor,project_id,source_id,offset=offset,limit=limit,kind=kind,expected_hash=expected_hash)
 
 
 @router.post('/runs/{run_id}/source-preparation-job')

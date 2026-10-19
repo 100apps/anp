@@ -108,8 +108,9 @@ def source_recheck_read(ctx:typer.Context,project_id:str,source_id:str):
 
 
 @project_commands.command('source-review-queue')
-def source_review_queue(ctx:typer.Context,project_id:str,source_id:str,offset:int=0,limit:int=30,kind:ReviewKind='all',expected_hash:str|None=None,include_secondary:bool=False):
+def source_review_queue(ctx:typer.Context,project_id:str,source_id:str,offset:int=0,limit:int=30,kind:ReviewKind='all',expected_hash:str|None=None,include_secondary:bool=False,include_parakeet:bool=False):
     params={'offset':offset,'limit':limit,'kind':kind,'include_secondary':include_secondary}
+    if include_parakeet:params['include_parakeet']=True
     if expected_hash is not None:params['expected_hash']=expected_hash
     perform(invoke(ctx,'GET',f'/projects/{project_id}/sources/{source_id}/review-queue?'+urlencode(params),
         lambda actor:read_source_review(actor,project_id,source_id,**params)))

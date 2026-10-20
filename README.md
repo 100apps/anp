@@ -21,7 +21,7 @@ make dev
 
 ## 开发与F5
 
-VSCode/Qoder打开仓库，安装推荐的Python和debugpy扩展，选择 **ANP: 一键前后端热重载**，按F5。准备任务安装锁定依赖、启动工具容器，再启动Vite和带debugpy的LangGraph后端；后端支持子进程断点和热重载。前端JavaScript断点可选择另一个需Edge的联合调试配置。
+VSCode/Qoder打开仓库，安装推荐的Python和debugpy扩展，选择 **ANP: 一键前后端热重载**，按F5。准备任务先停止已登记的本工作区开发进程，便于从make dev切换，再安装锁定依赖、启动工具容器、Vite和带debugpy的LangGraph后端；后端支持子进程断点和热重载。前端JavaScript断点可选择另一个需Edge的联合调试配置。
 
 停止调试仅结束本工作区登记的开发进程，工具容器继续运行。默认业务20260、前端51760、调试56796；初次准备依赖和平台迁移可能需要数分钟。
 

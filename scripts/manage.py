@@ -125,6 +125,8 @@ def main():
     elif command in ('dev','prepare','frontend','stop'):
         if command in ('dev','prepare'):
             install(); compose('up','-d','--no-build','--wait','--wait-timeout','900','toolbox')
+        if command=='dev':
+            run(['uv','run','--project','business','--frozen','python',ROOT/'scripts/dev.py','stop'])
         if command!='prepare': run(['uv','run','--project','business','--frozen','python',ROOT/'scripts/dev.py',command])
     elif command=='test':
         run(['uv','run','--project','business','--frozen','pytest','business/tests','tests/integration','tests/runtime','-q'])

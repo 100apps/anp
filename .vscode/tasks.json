@@ -81,6 +81,7 @@
       "label": "ANP: 准备调试",
       "dependsOrder": "sequence",
       "dependsOn": [
+        "ANP: 停止开发",
         "ANP: 准备依赖与工具服务",
         "ANP: 前端 HMR",
         "ANP: 后端 HMR 与调试"

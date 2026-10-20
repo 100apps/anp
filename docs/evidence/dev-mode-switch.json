@@ -1,0 +1,17 @@
+{
+  "normal_after_debug": true,
+  "debug_after_normal": true,
+  "normal_demos": {
+    "workflow_demo": {
+      "thread_id": "01a15acf-396d-7423-8808-7b39871bba13",
+      "events": 8,
+      "passed": true
+    },
+    "deepagent_demo": {
+      "thread_id": "01a15acf-3d43-7765-9ce8-95cb8d7ac640",
+      "events": 10,
+      "passed": true
+    }
+  },
+  "passed": true
+}

@@ -62,7 +62,7 @@ make build-multi IMAGE=ghcr.io/你的账号/anp:dev
 
 ## 配置与持久化
 
-根.env控制镜像、服务、端口、资源和数据根；business/.env控制业务；容器 `/data/config/` 存放平台配置、凭据与生效参数。默认8核16GiB。配置和数据通过一个独立目录映射到 `/data`。
+根.env控制镜像、服务、端口、资源和数据根；business/.env控制业务；容器 `/data/config/` 存放平台配置、凭据与生效参数。资源基线8核16GiB，首次生成配置的CPU不超过Docker实际可用核心数。配置和数据通过一个独立目录映射到 `/data`。
 
 Windows Docker Desktop 默认使用Linux主机目录 `/var/lib/anp-next/data`，避免ClickHouse在NTFS上的重命名兼容问题；它不是Windows本机文件夹，迁移机器需单独备份。当前开发机为兼容既有数据保留 `/var/lib/anp3/data`，与产品名称无关。Docker实例默认 `anp-next`，避免覆盖同机旧版ANP。
 

@@ -1,0 +1,40 @@
+{
+  "image": "ghcr.io/100apps/anp:sha-5b971f1b6488c57494733151c69e70a575c22dc3-amd64",
+  "passed": true,
+  "cpu_budget": 4,
+  "extensions_preserved": 78,
+  "storage_versions": {
+    "postgres": "17.6",
+    "redis": "8.10.2",
+    "clickhouse": "26.9.22.3",
+    "rustfs_image": "1.0.3"
+  },
+  "demos": {
+    "workflow_demo": {
+      "thread_id": "01a15af9-5671-700f-8afe-3fecd98ebaed",
+      "events": 8,
+      "passed": true
+    },
+    "deepagent_demo": {
+      "thread_id": "01a15af9-5a56-7289-9acb-f92504dbb001",
+      "events": 10,
+      "passed": true
+    }
+  },
+  "platform_operations": {
+    "dbx_login_cookie": true,
+    "litellm_authenticated_models": true,
+    "studio_public_schema": true,
+    "studio_query": true,
+    "studio_public_tables_loaded": true,
+    "supabase_storage_upload_download": true,
+    "supabase_storage_private_rls": true,
+    "supabase_storage_signed_download": true
+  },
+  "protected": {
+    "passed": true,
+    "unchanged_containers": 66
+  },
+  "docker_nano_cpus": 4000000000,
+  "image_id": "sha256:c8868f8ebe6887671f2739cd596160fe3ca3a68e5bb81eafd585e6b6e2853636"
+}

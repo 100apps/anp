@@ -23,7 +23,16 @@
       "id": "sha256:acac63e4b3a7aed45676488082f541c1335dd393079582966de0bf8a5b456cea",
       "docker_size_bytes": 8535946040,
       "platform": "linux/amd64"
+    },
+    {
+      "image": "ghcr.io/100apps/anp:sha-5b971f1b6488c57494733151c69e70a575c22dc3-amd64",
+      "id": "sha256:c8868f8ebe6887671f2739cd596160fe3ca3a68e5bb81eafd585e6b6e2853636",
+      "docker_size_bytes": 8537061465,
+      "platform": "linux/amd64",
+      "docker_cli_disk_usage": "8.55GB",
+      "docker_cli_content_size": "1.37GB"
     }
   ],
-  "gzip_and_zstd_rootfs_equal": true
+  "gzip_and_zstd_rootfs_equal": true,
+  "note": "docker_size_bytes来自image inspect；CLI的containerd索引总占用还包括SBOM等附属manifest，公开产物两种口径略有差异。"
 }

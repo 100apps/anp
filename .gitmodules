@@ -1,0 +1,24 @@
+[submodule "platform/sources/dbx"]
+	path = platform/sources/dbx
+	url = https://github.com/t8y2/dbx.git
+[submodule "platform/sources/langfuse"]
+	path = platform/sources/langfuse
+	url = https://github.com/langfuse/langfuse.git
+[submodule "platform/sources/litellm"]
+	path = platform/sources/litellm
+	url = https://github.com/BerriAI/litellm.git
+[submodule "platform/sources/supabase"]
+	path = platform/sources/supabase
+	url = https://github.com/supabase/supabase.git
+[submodule "platform/sources/components/auth"]
+	path = platform/sources/components/auth
+	url = https://github.com/supabase/auth.git
+[submodule "platform/sources/components/storage"]
+	path = platform/sources/components/storage
+	url = https://github.com/supabase/storage.git
+[submodule "platform/sources/components/postgres-meta"]
+	path = platform/sources/components/postgres-meta
+	url = https://github.com/supabase/postgres-meta.git
+[submodule "platform/sources/components/postgrest"]
+	path = platform/sources/components/postgrest
+	url = https://github.com/PostgREST/postgrest.git

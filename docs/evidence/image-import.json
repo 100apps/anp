@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "archive": "var/images/anp3-toolbox-20608ea3ae59.tar.zst",
+  "original_index_id": "sha256:20608ea3ae59cb517cbacf2da0fc611c1335465c8ababbae94ff6969ee9675e9",
+  "loaded_platform_id": "sha256:fb03e1d02e7fd24af18732343a94bfd4a1355e97ef11586da757e6fe492fba37",
+  "rootfs_equal": true,
+  "config_equal": true,
+  "note": "仅导出linux/amd64会移除多平台索引/构建证明，故外层ID变化，运行配置和文件系统完全一致；已保留原索引标签作为默认。"
+}

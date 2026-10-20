@@ -1,0 +1,15 @@
+{
+  "langfuse-web": {
+    "DATABASE_URL": "postgresql://user:encoded-password@external-pg:5432/langfuse?connection_limit=5",
+    "DIRECT_URL": "postgresql://user:encoded-password@external-pg:5432/langfuse",
+    "CLICKHOUSE_URL": "http://external-clickhouse:8123",
+    "CLICKHOUSE_MIGRATION_URL": "clickhouse://external-clickhouse:9000",
+    "CLICKHOUSE_USER": "langfuse",
+    "CLICKHOUSE_PASSWORD": "请替换",
+    "REDIS_HOST": "external-redis",
+    "REDIS_AUTH": "请替换",
+    "LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT": "https://s3.example.invalid",
+    "LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT": "https://s3.example.invalid",
+    "LANGFUSE_S3_MEDIA_UPLOAD_INTERNAL_ENDPOINT": "https://s3.example.invalid"
+  }
+}

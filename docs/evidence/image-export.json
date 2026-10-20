@@ -1,0 +1,9 @@
+{
+  "time": "2026-10-20T15:03:30.947015+00:00",
+  "image": "anp3/toolbox:local",
+  "image_id": "sha256:20608ea3ae59cb517cbacf2da0fc611c1335465c8ababbae94ff6969ee9675e9",
+  "archive": "E:\\anp3\\var\\images\\anp3-toolbox-20608ea3ae59.tar.zst",
+  "bytes": 1419252783,
+  "sha256": "bbea576499b0d85ec67bd41f12b68e074de154000b9603dfe0699ac5dd1d5f66",
+  "note": "这是分发包大小；导入后展开占用更大。包含镜像，不包含/data持久化数据。"
+}

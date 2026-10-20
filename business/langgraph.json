@@ -1,0 +1,14 @@
+{
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "workflow_demo": "./src/anp_business/workflow_demo/graph.py:graph",
+    "deepagent_demo": "./src/anp_business/deepagent_demo/agent.py:agent",
+    "video_dubbing": "./src/anp_business/dubbing/graph.py:entry_graph"
+  },
+  "http": {
+    "app": "./src/anp_business/server/http.py:app"
+  },
+  "env": ".env"
+}

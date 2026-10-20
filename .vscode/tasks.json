@@ -1,0 +1,104 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ANP3: 准备依赖与四存储",
+      "type": "process",
+      "command": "python",
+      "args": [
+        "scripts/manage.py",
+        "prepare"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ANP3: 前端 HMR",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "--frozen",
+        "--project",
+        "business",
+        "python",
+        "${workspaceFolder}/scripts/dev.py",
+        "frontend"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "anp3-frontend",
+        "pattern": {
+          "regexp": "^(?!)$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "ANP3_FRONTEND_START",
+          "endsPattern": "ANP3_FRONTEND_READY"
+        }
+      }
+    },
+    {
+      "label": "ANP3: 后端 HMR 与调试",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "--frozen",
+        "--project",
+        "business",
+        "python",
+        "${workspaceFolder}/scripts/dev.py",
+        "backend-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "anp3-backend",
+        "pattern": {
+          "regexp": "^(?!)$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "ANP3_BACKEND_START",
+          "endsPattern": "ANP3_BACKEND_READY"
+        }
+      }
+    },
+    {
+      "label": "ANP3: 准备调试",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "ANP3: 准备依赖与四存储",
+        "ANP3: 前端 HMR",
+        "ANP3: 后端 HMR 与调试"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ANP3: 停止开发",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "--frozen",
+        "--project",
+        "business",
+        "python",
+        "${workspaceFolder}/scripts/dev.py",
+        "stop"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

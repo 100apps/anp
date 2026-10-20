@@ -1,0 +1,7 @@
+**
+!docker/
+!docker/toolbox/
+!docker/toolbox/runtime/
+!docker/toolbox/runtime/**
+!docker/toolbox/versions.lock.json
+!docker/toolbox/optimize.py

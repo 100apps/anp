@@ -1,0 +1,67 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ANP3: Python 后端（热重载）",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "127.0.0.1",
+        "port": 56796
+      },
+      "justMyCode": true,
+      "subProcess": true,
+      "postDebugTask": "ANP3: 停止开发"
+    },
+    {
+      "name": "ANP3: 工作台前端",
+      "type": "pwa-msedge",
+      "request": "launch",
+      "url": "http://127.0.0.1:51760/workbench/",
+      "webRoot": "${workspaceFolder}/business/ui",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "vite:///*": "${webRoot}/*"
+      },
+      "timeout": 90000,
+      "pathMapping": {
+        "/workbench": "${workspaceFolder}/business/ui"
+      }
+    },
+    {
+      "name": "ANP3: 视频译配 CLI（断点）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/dubbing.py",
+      "args": [
+        "run",
+        "${input:anp3VideoInput}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/business/.env",
+      "justMyCode": true,
+      "subProcess": true,
+      "console": "integratedTerminal",
+      "preLaunchTask": "ANP3: 准备依赖与四存储"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "ANP3: 一键前后端热重载",
+      "configurations": [
+        "ANP3: Python 后端（热重载）",
+        "ANP3: 工作台前端"
+      ],
+      "preLaunchTask": "ANP3: 准备调试",
+      "stopAll": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "anp3VideoInput",
+      "type": "promptString",
+      "description": "视频URL或已允许的本地视频路径",
+      "default": "var/dubbing/inputs/science-workshop.mp4"
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "verified_at": "2026-10-20T14:04:42.090637+00:00",
+  "architecture": "linux/amd64",
+  "components": {
+    "dbx": {
+      "version": "0.6.49",
+      "upstream_ref": "v0.6.49",
+      "source_sha": "dc57c632280b65ce15513f9564b5e42e163f507d",
+      "image": "anp3/dbx:source",
+      "image_id": "sha256:a035c45193f7b27e935bd6e3e9681f805d764448946c05ce82a2bc3a6775105c"
+    },
+    "langfuse-web": {
+      "version": "4.64.0",
+      "upstream_ref": "v4.64.0",
+      "source_sha": "71c840e0e9cc945df9c250bdf182f99497584d3a",
+      "image": "anp3/langfuse-web:source",
+      "image_id": "sha256:88b19bc86cace33d601afe892a824a0954bd35fb223295a83f1d066ef5f16975"
+    },
+    "langfuse-worker": {
+      "version": "4.64.0",
+      "upstream_ref": "v4.64.0",
+      "source_sha": "71c840e0e9cc945df9c250bdf182f99497584d3a",
+      "image": "anp3/langfuse-worker:source",
+      "image_id": "sha256:94f95ca134c431a5fc1abd9a83eb015b534e56d284e3029386be2400ae7888a3"
+    },
+    "litellm": {
+      "version": "1.106.0",
+      "upstream_ref": "v1.106.0",
+      "source_sha": "955bdaafa8b72b2b6ff728048f272fbc06049f63",
+      "image": "anp3/litellm:source",
+      "image_id": "sha256:3fb5bdea149de4fba59315fcb905b54d48d564c78582d38d38d4b4bc3819020a"
+    },
+    "supabase-studio": {
+      "version": "1.26.08",
+      "upstream_ref": "v1.26.08",
+      "source_sha": "86854671e95be31e24fa0785cded0579fe692fcb",
+      "image": "anp3/supabase-studio:source",
+      "image_id": "sha256:2cf2ca8f31d5bd8b81b6f9bb759911c6c834737ffc9219bdef233cf1d49fa66a"
+    },
+    "supabase-auth": {
+      "version": "2.197.0",
+      "upstream_ref": "v2.197.0",
+      "source_sha": "4eee58f296d9698a1c2c0ae14d7a0b379c7622d3",
+      "image": "anp3/supabase-auth:source",
+      "image_id": "sha256:694d05cdc548537842fc6050ec426f6e1e80a2bd7ec8791a07a5633087b6c790"
+    },
+    "supabase-rest": {
+      "version": "14.18",
+      "upstream_ref": "v14.18",
+      "source_sha": "6fafa601d13b15f9875e3a70e733ddd6f38f633e",
+      "image": "anp3/supabase-rest:source",
+      "image_id": "sha256:101ee3c0fcceb306971e14cb09ea0289285681191deadbfdf2fc8b532eaf9116"
+    },
+    "supabase-meta": {
+      "version": "0.100.0",
+      "upstream_ref": "v0.100.0",
+      "source_sha": "9a2effd147f2f028fa36553ec2c7eeec80d7f8fc",
+      "image": "anp3/supabase-meta:source",
+      "image_id": "sha256:3601107ff00857e5aa063ea041f2b62a02e4ebf552b77e57011f46a080494313"
+    },
+    "supabase-storage": {
+      "version": "1.81.0",
+      "upstream_ref": "v1.81.0",
+      "source_sha": "f31599e188d7c9c854b1daa76a11b41c6d179462",
+      "image": "anp3/supabase-storage:source",
+      "image_id": "sha256:43ab65e215456310ac70865412c0dc240b0cb682825891836fa37410f5481b0c"
+    },
+    "postgres": {
+      "version": "17.6.1.136",
+      "image": "supabase/postgres:17.6.1.136",
+      "image_id": "sha256:f371b5f3f2ac0a05703f33d6e6134515fb2498cab708fb948a0aeb7481467c00"
+    },
+    "redis": {
+      "version": "8.10.2",
+      "image": "redis:8.10.2-trixie",
+      "image_id": "sha256:a2d0d2c53ca2e3aba4be7719116db00e4b66584509acd97bd2e61725bcacd6dd"
+    },
+    "clickhouse": {
+      "version": "26.9.22.3-stable",
+      "image": "clickhouse/clickhouse-server:26.9.22.3",
+      "image_id": "sha256:cb608f05c88d97584edf9fd9e0660bd54c9a8ce973093e374c96be80573f25ff"
+    },
+    "rustfs": {
+      "version": "1.0.3",
+      "image": "rustfs/rustfs:1.0.3",
+      "image_id": "sha256:ebd18f1cb68d03b8174b4bf663fea0420c3166b9ee06490ec17479212862849b"
+    },
+    "node": {
+      "version": "24 LTS",
+      "image": "node:24-bookworm-slim",
+      "image_id": "sha256:550f22d087ea646e2c4be2882fbdc42591809b1262d2b6197bd8415d31de999b"
+    },
+    "supabase-gateway": {
+      "version": "1.39.1",
+      "image": "envoyproxy/envoy:v1.39.1",
+      "image_id": "sha256:f9831c8399584a8aea0fdab8421a1961b49878dcfddc30f49010fca19935d5fb"
+    }
+  },
+  "compatibility_notes": [
+    "PostgreSQL使用Supabase当前支持的17.6扩展组合，未跳到PG18",
+    "ClickHouse26.9稳定分支满足Langfuse4大于等于25.12的约束",
+    "LiteLLM采用官方正式release1.106.0，不采用main的1.107开发版本",
+    "Studio从官方最新公开release v1.26.08生产重建路径前缀；不冒充2026.10.12预构建镜像"
+  ]
+}

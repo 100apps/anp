@@ -1,0 +1,8 @@
+{
+  "apply": true,
+  "removed_bytes": 922943971,
+  "removed_files": 41733,
+  "deduplicated_bytes": 323297889,
+  "deduplicated_files": 8176,
+  "preserved": "所有14个服务、PostgreSQL完整扩展、Java、Node22/24及原生运行库；保留LICENSE/NOTICE"
+}

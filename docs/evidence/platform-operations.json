@@ -1,0 +1,23 @@
+{
+  "dbx_login_cookie": true,
+  "litellm_authenticated_models": true,
+  "studio_dubbing_schema": true,
+  "studio_dubbing_tables": [
+    "assets",
+    "attempts",
+    "deliverables",
+    "memberships",
+    "projects",
+    "reviews",
+    "runs",
+    "segments",
+    "speakers",
+    "syntheses",
+    "translations",
+    "voices",
+    "workspaces"
+  ],
+  "supabase_storage_upload_download": true,
+  "supabase_storage_private_rls": true,
+  "supabase_storage_signed_download": true
+}

@@ -1,0 +1,23 @@
+{
+  "breakpoint": {
+    "verified": true,
+    "function": "normalize",
+    "line": 8
+  },
+  "continued_demos": {
+    "workflow_demo": {
+      "thread_id": "01a159b5-f7fc-7655-a945-c299a1a914bb",
+      "events": 8,
+      "passed": true
+    },
+    "deepagent_demo": {
+      "thread_id": "01a159b5-fb7b-7074-aac5-f090ac559e74",
+      "events": 10,
+      "passed": true
+    }
+  },
+  "backend_hot_reload": true,
+  "backend_reload_seconds": 13.56,
+  "source_restored": true,
+  "scope": "验证F5所用CLI、debugpy断点、继续执行与源码热重载；未操作IDE菜单"
+}

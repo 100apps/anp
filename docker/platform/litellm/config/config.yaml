@@ -1,0 +1,4 @@
+model_list: []
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+# 按实际供应商增加模型，密钥只使用 os.environ 引用。

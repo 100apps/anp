@@ -1,0 +1,12 @@
+.env
+business/.env
+var/
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/node_modules/
+**/dist/
+business/.langgraph_api/
+*.pyc
+*.tsbuildinfo

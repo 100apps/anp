@@ -1,0 +1,1 @@
+<clickhouse><timezone>UTC</timezone><max_server_memory_usage>1073741824</max_server_memory_usage><logger><level>warning</level><console>true</console></logger></clickhouse>

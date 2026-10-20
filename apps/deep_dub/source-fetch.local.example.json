@@ -1,9 +1,0 @@
-{
-  "executable": "F:/yt-dlp/yt-dlp.exe",
-  "executable_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-  "firefox_profile": "C:/Users/your-user/AppData/Roaming/Mozilla/Firefox/Profiles/your-profile.dub",
-  "user_agent": "请按所选Firefox实际版本与配置填写User-Agent",
-  "node": "C:/nvm4w/nodejs/node.exe",
-  "ffmpeg_directory": "D:/software/bin",
-  "context_revision": "请填写经过核验的下载上下文修订"
-}

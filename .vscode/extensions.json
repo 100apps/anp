@@ -1,1 +1,7 @@
-{"recommendations":["ms-python.python","ms-python.debugpy","ms-python.vscode-pylance","charliermarsh.ruff","bradlc.vscode-tailwindcss","dbaeumer.vscode-eslint"]}
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.debugpy",
+    "dbaeumer.vscode-eslint"
+  ]
+}

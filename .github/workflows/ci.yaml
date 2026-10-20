@@ -1,0 +1,112 @@
+name: 新版持续集成
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anp2-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    name: 锁定依赖与业务测试
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.11.7'
+          python-version: '3.12'
+          enable-cache: true
+          cache-dependency-glob: business/uv.lock
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - name: 准备锁定依赖和独立配置
+        run: |
+          npm install --global pnpm@11.25.0
+          uv sync --project business --frozen
+          pnpm --dir business/ui install --frozen-lockfile
+          python scripts/manage.py init
+      - name: 业务、代理及 Compose 契约测试
+        run: uv run --project business --frozen pytest business/tests tests/integration/test_compose.py -q
+      - name: 前端生产构建
+        run: pnpm --dir business/ui build
+      - name: 核对固定 submodule 与配方
+        run: |
+          python scripts/source_recipes.py
+          git diff --exit-code -- docker/platform docker/source-recipes.json
+      - name: 保存测试边界
+        run: echo '离线模型演示与代理契约测试；真实数据库测试另需显式配置，未调用付费模型。' >> "$GITHUB_STEP_SUMMARY"
+  business:
+    name: 业务镜像（${{ matrix.target }}）
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [demo, production]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 构建新版业务镜像
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/business/Dockerfile
+          target: ${{ matrix.target }}
+          load: true
+          tags: ghcr.io/100apps/anp2-business-${{ matrix.target }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/100apps/anp
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=business-${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=business-${{ matrix.target }}
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        if: matrix.target == 'demo'
+        with:
+          version: '0.11.7'
+          python-version: '3.12'
+      - name: 四存储与演示容器真实冒烟
+        if: matrix.target == 'demo'
+        env:
+          BUSINESS_IMAGE: ghcr.io/100apps/anp2-business-demo:sha-${{ github.sha }}
+        run: |
+          uv sync --project business --frozen
+          python scripts/manage.py init
+          python scripts/manage.py storage
+          docker compose -p anp2-next --profile business up -d --no-build --wait business
+          uv run --project business --frozen python scripts/check.py --api-url http://127.0.0.1:52024
+      - name: 发布已构建并验证的业务镜像
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          IMAGE: ghcr.io/100apps/anp2-business-${{ matrix.target }}
+        run: |
+          docker push "$IMAGE:sha-$GITHUB_SHA"
+          docker tag "$IMAGE:sha-$GITHUB_SHA" "$IMAGE:main"
+          docker push "$IMAGE:main"
+      - name: 保存演示验收回执
+        if: always() && matrix.target == 'demo'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: 新版业务容器验收
+          path: var/evidence/docker-smoke.json
+          if-no-files-found: ignore
+      - name: 清理本次托管运行器容器
+        if: always() && matrix.target == 'demo'
+        run: docker compose -p anp2-next --profile business down --remove-orphans

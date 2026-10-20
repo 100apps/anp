@@ -1,160 +1,111 @@
-# ANP：AI 原生应用工作台
+# ANP2：可插拔 AI 业务工作台
 
-默认用本地 CLI 直接运行业务代码，Web、HTTP CLI 与本地 CLI 共用业务服务、Supabase 身份和权限。
+三层职责、组件独立容器。项目固定使用 **anp2-next**，与现有 anp/anp2 服务隔离。
 
-**V3 仍在验收。** 四存储、单容器平台、真实任务与两种 Qoder F5 均已通过本机检查，包含前后端与平台源码热更新后再次命中断点。WSL 和返回 Docker 各 76 项回归通过，293 条跨模式线程状态完整保留。最新云端流水线已完整成功并发布（85 项检查通过），本机现已完成固定摘要真实拉取、Compose 重建、85 项回归（含真实模型）及 DBX 性能复测；deep_dub、整片 RTF≤0.5 和 B 站发布仍待完成。[完整验收账本](docs/重构实施与验收.md)保留全部目标。
+已跑通四存储、两个 demo、本机与容器 HTTP/流式执行，以及 Qoder 前后端断点和热重载。真实模型视频译配分别通过 CLI、浏览器和容器短片贯通，见[视频译配工作流](docs/视频译配工作流.md)。四个平台的源码构建、统一入口和关键 API 已验收，见[平台统一入口](docs/平台统一入口.md)；正式 Agent Server 授权运行及持久化仍需单独验收。
 
-仓库：[100apps/anp](https://github.com/100apps/anp)（私有）。旧 anp2 服务与数据保留，[V2 操作说明](docs/旧版V2操作说明.md)仅用于旧环境。
+GitHub 使用本版本的测试和独立镜像构建流程，说明见[GitHub 构建](docs/GitHub构建.md)。
 
-## 架构与目录
+## 首次使用
 
-Docker 运行四类存储各一个实例，加一个平台容器。存储也可替换为云 URL/密钥。原生平台调试时只有存储运行在 Docker；业务代码始终留在宿主机，图定义通过只读 apps 目录提供给平台，节点在本机 Worker 执行。
-
-```text
-anp/
-├─ apps/<id>/                 一个目录就是一个业务模块
-│  ├─ app.toml                菜单、权限、服务和图入口
-│  ├─ ui/                     shadcn/ui 页面
-│  ├─ api/                    HTTP 路由
-│  ├─ services/               CLI / HTTP / Web 共用的业务服务
-│  ├─ nodes/                  各阶段的实际业务逻辑
-│  ├─ flow/                   LangGraph 图与部署入口
-│  └─ migrations/             业务关系、约束和 RLS
-├─ console/                   登录、导航、连接管理与工作台外壳
-├─ src/anp/                   CLI、身份、任务、执行适配和业务宿主
-│  └─ dev/v3.py               两种 F5 和默认平台命令共用的编排
-├─ platform/runtime/          平台进程管理、网关、Agent 和状态交接
-├─ deploy/
-│  ├─ storage/                PostgreSQL / Redis / ClickHouse / RustFS
-│  ├─ platform/               一个常驻平台服务、一个发布端口
-│  └─ build/                  上游源码构建适配
-├─ third_party/               十项真实 Git submodule
-├─ config/                    连接模板；本机配置与凭据不提交
-├─ scripts/                   上游同步、构建、镜像组装、原生制品准备
-├─ .github/workflows/         最新依赖构建、验收与 GHCR 发布
-├─ .vscode/                   两种 F5、CLI 调试与后台任务
-├─ migrations/                平台权限和任务模型
-├─ tests/                     契约与真实服务验收
-└─ docs/evidence/             可复核的运行证据
-```
-
-PG 按服务划分数据库与账号，ClickHouse 按库和授权隔离，Redis 按前缀/逻辑库使用，RustFS 按桶使用。Supabase 使用其官方 PostgreSQL 镜像中的扩展，不使用 Windows PostgreSQL。构建中间镜像不会成为额外常驻服务。
-
-## 初始化和启动
-
-需要 Docker Desktop Linux containers、uv/Python 3.12、Node.js 22+、pnpm；Windows 原生平台模式另需 WSL Ubuntu。
+需要 Docker Desktop、uv/Python 3.12、Node.js 24、pnpm 11.25、GNU Make。Windows 克隆时启用长路径：
 
 ```powershell
-git clone --recurse-submodules https://github.com/100apps/anp.git
-cd anp
-uv sync --frozen
-pnpm install --frozen-lockfile
-uv run anp init
+git -c core.longpaths=true clone --recurse-submodules <本仓库地址>
+cd anp2
+git config core.longpaths true
+make init
+make install
+make storage
+make dev
 ```
 
-编辑 `config/deployment.local.toml`，配置平台镜像/URL、本地存储选择、云资源、业务端口和卷前缀。宿主 URL 给 CLI/F5 使用，容器 URL 给平台使用；不能把容器 localhost 当作宿主地址。
+源码已存在时，用 `git -c core.longpaths=true submodule update --init --depth 1` 获取锁定的依赖。普通启动不更新源码。
 
-**GHCR 镜像已发布，并通过本机固定摘要拉取、启动和回归验收。** 私有镜像为 `ghcr.io/100apps/anp-platform:latest`，本轮固定源码标签为 `sha-af282f7599b96ff1373b7d6e9a1051c3526ccd70`；两个标签的已推送摘要均为 `sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3`。本机已完成 read:packages 本人授权、标准输入 Docker 登录、固定摘要真实拉取与 Compose 重建；11 个组件 ready，85 项检查 72.47 秒全部通过且启用了真实模型分支。原 299 条线程完整保留，旧 anp2 未切换。详见 `docs/evidence/v3-ghcr-local-20261018.json`。
+开发工作台：[http://127.0.0.1:51730/workbench/](http://127.0.0.1:51730/workbench/)。后端默认 20240；调试端口 56790。首次无密钥运行使用明确标注的确定性演示模型。
 
-完成 GitHub 本人验证并取得仓库/包读取权限后，可通过标准输入登录；不要把令牌写入公开配置或仓库：
+## 快捷命令
 
-```powershell
-gh auth refresh --hostname github.com --scopes read:packages
-$githubLogin = gh api user --jq .login
-gh auth token | docker login ghcr.io --username $githubLogin --password-stdin
-docker pull ghcr.io/100apps/anp-platform@sha256:72d02acd0c7cd247e2266fa7f506fe795d561e7d2a4cd4bf47aa8ac18246a9b3
-```
-
-也可自行源码构建：先运行 `uv run python scripts/sync_upstreams.py`，构建十项源码组件，再执行 `uv run python scripts/bundle_platform.py --tag anp/platform:v3 --checkpoint-exports`。切换前保留现有状态备份，并将 `platform.image` 设置为实际验收的标签或摘要。
-
-```powershell
-uv run anp platform up
-uv run anp platform check
-```
-
-GitHub Actions 支持手动运行和 `v*` 标签触发：拉取最新上游、记录 SHA，各作业复现同一清单，组装并验收后发布。[39095879677](https://github.com/100apps/anp/actions/runs/39095879677) 已终态成功，85 项检查通过（77.93 秒），导出与服务/业务检查、两个标签推送及缓存收尾均通过。CI 不持有私人模型密钥，最后的真实上游模型调用分支提前返回；本机已使用真实 auto/auto:fast 补验通过，不能把该结果归入 CI。
-
-## 默认本地 CLI
-
-```powershell
-uv run anp auth login --email admin@anp.local
-uv run anp demo tasks create --title "我的任务" --text "你好，工作台。"
-uv run anp demo tasks run <任务ID>
-uv run anp demo tasks get <任务ID>
-uv run anp demo tasks result <任务ID>
-uv run anp demo tasks summary
-```
-
-不需要业务 API、Worker 或前端服务，但仍需访问平台存储和登录服务。JSON 输出与非零错误码便于 AI 调用，支持 `create --input input.json`。HTTP 模式加 `--transport http`，命令和功能一致，需要启动业务 API/Worker。
-
-`uv run anp migrate` 只迁移业务模块；平台内部表由平台初始化。CLI 自动读取私有 `.local/generated/platform-v3/business.env`，显式环境变量优先。本机登录信息在 `config/local-credentials.md`。
-
-## F5 开发
-
-VS Code 或兼容 Qoder 打开 `E:\anp` 或 `anp.code-workspace`，选择：
-
-- **ANP V3: F5 业务（Docker 平台）**：Docker 四存储和单平台，本机 API、Worker、Vite。
-- **ANP V3: F5 业务 + 平台（WSL 源码）**：Docker 四存储，WSL 运行平台源码，本机业务。
-
-API/Worker 使用 debugpy 跟踪 Uvicorn 热重载子进程，前端使用 Vite HMR 与 Edge 调试；平台 Python 源码改动后优雅退出、保存 Agent 状态并重启，调试器追踪子进程。第三方编译制品修改后需要重新构建。开发启动的就绪等待上限为 180 秒；启动断点暂停超过该时限后，需要重新启动调试组合。
-
-WSL 调试前置任务在宿主机确认回环监听后，才发出独立就绪标记；检查只读监听表，不建立额外调试连接。原生调试日志仅保存在 Git 忽略的 `.local/logs/native-debugpy/`。真实 Qoder 已完成整组 F5、前后端与平台源码热更新后的断点、任务执行及结果保存，见 [WSL IDE 分项证据](docs/evidence/v3-native-ide-readiness-20261018.json)。
-
-前端前置任务先验证 Vite 源码映射指向本工作区，再复用已有服务或启动新进程，并等待 API/Worker 就绪。不依赖 IDE 再次接收到旧后台任务的启动日志；启动日志在私有 `.local/v3-vite-f5.log`。单独启动前端仍可用 `uv run python -m anp.dev.v3 web`。
-
-平台 URL 与 `.vscode/settings.json` 的 `anp.platformUrl` 要一致，WSL 路径映射 `/mnt/e/anp` 对应当前工作区。本机隔离环境使用 `http://127.0.0.1:8089`，业务端口 8181/8282/5174；具体由私有绑定决定。5684 是本机开发调试端口，不增加 Docker 发布端口。
-
-首次原生运行从已构建镜像提取制品到受管理的 WSL `/opt/anp`；停止的临时导出容器随后删除，不运行嵌套 Docker。模式切换时先停止另一平台，再通过私有 Agent 归档交接，保留旧快照。
-
-原生制品更新采用干净提取，避免旧模块残留；Agent 状态保留，DBX 本地配置先备份再恢复，备份保存在 `/opt/anp/state/dbx-backups`。提取未完成或镜像身份不符时，启动器会拒绝启动；重新执行原生准备可恢复中断的提取。
-
-本地没有目标镜像时，原生准备会先执行拉取；已有镜像可以离线复用。私有 GHCR 首次拉取仍需要有效登录，拉取失败会停止准备，保留现有数据。
-
-**验收边界：** 实测 IDE 为 Qoder CN IDE 1.34.0。两种组合均完成真实 F5、前后端断点与热更新、任务执行及结果保存；WSL 平台源码重载后的新控制器也命中同一断点。WSL 76 项检查通过（70.50 秒），返回 Docker 后 76 项通过（75.97 秒），均包含真实模型调用；293 条线程的 ID 和 values 哈希跨模式全部一致，27 个含停止状态的受保护容器 ID 未变。临时源码已逐字恢复。运行制品为本机既有镜像，不能替代最新云端镜像的验收。[Qoder 分项证据](docs/evidence/v3-qoder-f5-20261018.json)、[WSL 与交接证据](docs/evidence/v3-native-ide-readiness-20261018.json)。
-
-## 单端口管理入口
-
-以下路径相对于 `platform.url`：
-
-| 路径 | 用途 |
+| 命令 | 用途 |
 | --- | --- |
-| `/workbench/`、`/demo/` | 登录、管理工作台和示例模块 |
-| `/api/` | 业务 API |
-| `/agent/` | 图执行与 Studio 连接 |
-| `/supabase/` | Studio、Auth、REST、Storage |
-| `/dbx/` | 已预配置 PG 各库、Redis、ClickHouse 连接 |
-| `/langfuse/` | 观测、user/session 与阶段评分 |
-| `/litellm/ui/`、`/litellm/v1` | 网关后台与模型 API |
-| `/lens/ui/` | Agent 追踪与 auto 模型分析 |
-| `/_platform/health` | 全部必要组件就绪后返回 200 |
+| make init | 创建缺失的私有配置和随机密码，保留已有值 |
+| make install | 按 uv/pnpm 锁文件安装业务开发依赖 |
+| make storage | 启动本项目四存储及必要的一次性权限初始化 |
+| make dev | 准备依赖与所选服务，前台启动 Python reload 和 Vite HMR |
+| make stop | 只停止本项目登记的开发进程，保留容器及数据 |
+| make build | 构建业务演示镜像，含业务 wheel 与生产前端 dist |
+| make up | 启动所选服务及业务演示容器，工作台端口 52024 |
+| make down | 停止本项目容器；不删除绑定数据文件夹 |
+| make ps / make logs | 查看本项目状态/日志 |
+| make config | 校验 Compose，不把展开后的密钥打印到终端 |
+| make check | 只读检查四存储及旧环境保护基线 |
+| make test | 业务单元测试与前端生产构建 |
+| make smoke | 对本机后端跑四存储读写及两个 HTTP/流式 demo |
+| make smoke-docker | 对演示容器执行同类检查 |
+| make test-integration | 写入探针、重启本项目四存储、读回探针并运行本机 demo |
+| make bootstrap | 显式初始化平台服务数据库、角色密码和 S3 桶 |
+| make build-platform COMPONENT=langfuse-web | 仅构建指定平台服务；不指定 COMPONENT 则构建所选平台 |
+| make platform | 启动已构建的平台服务，不隐式编译 |
+| make platform-check | 验收四个平台真实页面、静态资源及关键 API |
+| make build-production | 构建官方 Agent Server 生产运行目标 |
+| make up-production | 校验正式运行配置并启动；需要官方授权及数据库配置 |
 
-RustFS 控制台属于存储层，地址由宿主端口配置。LangSmith Studio 是外部开发工具；按用户选择仅使用本机 Langfuse，保留 LangSmith 云追踪未配置提示。
+`make test-integration` 只重启 anp2-next 四存储，会创建 anp2_smoke schema/库、Redis 探针及 anp2-smoke 桶。不要用于生产数据验收。CLI 默认不会删除这些探针。
 
-新版 Lens 使用独立追踪写入 Key，`auto` 已完成合成错误样本的真实诊断；接入地址、限额与验收边界见 [Lens 新版接入](docs/Lens新版接入.md)。
+普通 `make up` 是可运行的演示环境，采用开发运行器保存演示状态；不将它当作生产持久化方案。生产目标在同一个业务 Dockerfile 中，依赖官方 Agent Server 入口、PG/Redis 和相应授权。
 
-本机连接与图执行并发的实测、复现命令及参数选择见 [平台性能测量](docs/平台性能.md)。提高执行器并发未改善所测 demo 吞吐，默认保留为 1。
+## Qoder / VS Code 一键调试
 
-复制业务：`uv run anp app new my_app --from demo`，随后检查权限、迁移与 flow，执行 `uv run anp migrate`。详见 [Agent 与业务开发](docs/Agent与业务开发.md)。
+打开 E:/anp2，在“运行和调试”选择 **ANP2: 一键前后端热重载**，按 F5。
 
-## 更新前的数据备份
+前置任务安装锁定依赖、启动所选本地服务、启动前端 HMR 和原生 LangGraph 调试服务；Python 附加到 56790，Edge 调试工作台。已配置 /workbench/ 源码路径映射、Python 子进程调试和停止收尾。
 
-最新源码可能带来数据库迁移，切换前保留现有数据。已完成五库逐库逻辑恢复、RustFS 当前对象、Redis RDB，以及 ClickHouse/Keeper 和 Agent/DBX 的同版本隔离恢复验证；私有归档位于 Git 忽略的 `.local/backups/`，最近指针为 `.local/v3-latest-*-backup.json`。各备份时间不同，不是跨存储原子快照，也不是跨版本迁移通过。切换前须重新核对忙碌线程和状态变化；见[完整备份证据与限制](docs/重构实施与验收.md)。
+- Python 断点示例：business/src/anp_business/workflow_demo/nodes.py。
+- 前端断点示例：business/ui/src/app.tsx 的 run 函数。
+- 停止整组调试会停止本项目的前后端开发进程；容器与数据保留。
+- 普通 make dev 保留 LangGraph 阻塞检查。显式调试模式使用官方 --allow-blocking，因为 Windows debugpy 的源码路径探测会触发阻塞检测。
+- IDE 的工作区信任由用户决定，不自动修改安全设置。
+- 开发日志写入 `var/logs/dev/`，避免后台终端缓冲区写满后卡住热重载；需要持续输出到交互终端时设置 `ANP_DEV_LOG_TO_TERMINAL=1`。
 
-本次验证保留所有权和 ACL，但依赖当前实例已有角色；不代表跨库原子备份或四种存储的完整灾难恢复。后续新写入不在该快照内，正式升级前需要按当时数据重新备份。实际范围见 [备份与还原证据](docs/evidence/v3-postgres-backup-restore-20261018.json)。
+## 版本与文件夹
 
-工作台“平台连接”的管理地址来自当前部署配置。RustFS 默认使用 API 端口加一的控制台端口和 `/rustfs/console/` 路径；也可设置 `storage.s3_console_url`、`storage.s3_health_url`。改用云对象存储时，控制台和健康地址需显式提供；未提供健康接口时显示“外部工具”，不会探测旧本机实例。生成配置后重新启动 F5/API，使新的环境变量生效。
+版本以 [兼容性记录](docker/compatibility.yaml)、[镜像锁定](docker/versions.env)、uv.lock、pnpm-lock.yaml 和真实 submodule SHA 为准，不使用 latest 自动升级。
 
-## 单组件构建验证
+Windows 默认数据根目录为 **Docker Linux 主机文件系统上的 /var/lib/anp2-next/data**，是绑定文件夹，不是命名数据卷。配置位于本项目 var/config。首次验证发现 NTFS 不能满足 ClickHouse MergeTree 目录重命名语义，因此没有使用 Windows 文件夹保存数据库数据。
 
-修复某个上游组件时，可单独执行 GitHub 的“验证单组件源码构建”，使用与正式流水线相同的 CI 配方和磁盘门槛：
+Linux 可设置 ANP_DATA_ROOT 为独立宿主文件夹。变更数据根目录意味着连接另一套数据，应显式迁移；不会自动搬运或删除旧目录。不要运行 docker system prune，也不要复用旧 anp 的卷或路径。
 
-```powershell
-gh workflow run component.yml -f component=studio
-gh workflow run component.yml -f component=langfuse-web
+宿主端口：PG 55432、Redis 56379、ClickHouse 58123/59000、RustFS 59002/59003；均绑定回环地址。默认没有登录鉴权的业务 demo 也只发布到回环地址。
+
+## 切换外部资源
+
+从 .env 的 COMPOSE_PROFILES 移除 local-pg，然后修改 var/config/services 下消费者的连接配置。其他存储也可以分别关闭 profile 并修改对应连接。
+
+Supabase 有两种模式：本地 Auth/REST 等服务连接外部 PG；或业务直接连接已有 Supabase API，关闭整组本地 Supabase。外部 PG 必须满足启用能力所需的版本、角色、扩展、TLS 和迁移权限。bootstrap 不会随 up 自动执行。
+
+配置样例在 config/profiles。模型配置位于本机 business/.env 或容器 var/config/services/business.env：
+
+```dotenv
+ANP_MODEL_MODE=openai
+ANP_MODEL=你的模型名称
+ANP_MODEL_BASE_URL=https://你的OpenAI兼容网关/v1
+ANP_MODEL_API_KEY=你的密钥
 ```
 
-该入口先更新上游并记录 SHA，只推送 `anp-build-组件:run-编号` 中间制品。正式平台流水线的 `component_cache_run` 支持按顺序提供最多四个候选构建编号（逗号分隔）；只有仓库内批准的工作流、实际源码 SHA 和配方摘要都一致才会复用。单组件成功后，仍需正式流水线完成十组件组装、服务启动、业务和权限检查，才发布平台镜像。
+密钥不进入前端和镜像。两个通用 demo 使用标明的离线演示模型；真实供应商调用的验证范围见视频译配工作流记录。
 
-## deep_dub 后续设计
+平台更新流程：显式更新某个 submodule → 检查并同步该组件 Dockerfile → 构建对应服务 → 备份并执行必要迁移 → 仅重建该组件。Langfuse web/worker 使用同一源码版本成组升级，Compose 拓扑不变。
 
-[数据关系、工作台与流程草案](docs/deep_dub设计草案.md)基于旧项目任务和媒体工作台的只读取证，包含版本、RLS、质量审核、设备租约和完整计时口径。目前没有创建业务模块或执行迁移；平台完整验收通过后才实施。
+工作台侧栏集成 `/dbx/`、`/langfuse/`、`/litellm/`、`/supabase/` 同源入口，开发与容器环境使用同一组路径。路径编译、外部平台配置和验收方式见[平台统一入口](docs/平台统一入口.md)。
+## 视频翻译配音
+
+已新增对象驱动的译配业务，入口为工作台的“视频译配”。运行数据保存到本项目 Supabase PostgreSQL，媒体保存到私有 RustFS。
+
+```powershell
+make dub-config
+make dub-migrate
+make dev
+# 或：make dub-run INPUT="E:/anp2/var/dubbing/inputs/原片.mp4"
+```
+
+详细对象关系、模型接入、容器计算端、恢复与验收边界见[视频译配工作流](docs/视频译配工作流.md)。本轮跑通真实短片技术链路；成片状态为“待视听复核”，未声称长片、多角色、音色/自然度或最终专业质量通过。

@@ -1,0 +1,17 @@
+services:
+  dbx:
+    image: ${DBX_IMAGE:-anp2-next/dbx:source}
+    profiles: [dbx]
+    build:
+      context: ./platform/sources/dbx
+      dockerfile: ../../../docker/platform/dbx/Dockerfile
+      args:
+        VITE_DBX_BASE_PATH: /dbx
+    env_file: [./var/config/services/dbx.env]
+    environment:
+      DBX_PUBLIC_BASE_PATH: /dbx
+    ports: ['127.0.0.1:54224:4224']
+    volumes:
+      - ${ANP_DATA_ROOT:-./var/data}/dbx:/app/data
+    restart: unless-stopped
+    init: true

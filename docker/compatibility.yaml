@@ -1,0 +1,51 @@
+核对日期: '2026-10-20'
+状态说明:
+  文档核对: 官方文档或锁定源码声明的约束
+  已验证: 本项目真实运行结果
+  未验证: 不等同于上游或旧项目通过
+存储:
+  PostgreSQL:
+    镜像: supabase/postgres
+    版本: 17.6.1.136
+    实测服务器: '17.6'
+    依据: https://github.com/supabase/supabase/blob/master/docker/docker-compose.yml
+    共同约束: Supabase 扩展与角色; Langfuse_v4_PG大于等于15; PostgREST_14.18_PG大于等于13
+    已验证: 冷启动、SQL读写、重启读回、服务库初始化
+  Redis:
+    版本: 7.4.11
+    依据: https://langfuse.com/self-hosting/upgrade/upgrade-guides/upgrade-v3-to-v4
+    共同约束: Langfuse_v4大于等于7.0; 7.2为推荐值而非上限
+    选择说明: 7.x维护分支; 初选7.2拉取超时后显式选择现有官方7.4.11并锁定摘要
+    已验证: 认证、AOF写入、重启读回
+  ClickHouse:
+    版本: 25.12.11.4
+    依据: https://langfuse.com/self-hosting/upgrade/upgrade-guides/upgrade-v3-to-v4
+    共同约束: Langfuse_v4大于等于25.12
+    已验证: 认证、MergeTree写入、重启读回
+  RustFS:
+    版本: 1.0.2
+    源码提交: 2b243d8659497778c2406cc844a490565ec13287
+    已验证: 桶、对象写入读回、预签名URL、重启读回
+    未验证: Supabase及Langfuse全量S3操作与分段上传
+业务:
+  Python: '3.12'
+  langchain: 1.4.6
+  langgraph: 1.2.16
+  deepagents: 0.7.28
+  langgraph-cli: 0.4.37
+  langgraph-api: 0.16.1
+  langgraph-runtime-inmem: 0.36.1
+  psycopg: 3.3.3
+  生产依赖约束: 官方langgraph-storage-postgres要求psycopg大于等于3.2.8且小于等于3.3.3，不能使用3.3.6
+  已验证: uv锁解析、直接调用、HTTP流式、演示容器、Qoder断点及热重载
+  限制: demo使用确定性演示模型与开发运行器; 不声明真实模型及生产持久化已通过
+平台源码:
+  DBX: {版本: 0.6.48, 状态: 已源码构建启动，独立目录页面及资源通过，未验收全量数据库操作}
+  Langfuse: {版本: 4.63.0, 状态: 已源码构建web及worker，启动迁移及健康接口通过，登录页与资源通过}
+  LiteLLM: {版本: 1.107.0, 状态: 已源码构建启动，PG迁移及readiness通过，独立目录登录页及资源通过}
+  Supabase:
+    独立组件: {Auth: 2.197.0, Storage: 1.81.0, Meta: 0.100.0, PostgREST: 14.18}
+    状态: 已源码构建Studio及四个独立组件，PG迁移及API通过，浏览器可读取dubbing对象表
+    PG注意事项: 外部URL必须具备启用功能所需扩展、角色、迁移权限；并非任意托管PG都可替换
+源码身份: source-recipes.json及Git_submodule_gitlink
+镜像身份: versions.env

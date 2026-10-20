@@ -1,0 +1,11 @@
+{
+  "dependencies": ["anp-business"],
+  "graphs": {
+    "workflow_demo": "anp_business.workflow_demo.graph:graph",
+    "deepagent_demo": "anp_business.deepagent_demo.agent:agent",
+    "video_dubbing": "anp_business.dubbing.graph:entry_graph"
+  },
+  "http": {
+    "app": "anp_business.server.http:app"
+  }
+}

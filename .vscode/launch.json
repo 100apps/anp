@@ -2,131 +2,66 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "debugpy",
-      "request": "launch",
-      "module": "anp.dev.v3",
-      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "subProcess": true,
-      "envFile": "${workspaceFolder}/.local/generated/platform-v3/business.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}"
-      },
-      "presentation": {
-        "hidden": true
-      },
-      "name": "ANP V3: API 热重载调试",
-      "args": [
-        "api"
-      ]
-    },
-    {
-      "type": "debugpy",
-      "request": "launch",
-      "module": "anp.dev.v3",
-      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "subProcess": true,
-      "envFile": "${workspaceFolder}/.local/generated/platform-v3/business.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}"
-      },
-      "presentation": {
-        "hidden": true
-      },
-      "name": "ANP V3: Worker 热重载调试",
-      "args": [
-        "worker"
-      ]
-    },
-    {
-      "name": "ANP V3: 平台源码调试",
+      "name": "ANP2: Python 后端（热重载）",
       "type": "debugpy",
       "request": "attach",
       "connect": {
         "host": "127.0.0.1",
-        "port": 5684
+        "port": 56790
       },
-      "pathMappings": [
-        {
-          "localRoot": "${workspaceFolder}",
-          "remoteRoot": "/mnt/e/anp"
-        }
-      ],
-      "justMyCode": false,
+      "justMyCode": true,
       "subProcess": true,
-      "preLaunchTask": "anp:v3:native-runtime",
-      "postDebugTask": "anp:v3:stop-native",
-      "presentation": {
-        "hidden": true
-      },
-      "clientOS": "windows"
+      "postDebugTask": "ANP2: 停止开发"
     },
     {
-      "name": "ANP V3: 前端热更新调试",
+      "name": "ANP2: 工作台前端",
       "type": "pwa-msedge",
       "request": "launch",
-      "url": "${config:anp.platformUrl}/workbench/",
-      "webRoot": "${workspaceFolder}/console",
+      "url": "http://127.0.0.1:51730/workbench/",
+      "webRoot": "${workspaceFolder}/business/ui",
       "sourceMaps": true,
       "sourceMapPathOverrides": {
-        "http://?:*/workbench/src/*": "${workspaceFolder}/console/src/*",
-        "http://?:*/workbench/@fs/*": "*",
-        "/workbench/src/*": "${workspaceFolder}/console/src/*",
-        "/workbench/@fs/*": "*"
+        "vite:///*": "${webRoot}/*"
       },
-      "userDataDir": "${workspaceFolder}/.local/edge-v3-debug-profile",
-      "preLaunchTask": "anp:v3:frontend-ready",
-      "presentation": {
-        "hidden": true
+      "timeout": 90000,
+      "pathMapping": {
+        "/workbench": "${workspaceFolder}/business/ui"
       }
     },
     {
+      "name": "ANP2: 视频译配 CLI（断点）",
       "type": "debugpy",
       "request": "launch",
-      "module": "anp.cli.entry",
-      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "program": "${workspaceFolder}/scripts/dubbing.py",
+      "args": [
+        "run",
+        "${input:anp2VideoInput}"
+      ],
       "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/business/.env",
       "justMyCode": true,
       "subProcess": true,
-      "envFile": "${workspaceFolder}/.local/generated/platform-v3/business.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}"
-      },
-      "name": "ANP V3: 默认本地 CLI 调试",
-      "args": [
-        "demo",
-        "tasks",
-        "list"
-      ]
+      "console": "integratedTerminal",
+      "preLaunchTask": "ANP2: 准备依赖与四存储"
     }
   ],
   "compounds": [
     {
-      "name": "ANP V3: F5 业务（Docker 平台）",
+      "name": "ANP2: 一键前后端热重载",
       "configurations": [
-        "ANP V3: API 热重载调试",
-        "ANP V3: Worker 热重载调试",
-        "ANP V3: 前端热更新调试"
+        "ANP2: Python 后端（热重载）",
+        "ANP2: 工作台前端"
       ],
-      "preLaunchTask": "anp:v3:prepare-docker",
+      "preLaunchTask": "ANP2: 准备调试",
       "stopAll": true
-    },
+    }
+  ],
+  "inputs": [
     {
-      "name": "ANP V3: F5 业务 + 平台（WSL 源码）",
-      "configurations": [
-        "ANP V3: 平台源码调试",
-        "ANP V3: API 热重载调试",
-        "ANP V3: Worker 热重载调试",
-        "ANP V3: 前端热更新调试"
-      ],
-      "preLaunchTask": "anp:v3:prepare-native",
-      "stopAll": true
+      "id": "anp2VideoInput",
+      "type": "promptString",
+      "description": "视频URL或已允许的本地视频路径",
+      "default": "var/dubbing/inputs/science-workshop.mp4"
     }
   ]
 }

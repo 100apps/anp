@@ -1,0 +1,18 @@
+{
+  "scope": "刻意错误译稿的真实Deep Agent负向诊断，非业务成片审核",
+  "review": {
+    "findings": [
+      {
+        "segment_id": "b2e16477-eab2-4b0d-80ff-c4d1a7263610",
+        "verdict": "failed",
+        "reason": "译文在数字和否定上均出现实质错误：原文“十五美元”被译为“五十美元”，数值错误；原文“Do not drink the water.”的否定被误译为“请喝水”，意义完全相反，属于漏译/添加错误。"
+      }
+    ],
+    "summary": "该段译文存在严重的数字错误和否定意义错误，未能忠实传达原文信息，判定为不合格。",
+    "kind": "translation_semantics",
+    "model": "auto",
+    "subject_sha256": "0c349e5106c3614c355d459239261f6eab976e608f0f9e80801b11611c5b1893",
+    "scope": "文本语义复核；音色、自然度、实际听辨未测",
+    "tool_calls": 2
+  }
+}

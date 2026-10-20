@@ -1,0 +1,15 @@
+# 正式运行入口。授权与数据库配置放入私有 business.production.env。
+services:
+  business-permissions:
+    profiles: !override [demo-only]
+  business:
+    image: ${BUSINESS_PRODUCTION_IMAGE:-anp2-next/business:production}
+    build:
+      target: production
+    env_file:
+      - ./var/config/services/business.production.env
+    ports: !override ['127.0.0.1:52024:8000']
+    volumes: !reset []
+    depends_on: !reset {}
+    healthcheck:
+      test: [CMD, python, -c, 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/api/health")']

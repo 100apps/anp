@@ -1,0 +1,43 @@
+services:
+  business:
+    profiles: [business]
+    image: ${BUSINESS_IMAGE:-anp2-next/business:dev}
+    build:
+      context: .
+      dockerfile: docker/business/Dockerfile
+      target: demo
+    env_file:
+      - ./var/config/services/business.env
+      - path: ./var/config/services/dubbing.env
+        required: false
+    depends_on:
+      business-permissions:
+        condition: service_completed_successfully
+    environment:
+      ANP_UI_DIST: /app/ui
+      ANP_PLATFORM_DBX_URL: ${ANP_PLATFORM_DBX_URL:-http://dbx:4224/dbx}
+      ANP_PLATFORM_LANGFUSE_URL: ${ANP_PLATFORM_LANGFUSE_URL:-http://langfuse-web:3000/langfuse}
+      ANP_PLATFORM_LITELLM_URL: ${ANP_PLATFORM_LITELLM_URL:-http://litellm:4000/litellm}
+      ANP_PLATFORM_SUPABASE_URL: ${ANP_PLATFORM_SUPABASE_URL:-http://supabase-studio:3000/supabase}
+      ANP_PLATFORM_SUPABASE_API_URL: ${ANP_PLATFORM_SUPABASE_API_URL:-http://supabase-gateway:8000}
+    ports: ['127.0.0.1:${BUSINESS_DOCKER_PORT:-52024}:2024']
+    volumes:
+      - ${ANP_DATA_ROOT:-./var/data}/business:/app/.langgraph_api
+      - ./var/dubbing/inputs:/app/dubbing-inputs:ro
+      - ./var/config/dubbing:/app/dubbing-config:ro
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:2024/api/health")']
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  business-permissions:
+    profiles: [business]
+    image: ${BUSINESS_IMAGE:-anp2-next/business:dev}
+    user: '0:0'
+    entrypoint: [/bin/sh, -c]
+    command: ['chown 10001:10001 /state']
+    volumes:
+      - ${ANP_DATA_ROOT:-./var/data}/business:/state
+    restart: 'no'

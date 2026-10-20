@@ -1,0 +1,92 @@
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:?请先执行 make init}
+    profiles: [local-pg]
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?缺少密码}
+      POSTGRES_DB: postgres
+      TZ: UTC
+      PGTZ: UTC
+    ports: ['127.0.0.1:${PG_PORT:-55432}:5432']
+    volumes:
+      - ${ANP_DATA_ROOT:-./var/data}/postgres:/var/lib/postgresql/data
+      - ./var/config/postgres:/etc/postgresql-custom
+    shm_size: 128mb
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U postgres -d postgres']
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    stop_grace_period: 60s
+  redis:
+    image: ${REDIS_IMAGE:?请先执行 make init}
+    profiles: [local-redis]
+    restart: unless-stopped
+    command: [redis-server, /usr/local/etc/redis/redis.conf, --requirepass, '${REDIS_PASSWORD}']
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?缺少密码}
+    ports: ['127.0.0.1:${REDIS_PORT:-56379}:6379']
+    volumes:
+      - ${ANP_DATA_ROOT:-./var/data}/redis:/data
+      - ./var/config/redis:/usr/local/etc/redis:ro
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  clickhouse:
+    image: ${CLICKHOUSE_IMAGE:?请先执行 make init}
+    profiles: [local-clickhouse]
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_USER: anp
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?缺少密码}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: '1'
+      TZ: UTC
+    ports: ['127.0.0.1:${CH_PORT:-58123}:8123', '127.0.0.1:${CH_NATIVE_PORT:-59000}:9000']
+    volumes:
+      - ${ANP_DATA_ROOT:-./var/data}/clickhouse:/var/lib/clickhouse
+      - ./var/config/clickhouse/anp.xml:/etc/clickhouse-server/config.d/anp.xml:ro
+    ulimits:
+      nofile: {soft: 262144, hard: 262144}
+    healthcheck:
+      test: [CMD-SHELL, 'clickhouse-client --user anp --password "$${CLICKHOUSE_PASSWORD}" --query "SELECT 1"']
+      interval: 3s
+      timeout: 5s
+      retries: 40
+    stop_grace_period: 60s
+  rustfs:
+    image: ${RUSTFS_IMAGE:?请先执行 make init}
+    profiles: [local-s3]
+    restart: unless-stopped
+    depends_on:
+      rustfs-permissions:
+        condition: service_completed_successfully
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:?缺少访问 Key}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:?缺少密钥}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: 'true'
+      RUSTFS_ADDRESS: ':9000'
+      RUSTFS_CONSOLE_ADDRESS: ':9001'
+      RUSTFS_OBS_LOG_DIRECTORY: /logs
+    ports: ['127.0.0.1:${S3_PORT:-59002}:9000', '127.0.0.1:${S3_CONSOLE_PORT:-59003}:9001']
+    volumes:
+      - ${ANP_DATA_ROOT:-./var/data}/rustfs:/data
+      - ./var/logs/rustfs:/logs
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:9000/health >/dev/null']
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  rustfs-permissions:
+    image: ${RUSTFS_IMAGE:?请先执行 make init}
+    profiles: [local-s3]
+    user: '0:0'
+    entrypoint: [/bin/sh, -c]
+    command: ['chown 10001:10001 /data /logs']
+    volumes:
+      - ${ANP_DATA_ROOT:-./var/data}/rustfs:/data
+      - ./var/logs/rustfs:/logs
+    restart: 'no'

@@ -1,0 +1,54 @@
+x-supabase: &supabase
+  profiles: [supabase]
+  env_file: [./var/config/services/supabase.env]
+  environment: &supabase-environment
+    API_EXTERNAL_URL: ${ANP_PUBLIC_URL:-http://127.0.0.1:52024}/supabase/auth/v1
+    SUPABASE_PUBLIC_URL: ${ANP_PUBLIC_URL:-http://127.0.0.1:52024}/supabase
+    NEXT_PUBLIC_BASE_PATH: /supabase
+  restart: unless-stopped
+  init: true
+services:
+  supabase-auth:
+    <<: *supabase
+    image: ${SUPABASE_AUTH_IMAGE:-anp2-next/supabase-auth:source}
+    build:
+      context: ./platform/sources/components/auth
+      dockerfile: ../../../../docker/platform/supabase/auth.Dockerfile
+  supabase-rest:
+    <<: *supabase
+    image: ${SUPABASE_REST_IMAGE:-anp2-next/supabase-rest:source}
+    build:
+      context: ./platform/sources/components/postgrest
+      dockerfile: ../../../../docker/platform/supabase/rest.Dockerfile
+  supabase-meta:
+    <<: *supabase
+    image: ${SUPABASE_META_IMAGE:-anp2-next/supabase-meta:source}
+    build:
+      context: ./platform/sources/components/postgres-meta
+      dockerfile: ../../../../docker/platform/supabase/meta.Dockerfile
+  supabase-studio:
+    <<: *supabase
+    image: ${SUPABASE_STUDIO_IMAGE:-anp2-next/supabase-studio:source}
+    build:
+      context: ./platform/sources/supabase
+      dockerfile: ../../../docker/platform/supabase/studio.Dockerfile
+      target: production
+      args:
+        NEXT_PUBLIC_BASE_PATH: /supabase
+    ports: ['127.0.0.1:53001:3000']
+  supabase-storage:
+    <<: *supabase
+    environment:
+      <<: *supabase-environment
+      SERVER_PORT: '5000'
+    image: ${SUPABASE_STORAGE_IMAGE:-anp2-next/supabase-storage:source}
+    build:
+      context: ./platform/sources/components/storage
+      dockerfile: ../../../../docker/platform/supabase/storage.Dockerfile
+  supabase-gateway:
+    profiles: [supabase]
+    image: envoyproxy/envoy:v1.39.1
+    command: ['envoy', '-c', '/etc/envoy/envoy.yaml', '--log-level', warning]
+    volumes: [./docker/platform/supabase/config/envoy.yaml:/etc/envoy/envoy.yaml:ro]
+    ports: ['127.0.0.1:58000:8000']
+    restart: unless-stopped

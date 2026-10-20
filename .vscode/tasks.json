@@ -2,161 +2,103 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "anp:v3:prepare-docker",
+      "label": "ANP2: 准备依赖与四存储",
       "type": "process",
-      "command": "uv",
+      "command": "python",
       "args": [
-        "run",
-        "python",
-        "-m",
-        "anp.dev.v3",
-        "prepare",
-        "--mode",
-        "docker"
+        "scripts/manage.py",
+        "prepare"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      }
+      "problemMatcher": []
     },
     {
-      "label": "anp:v3:prepare-native",
+      "label": "ANP2: 前端 HMR",
       "type": "process",
       "command": "uv",
       "args": [
         "run",
+        "--frozen",
+        "--project",
+        "business",
         "python",
-        "-m",
-        "anp.dev.v3",
-        "prepare",
-        "--mode",
-        "native"
+        "${workspaceFolder}/scripts/dev.py",
+        "frontend"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "anp:v3:native-runtime",
-      "type": "process",
-      "command": "uv",
-      "args": [
-        "run",
-        "python",
-        "-m",
-        "anp.dev.v3",
-        "native"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "isBackground": true,
       "problemMatcher": {
-        "owner": "anp:v3:native-runtime",
+        "owner": "anp2-frontend",
         "pattern": {
-          "regexp": "^(__ANP_NEVER_MATCH__)$",
-          "message": 1
+          "regexp": "^(?!)$"
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": ".*",
-          "endsPattern": "^ANP_NATIVE_HOST_DEBUG_READY$"
+          "beginsPattern": "ANP2_FRONTEND_START",
+          "endsPattern": "ANP2_FRONTEND_READY"
         }
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      },
-      "isBackground": true
-    },
-    {
-      "label": "anp:v3:stop-native",
-      "type": "process",
-      "command": "uv",
-      "args": [
-        "run",
-        "python",
-        "-m",
-        "anp.dev.v3",
-        "stop-native"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
       }
     },
     {
-      "label": "anp:v3:web",
+      "label": "ANP2: 后端 HMR 与调试",
       "type": "process",
       "command": "uv",
       "args": [
         "run",
+        "--frozen",
+        "--project",
+        "business",
         "python",
-        "-m",
-        "anp.dev.v3",
-        "web"
+        "${workspaceFolder}/scripts/dev.py",
+        "backend-debug"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
+      "isBackground": true,
       "problemMatcher": {
-        "owner": "anp:v3:web",
+        "owner": "anp2-backend",
         "pattern": {
-          "regexp": "^(__ANP_NEVER_MATCH__)$",
-          "message": 1
+          "regexp": "^(?!)$"
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": ".*",
-          "endsPattern": ".*Local:.*"
+          "beginsPattern": "ANP2_BACKEND_START",
+          "endsPattern": "ANP2_BACKEND_READY"
         }
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      },
-      "isBackground": true
+      }
     },
     {
-      "label": "anp:v3:wait",
+      "label": "ANP2: 准备调试",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "ANP2: 准备依赖与四存储",
+        "ANP2: 前端 HMR",
+        "ANP2: 后端 HMR 与调试"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ANP2: 停止开发",
       "type": "process",
       "command": "uv",
       "args": [
         "run",
+        "--frozen",
+        "--project",
+        "business",
         "python",
-        "-m",
-        "anp.dev.v3",
-        "wait"
+        "${workspaceFolder}/scripts/dev.py",
+        "stop"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "anp:v3:frontend-ready",
-      "type": "process",
-      "command": "uv",
-      "args": ["run", "python", "-m", "anp.dev.v3", "frontend-ready"],
-      "options": {"cwd": "${workspaceFolder}"},
-      "problemMatcher": [],
-      "presentation": {"reveal": "always", "panel": "dedicated"}
+      "problemMatcher": []
     }
   ]
 }

@@ -1,0 +1,23 @@
+services:
+  litellm:
+    image: ${LITELLM_IMAGE:-anp2-next/litellm:source}
+    profiles: [litellm]
+    build:
+      context: ./platform/sources/litellm
+      dockerfile: ../../../docker/platform/litellm/Dockerfile
+    env_file: [./var/config/services/litellm.env]
+    environment:
+      SERVER_ROOT_PATH: /litellm
+      LITELLM_LOCAL_MODEL_COST_MAP: 'true'
+      PROXY_BASE_URL: ${ANP_PUBLIC_URL:-http://127.0.0.1:52024}/litellm
+    command: ['--config', /etc/litellm/config.yaml, '--port', '4000']
+    volumes: [./var/config/platform/litellm:/etc/litellm:ro]
+    ports: ['127.0.0.1:54000:4000']
+    restart: unless-stopped
+    init: true
+    healthcheck:
+      test: [CMD, python, -c, 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:4000/health/readiness", timeout=5)']
+      interval: 3s
+      timeout: 6s
+      start_period: 60s
+      retries: 20

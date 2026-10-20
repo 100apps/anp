@@ -1,0 +1,84 @@
+{
+  "dbx/Dockerfile": {
+    "source": "dbx/deploy/Dockerfile",
+    "sha": "41a5a9f59e4d8d265b4e148290241a3ecda7f60a",
+    "upstream_dockerfile_sha256": "4f4bc4dc5b80054dcfec238d55dbaed891ad996f5ab2b471114aadc1a070b256",
+    "dockerfile_sha256": "d74eacf099b35bb17b34cdd19bf5674b506bcba4566bd086340b617d36169eb8",
+    "adaptations": [
+      "\u4f7f\u7528Docker\u5185\u7f6eBuildKit\u524d\u7aef\uff0c\u907f\u514d\u989d\u5916\u62c9\u53d6\u6784\u5efa\u524d\u7aef",
+      "DBX\u524d\u7aef\u7f16\u8bd1\u5199\u5165/dbx\u524d\u7f00",
+      "\u6784\u5efa\u547d\u4ee4\u517c\u5bb9\u663e\u5f0f\u4f20\u5165\u7684\u4e34\u65f6HTTP(S)\u4ee3\u7406\uff1b\u8fd0\u884c\u955c\u50cf\u4e0d\u4fdd\u5b58\u4ee3\u7406"
+    ]
+  },
+  "langfuse/web.Dockerfile": {
+    "source": "langfuse/web/Dockerfile",
+    "sha": "a08b1f33a43b70ca717c60019c37a14583bcb550",
+    "upstream_dockerfile_sha256": "60a39d3130003c5697c7298636adcaf418a98c01e64c1f957ca9c05c2c61709a",
+    "dockerfile_sha256": "4b6f1bbd23591aa3208313cf84c293c637677de375d2f819d672012582c187e3",
+    "adaptations": [
+      "\u6784\u5efa\u547d\u4ee4\u517c\u5bb9\u663e\u5f0f\u4f20\u5165\u7684\u4e34\u65f6HTTP(S)\u4ee3\u7406\uff1b\u8fd0\u884c\u955c\u50cf\u4e0d\u4fdd\u5b58\u4ee3\u7406"
+    ]
+  },
+  "langfuse/worker.Dockerfile": {
+    "source": "langfuse/worker/Dockerfile",
+    "sha": "a08b1f33a43b70ca717c60019c37a14583bcb550",
+    "upstream_dockerfile_sha256": "01250e73e750a2dbfa0112d8900f9ddb545e8f1e877c265cb2792840744a1a2d",
+    "dockerfile_sha256": "d944932f2a06ecc8aea4348f5dcfb676e15be015445da65e9e768a2f0d98204c",
+    "adaptations": [
+      "\u6784\u5efa\u547d\u4ee4\u517c\u5bb9\u663e\u5f0f\u4f20\u5165\u7684\u4e34\u65f6HTTP(S)\u4ee3\u7406\uff1b\u8fd0\u884c\u955c\u50cf\u4e0d\u4fdd\u5b58\u4ee3\u7406"
+    ]
+  },
+  "litellm/Dockerfile": {
+    "source": "litellm/Dockerfile",
+    "sha": "c80f1c2ec8c266695eee8f4af1f1a1d68038b65a",
+    "upstream_dockerfile_sha256": "6b1c1e4dfcc170012d08fa435e6806cf1310742803ce9d061be424d6951ac7f4",
+    "dockerfile_sha256": "cb94e38df0f56472d969e79073da8968841c14c7133478f3b785c5273d7f7839",
+    "adaptations": [
+      "\u4f7f\u7528Docker\u5185\u7f6eBuildKit\u524d\u7aef\uff0c\u907f\u514d\u989d\u5916\u62c9\u53d6\u6784\u5efa\u524d\u7aef",
+      "\u4f7f\u7528\u5df2\u6709\u5b98\u65b9\u7b7e\u540d\u5bc6\u94a5\u9a8c\u8bc1\u516c\u5f00Wolfi\u8f6f\u4ef6\u4ed3\u5e93\uff0c\u907f\u514d\u79c1\u6709APK\u4ed3\u5e93\u8ba4\u8bc1\u4f9d\u8d56",
+      "Dashboard\u4f7f\u7528Next\u751f\u4ea7Webpack\u7f16\u8bd1\uff0c\u89c4\u907f\u9501\u5b9a\u7248\u672cTurbopack\u5185\u90e8\u51b2\u7a81",
+      "\u8fdc\u7a0b\u6e90\u7801\u5f52\u6863\u5728RUN\u4e2d\u4e0b\u8f7d\u4ee5\u652f\u6301\u663e\u5f0f\u4ee3\u7406\uff0c\u4fdd\u7559\u4e0a\u6e38SHA256\u6821\u9a8c",
+      "\u6784\u5efa\u547d\u4ee4\u517c\u5bb9\u663e\u5f0f\u4f20\u5165\u7684\u4e34\u65f6HTTP(S)\u4ee3\u7406\uff1b\u8fd0\u884c\u955c\u50cf\u4e0d\u4fdd\u5b58\u4ee3\u7406"
+    ]
+  },
+  "supabase/auth.Dockerfile": {
+    "source": "components/auth/Dockerfile",
+    "sha": "4eee58f296d9698a1c2c0ae14d7a0b379c7622d3",
+    "upstream_dockerfile_sha256": "382271a57f2c9887652641d1a8c1c297b8da7b0839a6062565f39ddbdbde5ac3",
+    "dockerfile_sha256": "8257ee2b364d60f5ae393a35ff3f5e57fd5788c4f2f7b8da0c95d1072f2c517d",
+    "adaptations": [
+      "\u6784\u5efa\u547d\u4ee4\u517c\u5bb9\u663e\u5f0f\u4f20\u5165\u7684\u4e34\u65f6HTTP(S)\u4ee3\u7406\uff1b\u8fd0\u884c\u955c\u50cf\u4e0d\u4fdd\u5b58\u4ee3\u7406"
+    ]
+  },
+  "supabase/meta.Dockerfile": {
+    "source": "components/postgres-meta/Dockerfile",
+    "sha": "9a2effd147f2f028fa36553ec2c7eeec80d7f8fc",
+    "upstream_dockerfile_sha256": "f70307c2836b8e791516557268c9e51a990af0a4b41cdfb1f07cd254a6df9451",
+    "dockerfile_sha256": "0a164b513020fee598cb42a1334514cf2659c5db51c728ff0b6759339b6e4565",
+    "adaptations": [
+      "\u6784\u5efa\u547d\u4ee4\u517c\u5bb9\u663e\u5f0f\u4f20\u5165\u7684\u4e34\u65f6HTTP(S)\u4ee3\u7406\uff1b\u8fd0\u884c\u955c\u50cf\u4e0d\u4fdd\u5b58\u4ee3\u7406"
+    ]
+  },
+  "supabase/storage.Dockerfile": {
+    "source": "components/storage/Dockerfile",
+    "sha": "f31599e188d7c9c854b1daa76a11b41c6d179462",
+    "upstream_dockerfile_sha256": "041cceef935c0e743f78edc1e7d7a3f1a56ef82893575719b2d831728e0cad08",
+    "dockerfile_sha256": "cd7ca9e549c30779755ee881be2aad4d902c65c4964fd4015a7ea3442f603f7b",
+    "adaptations": [
+      "\u4f7f\u7528Docker\u5185\u7f6eBuildKit\u524d\u7aef\uff0c\u907f\u514d\u989d\u5916\u62c9\u53d6\u6784\u5efa\u524d\u7aef",
+      "\u6784\u5efa\u547d\u4ee4\u517c\u5bb9\u663e\u5f0f\u4f20\u5165\u7684\u4e34\u65f6HTTP(S)\u4ee3\u7406\uff1b\u8fd0\u884c\u955c\u50cf\u4e0d\u4fdd\u5b58\u4ee3\u7406"
+    ]
+  },
+  "supabase/studio.Dockerfile": {
+    "source": "supabase/apps/studio/Dockerfile",
+    "sha": "5c7638f08bacc6f14a567f0acc0e43a4aa064e82",
+    "upstream_dockerfile_sha256": "e998ba05d068468d08b73c90d2a149bcdaa961557ee6b23bb0f00478398b99da",
+    "dockerfile_sha256": "45d8e443f87a4079032489251aa0d1e0a7cb8aee22ed500e11e809c73862b19c",
+    "adaptations": [
+      "Studio\u4e24\u4e2a\u6784\u5efa\u76ee\u6807\u5747\u5199\u5165/supabase\u524d\u7f00",
+      "\u4fee\u6b63\u81ea\u6258\u7ba1Studio API_URL\u786c\u7f16\u7801/api\uff0c\u4f7f\u6d4f\u89c8\u5668API\u8bf7\u6c42\u4fdd\u7559\u5e73\u53f0\u524d\u7f00\uff1b\u4ec5\u955c\u50cf\u5185\u8865\u4e01",
+      "Studio\u955c\u50cf\u5065\u5eb7\u68c0\u67e5\u4f7f\u7528\u5b9e\u9645\u76ee\u5f55\u524d\u7f00",
+      "\u6784\u5efa\u547d\u4ee4\u517c\u5bb9\u663e\u5f0f\u4f20\u5165\u7684\u4e34\u65f6HTTP(S)\u4ee3\u7406\uff1b\u8fd0\u884c\u955c\u50cf\u4e0d\u4fdd\u5b58\u4ee3\u7406"
+    ]
+  }
+}

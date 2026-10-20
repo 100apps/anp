@@ -1,0 +1,14 @@
+name: anp2-next
+include:
+  - path: docker/storage/compose.yaml
+    project_directory: .
+  - path: docker/platform/dbx/compose.yaml
+    project_directory: .
+  - path: docker/platform/langfuse/compose.yaml
+    project_directory: .
+  - path: docker/platform/litellm/compose.yaml
+    project_directory: .
+  - path: docker/platform/supabase/compose.yaml
+    project_directory: .
+  - path: docker/business/compose.yaml
+    project_directory: .

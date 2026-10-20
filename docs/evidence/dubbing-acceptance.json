@@ -1,0 +1,550 @@
+{
+  "checked_at": "2026-10-19T17:08:50.682381+00:00",
+  "scope": "真实短片技术链路与对象完整性；非长片或完整质量达标",
+  "runs": [
+    {
+      "run_id": "33f53b0f-e343-4251-a776-80556383063e",
+      "status": "ready_for_review",
+      "duration_seconds": 13.56,
+      "elapsed_seconds_including_failure_and_queue": 181.878642,
+      "stages": [
+        "acquire",
+        "audio_review",
+        "background",
+        "finish",
+        "mix",
+        "review_translation",
+        "source_text",
+        "synthesize",
+        "translate",
+        "voices"
+      ],
+      "segment_count": 1,
+      "translation_versions": 1,
+      "asset_readbacks": [
+        {
+          "id": "625f6838-cced-4bf9-9693-cbdba167f0ce",
+          "kind": "source",
+          "sha256": "5447037e296fc86c481f223eb8331d250b517c8fac9a12debc44558f7bda726f",
+          "size_bytes": 123270
+        },
+        {
+          "id": "f12890ce-2497-47e2-9759-62fe20c931b1",
+          "kind": "source_pcm",
+          "sha256": "b1128cf969b002a945db21800e47f40456d4ce3df82a8c58a0e26a80b98473b3",
+          "size_bytes": 2310222
+        },
+        {
+          "id": "075b15c5-fc4b-4469-ba74-a6cd466f1bcd",
+          "kind": "asr_evidence",
+          "sha256": "2705997da8141164db5c8595fcefc0f7066b46a6f5cec3cd92ddb8e5972f82a5",
+          "size_bytes": 267
+        },
+        {
+          "id": "74537bc3-8436-4e48-9c14-9d2a4564adb7",
+          "kind": "source_vocals",
+          "sha256": "b2877b462cdf078f4b4b487ea1e3482c68bd81b70f028ddd9e0a30d4fd591149",
+          "size_bytes": 2310188
+        },
+        {
+          "id": "b2b7130b-185d-4db2-9f96-4633bfc93d63",
+          "kind": "background",
+          "sha256": "0db4b4c3e553fa76cb818664f055eb4cb71636495707f07698692fb608e6a680",
+          "size_bytes": 2310188
+        },
+        {
+          "id": "1456a329-f575-4015-a560-f8f00ad6b623",
+          "kind": "voice_reference",
+          "sha256": "12f48fc1ae7aa08c11d6d0229ea3cf61c0824a65799a7f0f99f3a026fb3a6453",
+          "size_bytes": 480078
+        },
+        {
+          "id": "235ae2fd-4e66-47da-a438-dfbb978b08dd",
+          "kind": "tts_candidate",
+          "sha256": "a7eb948af29f4aff726c301bdfaf6642c17b05a7c85ebc4726ac43608dcd1688",
+          "size_bytes": 524844
+        },
+        {
+          "id": "12e9e1d1-b34f-495c-bcb1-7e1d5edecd25",
+          "kind": "back_asr_evidence",
+          "sha256": "4c4a329be669bd31e4881b375febc0b9df310ad8e8032cde4f066a4e91ccbe54",
+          "size_bytes": 278
+        },
+        {
+          "id": "b8a6e994-5911-43fc-ac81-82a0fd0af653",
+          "kind": "translated_subtitle",
+          "sha256": "ec3732ccdb6c7e04670797d6369e6509dfecc789a9e2dffc3135ef912eb40922",
+          "size_bytes": 222
+        },
+        {
+          "id": "0f624923-587d-4d38-ad12-83bd96870407",
+          "kind": "source_subtitle",
+          "sha256": "81c406d1038ded772d4c61a76925481e96519796549d4099d180b1f5f75a04ed",
+          "size_bytes": 214
+        },
+        {
+          "id": "396ebe74-4720-4b75-8841-ae97e5ef6782",
+          "kind": "dubbing_track",
+          "sha256": "148fbdd09dcf4da85106b9a14dacd41a1b5580a6195a48c54014d14dffb8859a",
+          "size_bytes": 1301804
+        },
+        {
+          "id": "78984ca6-970d-4575-b41b-c96d72798474",
+          "kind": "translated_video",
+          "sha256": "61fb39531aee70f3db34e963422b8bde74e51866dd0603b520e10b4aadb0a452",
+          "size_bytes": 329364
+        },
+        {
+          "id": "f42c0930-87ba-4f1b-b8bc-c319a2c29381",
+          "kind": "delivery_manifest",
+          "sha256": "35df80224a9a7506ec3fecde2ba5ac47a9d84de4154ca3a85920975b498eb5f3",
+          "size_bytes": 1147
+        }
+      ],
+      "reviews": [
+        {
+          "kind": "source_audio_and_speaker",
+          "verdict": "not_measured",
+          "tool_calls": null,
+          "subject_sha256": "ea1e8e952bb08bc09dbb41e1d63c6f2b3aae8e54a00fd7ba079da132acae03a7"
+        },
+        {
+          "kind": "background_listening",
+          "verdict": "not_measured",
+          "tool_calls": null,
+          "subject_sha256": "0db4b4c3e553fa76cb818664f055eb4cb71636495707f07698692fb608e6a680"
+        },
+        {
+          "kind": "translation_semantics",
+          "verdict": "passed",
+          "tool_calls": 2,
+          "subject_sha256": "0c60b721fa551e99a9fb34fc381811210a5a6532c36c8e33a51fb0ef8bb7bed7"
+        },
+        {
+          "kind": "audio_text",
+          "verdict": "passed",
+          "tool_calls": 3,
+          "subject_sha256": "5e4d94a3e24e22eddcc9237623ad9940a63ada172f5e9883e83b247684af5f70"
+        },
+        {
+          "kind": "final_listening",
+          "verdict": "not_measured",
+          "tool_calls": null,
+          "subject_sha256": "61fb39531aee70f3db34e963422b8bde74e51866dd0603b520e10b4aadb0a452"
+        }
+      ],
+      "manifest": {
+        "checks": {
+          "decode": "passed",
+          "duration": "passed",
+          "loudness": {
+            "input_i": "-16.07",
+            "input_tp": "-2.38",
+            "output_i": "-16.02",
+            "input_lra": "4.10",
+            "output_tp": "-2.27",
+            "output_lra": "1.60",
+            "input_thresh": "-26.37",
+            "output_thresh": "-26.25",
+            "target_offset": "0.02",
+            "normalization_type": "dynamic"
+          },
+          "audio_text": "passed",
+          "translation_text": "passed"
+        },
+        "run_id": "33f53b0f-e343-4251-a776-80556383063e",
+        "status": "ready_for_review",
+        "not_measured": [
+          "源正文听辨",
+          "源词边界",
+          "说话人身份",
+          "音色相似度",
+          "自然度",
+          "背景泄漏及事件",
+          "最终人工视听"
+        ],
+        "synthesis_ids": [
+          "48a456dd-832d-4c6f-983e-13b0533a6565"
+        ],
+        "output_asset_id": "78984ca6-970d-4575-b41b-c96d72798474",
+        "source_asset_id": "625f6838-cced-4bf9-9693-cbdba167f0ce",
+        "translation_ids": {
+          "4da9668e-69c0-4a40-933b-563b83c13cbe": "d1a40a66-b860-4e65-9ca6-4cecbf1b5d15"
+        },
+        "performance_scope": "本轮技术贯通，非整片质量或RTF达标声明"
+      },
+      "model_identity": "LiteLLM auto 路由；未核实其底层模型身份",
+      "professional_quality_passed": false
+    },
+    {
+      "run_id": "6580609b-96d7-414a-97bd-1fc94e5b8aca",
+      "status": "ready_for_review",
+      "duration_seconds": 13.56,
+      "elapsed_seconds_including_failure_and_queue": 53.452914,
+      "stages": [
+        "acquire",
+        "audio_review",
+        "background",
+        "finish",
+        "mix",
+        "review_translation",
+        "source_text",
+        "synthesize",
+        "translate",
+        "voices"
+      ],
+      "segment_count": 1,
+      "translation_versions": 1,
+      "asset_readbacks": [
+        {
+          "id": "a397bc3c-5fe0-46bd-9d94-c531ec80aa70",
+          "kind": "source",
+          "sha256": "5447037e296fc86c481f223eb8331d250b517c8fac9a12debc44558f7bda726f",
+          "size_bytes": 123270
+        },
+        {
+          "id": "76f452ab-307e-401b-8d6c-53ede1252e59",
+          "kind": "source_pcm",
+          "sha256": "b1128cf969b002a945db21800e47f40456d4ce3df82a8c58a0e26a80b98473b3",
+          "size_bytes": 2310222
+        },
+        {
+          "id": "4eb35b68-fe3c-438b-b762-5cf759ef8d49",
+          "kind": "source_vocals",
+          "sha256": "b2877b462cdf078f4b4b487ea1e3482c68bd81b70f028ddd9e0a30d4fd591149",
+          "size_bytes": 2310188
+        },
+        {
+          "id": "a17bd418-1de0-4812-85c8-7a22b250dbfe",
+          "kind": "background",
+          "sha256": "0db4b4c3e553fa76cb818664f055eb4cb71636495707f07698692fb608e6a680",
+          "size_bytes": 2310188
+        },
+        {
+          "id": "10c12aa7-208f-43c7-ba1a-825562f0f96b",
+          "kind": "asr_evidence",
+          "sha256": "12b1be24c063d3af18ba989d12905717a3967aa3fd9a01e021ea25043a9a539a",
+          "size_bytes": 267
+        },
+        {
+          "id": "edf5413a-8971-40bc-8938-a372ed5f4e2f",
+          "kind": "voice_reference",
+          "sha256": "12f48fc1ae7aa08c11d6d0229ea3cf61c0824a65799a7f0f99f3a026fb3a6453",
+          "size_bytes": 480078
+        },
+        {
+          "id": "a8b2778d-f6b6-48d6-a82c-8da302cae3af",
+          "kind": "tts_candidate",
+          "sha256": "cdf48d8d92c0efda841b441d840094ae71452a86aeb6edd66f9da40b2f8e4a1d",
+          "size_bytes": 517676
+        },
+        {
+          "id": "ef76a5cf-704d-4de5-976f-7f93e99bbb29",
+          "kind": "back_asr_evidence",
+          "sha256": "2214521de99026073c0b7107bea15a9665491899b5c1a003eb1d9403c4e8a451",
+          "size_bytes": 269
+        },
+        {
+          "id": "067d60fe-d936-46f9-af5b-a02825f846f4",
+          "kind": "translated_subtitle",
+          "sha256": "30b3b67ca922d121888d5cd9ba681e15e2a4b1342748a3d5617e1ee8ddf6d8d9",
+          "size_bytes": 216
+        },
+        {
+          "id": "e7a21fb1-fd84-4c0a-a18f-c318990c2da6",
+          "kind": "source_subtitle",
+          "sha256": "81c406d1038ded772d4c61a76925481e96519796549d4099d180b1f5f75a04ed",
+          "size_bytes": 214
+        },
+        {
+          "id": "8acc95c8-68cf-4eb9-bc0e-a4df1d34708d",
+          "kind": "dubbing_track",
+          "sha256": "099f25b12f4da0154a38b7893894a86f2ea30fc7c2fa676abb2fd7f72583bdbe",
+          "size_bytes": 1301804
+        },
+        {
+          "id": "998de4e8-16aa-4790-832b-ab4e8f442045",
+          "kind": "translated_video",
+          "sha256": "ba45efeadbc59a61ccfa70cfd30f43f006d097188cf19772d170d428755d21a2",
+          "size_bytes": 329188
+        },
+        {
+          "id": "e753fc1f-3378-4f3d-90d4-6f3cb2a768d8",
+          "kind": "delivery_manifest",
+          "sha256": "0c01da506e05f48d4af2966af4717a74be3a89915508b3231d2eaad33222798e",
+          "size_bytes": 1147
+        }
+      ],
+      "reviews": [
+        {
+          "kind": "background_listening",
+          "verdict": "not_measured",
+          "tool_calls": null,
+          "subject_sha256": "0db4b4c3e553fa76cb818664f055eb4cb71636495707f07698692fb608e6a680"
+        },
+        {
+          "kind": "source_audio_and_speaker",
+          "verdict": "not_measured",
+          "tool_calls": null,
+          "subject_sha256": "ea1e8e952bb08bc09dbb41e1d63c6f2b3aae8e54a00fd7ba079da132acae03a7"
+        },
+        {
+          "kind": "translation_semantics",
+          "verdict": "passed",
+          "tool_calls": 2,
+          "subject_sha256": "5ae9ec2df265e4e9b77b939f0a0aa416f7fcbf361e6ed6fe3f0189f0635cf4b0"
+        },
+        {
+          "kind": "audio_text",
+          "verdict": "passed",
+          "tool_calls": 2,
+          "subject_sha256": "28a940fdefda922b7a03cecf6cf7bddc868538456aa717da05a17a3b3021c072"
+        },
+        {
+          "kind": "final_listening",
+          "verdict": "not_measured",
+          "tool_calls": null,
+          "subject_sha256": "ba45efeadbc59a61ccfa70cfd30f43f006d097188cf19772d170d428755d21a2"
+        }
+      ],
+      "manifest": {
+        "checks": {
+          "decode": "passed",
+          "duration": "passed",
+          "loudness": {
+            "input_i": "-16.30",
+            "input_tp": "-4.32",
+            "output_i": "-16.23",
+            "input_lra": "5.50",
+            "output_tp": "-4.15",
+            "output_lra": "2.40",
+            "input_thresh": "-26.57",
+            "output_thresh": "-26.46",
+            "target_offset": "0.23",
+            "normalization_type": "dynamic"
+          },
+          "audio_text": "passed",
+          "translation_text": "passed"
+        },
+        "run_id": "6580609b-96d7-414a-97bd-1fc94e5b8aca",
+        "status": "ready_for_review",
+        "not_measured": [
+          "源正文听辨",
+          "源词边界",
+          "说话人身份",
+          "音色相似度",
+          "自然度",
+          "背景泄漏及事件",
+          "最终人工视听"
+        ],
+        "synthesis_ids": [
+          "4d0a0d31-05ab-4d0d-b2f4-10aeea26c380"
+        ],
+        "output_asset_id": "998de4e8-16aa-4790-832b-ab4e8f442045",
+        "source_asset_id": "a397bc3c-5fe0-46bd-9d94-c531ec80aa70",
+        "translation_ids": {
+          "63c6a1fd-508d-4bb1-a1e1-370affc4e844": "eff32684-4237-48c6-abfe-4d8ba64a7bad"
+        },
+        "performance_scope": "本轮技术贯通，非整片质量或RTF达标声明"
+      },
+      "model_identity": "LiteLLM auto 路由；未核实其底层模型身份",
+      "professional_quality_passed": false
+    },
+    {
+      "run_id": "8944ec52-4896-4469-bf7e-46f777c8083a",
+      "status": "ready_for_review",
+      "duration_seconds": 13.56,
+      "elapsed_seconds_including_failure_and_queue": 105.538608,
+      "stages": [
+        "acquire",
+        "audio_review",
+        "background",
+        "finish",
+        "mix",
+        "review_translation",
+        "source_text",
+        "synthesize",
+        "translate",
+        "voices"
+      ],
+      "segment_count": 1,
+      "translation_versions": 1,
+      "asset_readbacks": [
+        {
+          "id": "d3b71e69-b80a-4abc-92dd-848349fae89a",
+          "kind": "source",
+          "sha256": "5447037e296fc86c481f223eb8331d250b517c8fac9a12debc44558f7bda726f",
+          "size_bytes": 123270
+        },
+        {
+          "id": "fcd8d4b2-31e1-4ad3-8e44-124f22ee76af",
+          "kind": "source_pcm",
+          "sha256": "94d1e380116de4b34b94b9a6e1dcc041bfcc5e32af96dac09f42d2b72a254df0",
+          "size_bytes": 2310222
+        },
+        {
+          "id": "0cc01425-6c45-436c-ade8-b5301cfc6017",
+          "kind": "source_vocals",
+          "sha256": "b2877b462cdf078f4b4b487ea1e3482c68bd81b70f028ddd9e0a30d4fd591149",
+          "size_bytes": 2310188
+        },
+        {
+          "id": "f1351127-af12-4c46-a620-7fd91447d2ce",
+          "kind": "background",
+          "sha256": "0db4b4c3e553fa76cb818664f055eb4cb71636495707f07698692fb608e6a680",
+          "size_bytes": 2310188
+        },
+        {
+          "id": "c76f854e-817e-404c-82ab-6820b8915979",
+          "kind": "asr_evidence",
+          "sha256": "2fa619dd95ef2da68c01902d88e941c43318b8304fc04f2cefa756b784fd1d65",
+          "size_bytes": 261
+        },
+        {
+          "id": "e4c498e0-ee68-4c5d-91c2-d75b5ff8ad6c",
+          "kind": "voice_reference",
+          "sha256": "0c646e80353c6beb5c1de56458a50403f875b8535a76b8dfbf180a70058bfddd",
+          "size_bytes": 480078
+        },
+        {
+          "id": "6a360709-5db2-4f13-84a7-be753e389910",
+          "kind": "tts_candidate",
+          "sha256": "9092ce14097529d136168aad0c1fca8be3f2714d3f49ca5e14e099456a9bea89",
+          "size_bytes": 506924
+        },
+        {
+          "id": "1154601f-b774-4339-95b9-60c8b96f7e66",
+          "kind": "back_asr_evidence",
+          "sha256": "2e859c9863a5404088fed6c480c3906ee9f04fe8f8fcca96a801cb9bee5c6466",
+          "size_bytes": 257
+        },
+        {
+          "id": "b5458be8-f2cc-4894-a8cd-eb0143629a5a",
+          "kind": "translated_subtitle",
+          "sha256": "e22d297ccf5a5152c8c134d569046c083ce0f289261abe7f697a6a49187b10fa",
+          "size_bytes": 207
+        },
+        {
+          "id": "21965ddc-584e-4d89-bef8-8b2269142cbb",
+          "kind": "source_subtitle",
+          "sha256": "97d6b4ce2dc43780cebe08ff5fefdebcb6a5df542930d54a145ff558e9b15c47",
+          "size_bytes": 211
+        },
+        {
+          "id": "63641b0d-8d15-47ca-92ff-14b817be6312",
+          "kind": "dubbing_track",
+          "sha256": "6b68c92c556cd1e585fb312f715e54e5ff61fc52fa353ca39c58092e1bd4b3bf",
+          "size_bytes": 1301838
+        },
+        {
+          "id": "fb5f67b3-b6b5-4799-af36-0d070ba5b471",
+          "kind": "translated_video",
+          "sha256": "49a2ef3f513e558c6bf1b6466f34ba5d6d5992126b648d8649de5e3cd2f0a586",
+          "size_bytes": 329199
+        },
+        {
+          "id": "e4bc9966-e2c0-4524-ae3e-7d8c46fc8fe5",
+          "kind": "delivery_manifest",
+          "sha256": "092f2be464fdbfef2336b2a9efda4d67f00db14ca2d784ba5432a0187d737402",
+          "size_bytes": 1108
+        }
+      ],
+      "reviews": [
+        {
+          "kind": "background_listening",
+          "verdict": "not_measured",
+          "tool_calls": null,
+          "subject_sha256": "0db4b4c3e553fa76cb818664f055eb4cb71636495707f07698692fb608e6a680"
+        },
+        {
+          "kind": "source_audio_and_speaker",
+          "verdict": "not_measured",
+          "tool_calls": null,
+          "subject_sha256": "ea1e8e952bb08bc09dbb41e1d63c6f2b3aae8e54a00fd7ba079da132acae03a7"
+        },
+        {
+          "kind": "translation_semantics",
+          "verdict": "passed",
+          "tool_calls": 2,
+          "subject_sha256": "158de59a7c52119c5935ee4138caab4312d15f46aef6a9399e8fe9ae38ed50c1"
+        },
+        {
+          "kind": "audio_text",
+          "verdict": "passed",
+          "tool_calls": 2,
+          "subject_sha256": "da2c68cf17b8553b335321f9d0bb5fcb51db3b547f3c4d38e3e7db0ee58bf843"
+        },
+        {
+          "kind": "final_listening",
+          "verdict": "not_measured",
+          "tool_calls": null,
+          "subject_sha256": "49a2ef3f513e558c6bf1b6466f34ba5d6d5992126b648d8649de5e3cd2f0a586"
+        }
+      ],
+      "manifest": {
+        "checks": {
+          "decode": "passed",
+          "duration": "passed",
+          "loudness": {
+            "input_i": "-16.24",
+            "input_tp": "-4.08",
+            "output_i": "-16.10",
+            "input_lra": "7.20",
+            "output_tp": "-3.92",
+            "output_lra": "2.90",
+            "input_thresh": "-26.61",
+            "output_thresh": "-26.41",
+            "target_offset": "0.10",
+            "normalization_type": "dynamic"
+          },
+          "audio_text": "passed",
+          "translation_text": "passed"
+        },
+        "run_id": "8944ec52-4896-4469-bf7e-46f777c8083a",
+        "status": "ready_for_review",
+        "not_measured": [
+          "源正文听辨",
+          "源词边界",
+          "说话人身份",
+          "音色相似度",
+          "自然度",
+          "背景泄漏及事件",
+          "最终人工视听"
+        ],
+        "synthesis_ids": [
+          "79b80b2f-5e84-40b4-a631-5de3290a1aae"
+        ],
+        "output_asset_id": "fb5f67b3-b6b5-4799-af36-0d070ba5b471",
+        "source_asset_id": "d3b71e69-b80a-4abc-92dd-848349fae89a",
+        "translation_ids": {
+          "cef067ec-bfe3-4c7f-95cc-a1de22fcd3e4": "87d64c15-cb0a-45ae-86a3-245003ef772f"
+        },
+        "performance_scope": "本轮技术贯通，非整片质量或RTF达标声明"
+      },
+      "model_identity": "LiteLLM auto 路由；未核实其底层模型身份",
+      "professional_quality_passed": false
+    }
+  ],
+  "validation": {
+    "pytest": {
+      "passed": 18,
+      "database_integration_enabled": true,
+      "command": "ANP_DUB_TEST_DATABASE=1; uv run --project business --frozen pytest business/tests tests/integration/test_compose.py -q"
+    },
+    "ui_build": "通过 TypeScript 与 Vite 生产构建",
+    "negative_review": "真实Deep Agent拦截数字与否定的刻意错误",
+    "http": "原生图重放、独立进程重放、阶段数不增加、MP4 Range=206",
+    "browser": {
+      "readyState": 4,
+      "duration_seconds": 13.6,
+      "screenshot": "docs/evidence/dubbing-workbench.png"
+    },
+    "demo_image": "sha256:e22fe9993933d1d69da267dbb7838f92be250738f58a3ffc7f28cd02fa49a65c",
+    "production_image": "sha256:de4e0e4455bffb3a2e1377a0c0bfd7d3ba5b421fda818660eb58b7d1dfdc80e4",
+    "production_runtime": "已构建并通过依赖兼容检查；未启动正式授权运行器",
+    "protected_containers": {
+      "unchanged": 49,
+      "scope": "既有容器ID及StartedAt；不含本项目新容器"
+    }
+  }
+}

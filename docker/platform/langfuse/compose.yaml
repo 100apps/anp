@@ -1,0 +1,24 @@
+x-langfuse: &langfuse
+  profiles: [langfuse]
+  env_file: [./var/config/services/langfuse.env]
+  environment:
+    NEXT_PUBLIC_BASE_PATH: /langfuse
+    NEXTAUTH_URL: ${ANP_PUBLIC_URL:-http://127.0.0.1:52024}/langfuse/api/auth
+  restart: unless-stopped
+  init: true
+services:
+  langfuse-web:
+    <<: *langfuse
+    image: ${LANGFUSE_WEB_IMAGE:-anp2-next/langfuse-web:source}
+    build:
+      context: ./platform/sources/langfuse
+      dockerfile: ../../../docker/platform/langfuse/web.Dockerfile
+      args:
+        NEXT_PUBLIC_BASE_PATH: /langfuse
+    ports: ['127.0.0.1:53000:3000']
+  langfuse-worker:
+    <<: *langfuse
+    image: ${LANGFUSE_WORKER_IMAGE:-anp2-next/langfuse-worker:source}
+    build:
+      context: ./platform/sources/langfuse
+      dockerfile: ../../../docker/platform/langfuse/worker.Dockerfile

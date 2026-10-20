@@ -1,0 +1,27 @@
+{
+  "project": "anp2-next",
+  "time": "2026-10-20T02:00:52Z",
+  "storage_versions": {
+    "postgres": "17.6",
+    "redis": "7.4.11",
+    "clickhouse": "25.12.11.4",
+    "rustfs_image": "rustfs/rustfs@sha256:7e948dad4748bda48f8985fda7195f8cf2e4259427011f6120acc2c9acf51587"
+  },
+  "storage_read_write": true,
+  "demos": {
+    "workflow_demo": {
+      "thread_id": "01a1570a-4476-703c-b52b-0857712035db",
+      "events": 8,
+      "passed": true
+    },
+    "deepagent_demo": {
+      "thread_id": "01a1570a-4791-7018-8c25-abba61dc743d",
+      "events": 10,
+      "passed": true
+    }
+  },
+  "protected": {
+    "passed": true,
+    "unchanged_containers": 49
+  }
+}

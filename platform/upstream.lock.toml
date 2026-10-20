@@ -1,8 +1,0 @@
-[supabase]
-repository = "https://github.com/supabase/supabase"
-revision = "7425d4930528931400fb3e656e860b1094cb224e"
-
-[langfuse]
-repository = "https://github.com/langfuse/langfuse"
-configuration = "docker-compose.yml"
-sha256 = "cbadc35c66f78297aa758a9cfd7f2d1e36ba7146c60985c77bff448d023a29f2"

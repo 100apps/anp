@@ -1,0 +1,24 @@
+services:
+  business:
+    build:
+      target: dev
+    working_dir: /workspace/business
+    environment:
+      UV_PROJECT_ENVIRONMENT: /opt/anp-venv
+    volumes:
+      - ./business:/workspace/business
+      - business_dev_venv:/opt/anp-venv
+  business-ui:
+    profiles: [business]
+    image: node:24-bookworm-slim
+    working_dir: /workspace/business/ui
+    command: [sh, -c, 'npx --yes pnpm@11.25.0 install --frozen-lockfile && npx --yes pnpm@11.25.0 dev --host 0.0.0.0']
+    environment:
+      ANP_AGENT_URL: http://business:2024
+    ports: ['127.0.0.1:51730:51730']
+    volumes:
+      - ./business/ui:/workspace/business/ui
+      - business_ui_modules:/workspace/business/ui/node_modules
+volumes:
+  business_dev_venv:
+  business_ui_modules:

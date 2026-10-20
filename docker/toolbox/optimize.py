@@ -8,7 +8,7 @@ from pathlib import Path
 import shutil
 import stat
 
-ROOTS=[Path(p) for p in ('/opt/apps','/app/.venv','/opt/prisma','/opt/langfuse-tools')]
+ROOTS=[Path(p) for p in ('/opt/anp/services','/app/.venv','/opt/prisma','/opt/langfuse-tools')]
 
 
 def files(root):
@@ -39,21 +39,21 @@ def main():
             report['removed_bytes']+=path.stat().st_size; report['removed_files']+=1
             if args.apply: path.unlink()
     # Redis的四个入口使用相同官方二进制，由argv[0]选择模式；保留全部命令。
-    redis=Path('/opt/bin/redis-server')
+    redis=Path('/opt/anp/bin/redis-server')
     digest=hashlib.sha256(redis.read_bytes()).digest()
     for name in ('redis-sentinel','redis-check-rdb','redis-check-aof'):
         path=redis.with_name(name)
         if path.is_file() and not path.is_symlink():
-            assert hashlib.sha256(path.read_bytes()).digest()==digest
+            if hashlib.sha256(path.read_bytes()).digest()!=digest: continue
             report['removed_bytes']+=path.stat().st_size
             if args.apply: path.unlink(); path.symlink_to('redis-server')
     node=Path('/usr/bin/node')
     if node.is_file() and not node.is_symlink():
         report['removed_bytes']+=node.stat().st_size
-        if args.apply: node.unlink(); node.symlink_to('/opt/node24/bin/node')
+        if args.apply: node.unlink(); node.symlink_to('/opt/anp/runtimes/node24/bin/node')
     # 硬链接保持原始路径与Node相对解析；仅对node_modules代码进行内容去重。
     groups=defaultdict(list)
-    for path in files(Path('/opt/apps')):
+    for path in files(Path('/opt/anp/services')):
         if 'node_modules' not in path.parts or any(p in ('.cache','cache','tmp') for p in path.parts): continue
         info=path.stat()
         if info.st_size>=4096: groups[(info.st_size,bool(info.st_mode&0o111))].append(path)
@@ -71,7 +71,7 @@ def main():
                 os.chown(first,0,0); first.chmod(0o755 if executable else 0o644)
                 path.unlink(); os.link(first,path)
     if args.apply:
-        Path('/opt/anp3/image-optimization.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+        Path('/opt/anp/image-optimization.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps(report,ensure_ascii=False))
 
 

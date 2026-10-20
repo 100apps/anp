@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from anp_business.dubbing import media, providers
 from anp_business.dubbing.settings import required
 
-app = FastAPI(title="ANP3 独立音频计算端", docs_url=None, openapi_url=None)
+app = FastAPI(title="ANP 独立音频计算端", docs_url=None, openapi_url=None)
 
 
 class Task(BaseModel):

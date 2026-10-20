@@ -1,0 +1,87 @@
+[
+  {
+    "component": "rustfs",
+    "path": "LICENSE",
+    "ref": "1.0.3",
+    "sha256": "8ef87773cd6df917c9cf75bdb3075d92b78ad4cdf8e51d6c98030292442524d8",
+    "source": "https://github.com/rustfs/rustfs/blob/1.0.3/LICENSE"
+  },
+  {
+    "component": "envoy",
+    "path": "LICENSE",
+    "ref": "v1.39.1",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "source": "https://github.com/envoyproxy/envoy/blob/v1.39.1/LICENSE"
+  },
+  {
+    "component": "envoy",
+    "path": "NOTICE",
+    "ref": "v1.39.1",
+    "sha256": "329d90738f1ee3633da8e7439ea6f9624ec6274a9cbd72437aafa0e8df9de32e",
+    "source": "https://github.com/envoyproxy/envoy/blob/v1.39.1/NOTICE"
+  },
+  {
+    "component": "clickhouse",
+    "path": "LICENSE",
+    "ref": "v26.9.22.3-stable",
+    "sha256": "af5d33e7f3dbbd25e889d8bdc61c83562c257d20c22386bb04106cd22937341a",
+    "source": "https://github.com/ClickHouse/ClickHouse/blob/v26.9.22.3-stable/LICENSE"
+  },
+  {
+    "component": "redis",
+    "path": "LICENSE.txt",
+    "ref": "8.10.2",
+    "sha256": "4a0e416b9537688f30dfe69ddaceb2ca64d96b7df02a0a6760d376890ddc4e40",
+    "source": "https://github.com/redis/redis/blob/8.10.2/LICENSE.txt"
+  },
+  {
+    "component": "dbx",
+    "path": "LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  {
+    "component": "langfuse",
+    "path": "LICENSE",
+    "sha256": "fd09d42b5b16606ad2042cc1edf3a82da1c47743709f170c959c74758af229d6"
+  },
+  {
+    "component": "litellm",
+    "path": "LICENSE",
+    "sha256": "b170d6bf8e8835dd357e011681db028f4d51e2fb0ea892058f56e01fb39b8273"
+  },
+  {
+    "component": "litellm",
+    "path": "license_cache.json",
+    "sha256": "bd6fe3f79d87afe7a108bf42873e3bac12e8d76a4ead421d25c388bae2ac180f"
+  },
+  {
+    "component": "supabase",
+    "path": "LICENSE",
+    "sha256": "c29468abcd629e248c2f76848155c386b733872bcabcc4cf65ef1e7c61431042"
+  },
+  {
+    "component": "auth",
+    "path": "LICENSE",
+    "sha256": "503d71232fd444999ec976b5109958cf029d0a992401a0b51b36579c741fd048"
+  },
+  {
+    "component": "postgrest",
+    "path": "LICENSE",
+    "sha256": "9581b7c80c9fc84b79b98985821c7e5e4ce01706287e2c7a7b64aa8eeb85d227"
+  },
+  {
+    "component": "meta",
+    "path": "LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  {
+    "component": "storage",
+    "path": "LICENSE",
+    "sha256": "87420ad3debbb44af3e5aac29f5bafd4427eef7a28c6e5eae199bdde1ad7c2e2"
+  },
+  {
+    "component": "postgres",
+    "path": "LICENSE",
+    "sha256": "fd313c784c2e3c964fe043fdb7bcffa8f84627d53d2cf3a61c61586ff6c3f4c1"
+  }
+]

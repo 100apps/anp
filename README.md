@@ -1,58 +1,71 @@
-# ANP3：统一工具镜像与本地业务
+# ANP
 
-存储和平台组成一个 `anp3/toolbox:local` 镜像，运行时只有一个工具容器。业务 Python 和工作台在宿主运行，LangGraph 内置 Agent Server 的 HTTP 扩展提供平台路径代理。默认资源基线为 8 核、16GB。
+一个可插拔的 AI 应用脚手架：Debian slim 工具镜像内置存储和平台，业务代码在本地运行，LangGraph 内置 Agent Server 扩展提供统一HTTP入口，前端使用React、shadcn/ui和Vite。
 
-## 启动
+## 快速开始
 
-需要 Docker、Python、uv、Node 24、pnpm 11.25 和 Make。平台是真实 submodule，Windows 初始化时执行 `git -c core.longpaths=true submodule update --init --recursive`，避免上游源码长路径问题。已构建好的本机工作区可直接启动：
+需要 Docker（Linux容器）、uv、Node.js 24、pnpm 11.25 和 Make。命令行快捷操作还需要 Python 3；Windows使用python，Linux/macOS使用python3。uv会按锁文件准备业务Python 3.12环境。
 
 ```sh
+git clone https://github.com/100apps/anp.git
+cd anp
 make init
+make pull
 make up
 make dev
 ```
 
-工作台：http://127.0.0.1:51760/workbench/ 。平台入口：`/dbx/`、`/langfuse/`、`/litellm/`、`/supabase/`。业务 API：http://127.0.0.1:20260/docs 。业务默认使用明确标注的离线演示模型，包含 Workflow、Deep Agents 和保留的译配工作流。
+首次使用发布镜像不需要检出平台源码。默认拉取 `ghcr.io/100apps/anp:latest`；正式部署可在根.env固定 `sha-<提交SHA>` 或镜像digest。发布镜像目标为linux/amd64与linux/arm64，Docker自动选择本机架构。
 
-首次从源码构建：
+工作台：[http://127.0.0.1:51760/workbench/](http://127.0.0.1:51760/workbench/)。平台路径为 `/dbx/`、`/langfuse/`、`/litellm/`、`/supabase/`。业务API：[http://127.0.0.1:20260/docs](http://127.0.0.1:20260/docs)。默认离线模型可直接运行普通Workflow与Deep Agents工具调用演示。
 
-```sh
-make install
-make build-components
-python scripts/lock_versions.py --require-images
-make build
-make up
-```
+## 开发与F5
 
-平台按上游生产 Dockerfile 多阶段编译；各组件镜像只是组装输入，运行无需启动这些独立容器。首次源码构建较慢、占用较多磁盘。工具镜像保留全部14个服务、完整 PostgreSQL 扩展和平台前端。经过运行文件清理、依赖去重和 Zstd 压缩，Docker 本地占用约8.72GB，分发内容约1.42GB；两者不是同一个指标。详见[镜像体积优化](docs/镜像体积优化.md)。
+VSCode/Qoder打开仓库，安装推荐的Python和debugpy扩展，选择 **ANP: 一键前后端热重载**，按F5。准备任务安装锁定依赖、启动工具容器，再启动Vite和带debugpy的LangGraph后端；后端支持子进程断点和热重载。前端JavaScript断点可选择另一个需Edge的联合调试配置。
 
-## 常用命令
+停止调试仅结束本工作区登记的开发进程，工具容器继续运行。默认业务20260、前端51760、调试56796；初次准备依赖和平台迁移可能需要数分钟。
+
+## 快捷命令
 
 | 命令 | 用途 |
 | --- | --- |
-| `make up SERVICES=redis` | 同一镜像只启动 Redis |
-| `make up SERVICES=storage` | 启动四存储 |
-| `make up SERVICES=langfuse` | 启动 Langfuse 及依赖 |
-| `make up` | 启动全部14个服务进程 |
-| `make restart` / `make down` | 重启 / 停止本项目工具容器，保留数据 |
-| `make dev` / `make stop` | 本地前后端热重载 / 停止本项目开发进程 |
-| `make status` / `make logs` | 查看服务状态 / 管理日志 |
-| `make check` / `make smoke` | 四存储健康 / 真实读写与两业务图 |
-| `make platform-check` | 平台页面、JS/CSS和API |
-| `make test` | 业务、代理、运行时契约测试和前端编译 |
-| `make acceptance` | 真实重启、单选恢复、存储读回及平台端到端验收 |
-| `make image-size` / `make image-export` | 查看本地与分发体积 / 导出 Zstd 镜像包 |
-| `make platform-operations` / `make debug-check` | 平台真实操作 / 断点与热重载协议验收 |
-| `make dub-migrate` | 新 Supabase 对象、关系和 RLS 初始化 |
+| make doctor / make context | 工具检查 / 不含凭据的Agent入口JSON |
+| make pull / make up | 拉取发布镜像 / 启动全部服务 |
+| make up SERVICES=storage | 仅四存储 |
+| make up SERVICES=redis,dbx | 指定多个服务 |
+| make up SERVICES=langfuse | Langfuse及依赖；supabase同理 |
+| make status / make logs | 状态 / 容器管理日志 |
+| make restart / make down | 重启 / 停止工具容器，保留数据 |
+| make dev / make stop | 前后端热重载 / 停止本项目开发进程 |
+| make test | 两Demo、代理与运行时契约测试及前端生产构建 |
+| make smoke / make platform-operations | 四存储和两图 / 平台真实API操作 |
+| make acceptance / make debug-check | 镜像完整回归 / 断点与热重载协议 |
+| make image-size / make image-export | 镜像体积 / 导出Zstd分发包 |
 
-`make acceptance` 会重建或重启 **anp3** 工具容器，业务开发环境需先启动；不会操作相邻项目。真实数据库权限测试另设 `ANP_DUB_TEST_DATABASE=1`，默认跳过并明确报告。
+业务演示只使用离线模型，不调用付费API。原视频译配对象与源码作为可选业务保留，可通过make dub-config、make dub-migrate等入口接入；本轮业务验收范围是两个Demo。
 
-## 数据与调试
+## 自行构建与定制平台
 
-唯一容器映射是 `${ANP_DATA_ROOT}:/data`。Windows Docker Desktop 默认将其设为 Linux 主机目录 `/var/lib/anp3/data`，避免 NTFS 不满足 ClickHouse 重命名语义。它不是 Windows 的 `E:/anp3/var/data`，迁移机器必须另外备份该目录。Linux 可显式设为 `/srv/anp3/data`。配置、密钥、各服务数据和轮转日志均在此目录下。
+```sh
+make sources
+make build
+# 运行自行构建的镜像：根.env设 ANP_IMAGE=anp/toolbox:local
+make up
 
-根 `.env` 和 `business/.env` 仅本机私有；容器首次生成 `/data/config/credentials.json`，持久化后拒绝以不同环境密码覆盖。查看管理员凭据：在自己终端执行 `docker compose -p anp3 exec toolbox cat /data/config/credentials.json`，不要分享输出。LiteLLM 的模型列表初始为空，通过 `/data/config/litellm.yaml` 配置供应商和模型，再重启工具容器。业务真实模型另外在 `business/.env` 配置。
+# 双架构发布到自己有权限的仓库，需先docker login：
+make build-multi IMAGE=ghcr.io/你的账号/anp:dev
+```
 
-VSCode/Qoder 打开本目录，选择 **ANP3: 一键前后端热重载** 后按 F5。准备任务安装锁定依赖、等待工具服务、迁移新库，随后启动 Vite 和带 debugpy 的 LangGraph 热重载后端；调试端口 56796。停止调试会停止本项目开发进程，保留工具容器。Windows开发后端使用独立隐藏控制台；Uvicorn重载退出最多等待8秒，再回收本开发子进程，避免后台调试信号导致无限等待。该适配不改变内置HTTP服务。
+只有 `docker/toolbox/Dockerfile` 是镜像构建入口。官方二进制使用固定URL与SHA256；必须编译的组件在同一个Dockerfile的阶段内完成。PostgreSQL使用锁定Supabase源码和官方Nix缓存，缓存缺失时构建同一版本及扩展，不依赖本机已有组件镜像。源码位于真实submodule，版本与提交在 `docker/toolbox/versions.lock.json`。
 
-更多：[目录与启动](docs/三层目录与启动方案.md)、[版本与参数](docs/版本与运行参数.md)、[平台代理](docs/平台统一入口.md)、[本地验收](docs/本地验收.md)、[译配对象模型](docs/视频译配工作流.md)。
+首次全量源码构建需要较多时间、内存和磁盘。推荐双架构分别使用原生机器构建；本地QEMU仿真可以使用，但编译明显更慢。CI采用各架构原生runner，候选镜像分别通过启动验收后才合并发布latest。
+
+## 配置与持久化
+
+根.env控制镜像、服务、端口、资源和数据根；business/.env控制业务；容器 `/data/config/` 存放平台配置、凭据与生效参数。默认8核16GiB。配置和数据通过一个独立目录映射到 `/data`。
+
+Windows Docker Desktop 默认使用Linux主机目录 `/var/lib/anp-next/data`，避免ClickHouse在NTFS上的重命名兼容问题；它不是Windows本机文件夹，迁移机器需单独备份。当前开发机为兼容既有数据保留 `/var/lib/anp3/data`，与产品名称无关。Docker实例默认 `anp-next`，避免覆盖同机旧版ANP。
+
+根.env、business/.env和credentials.json均不提交。已有数据根的凭据不会因修改环境变量而隐式轮换。详细配置见[配置参考](docs/配置参考.md)。
+
+更多：[架构与Agent指南](docs/架构与Agent指南.md)、[版本与参数](docs/版本与运行参数.md)、[平台代理](docs/平台统一入口.md)、[本地验收](docs/本地验收.md)、[镜像体积](docs/镜像体积优化.md)、[GitHub构建](docs/GitHub构建.md)。

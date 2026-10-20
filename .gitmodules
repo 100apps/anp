@@ -22,3 +22,6 @@
 [submodule "platform/sources/components/postgrest"]
 	path = platform/sources/components/postgrest
 	url = https://github.com/PostgREST/postgrest.git
+[submodule "platform/sources/components/postgres"]
+	path = platform/sources/components/postgres
+	url = https://github.com/supabase/postgres.git

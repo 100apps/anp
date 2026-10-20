@@ -1,5 +1,5 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/business/.venv/Scripts/python.exe",
+  "python.defaultInterpreterPath": "${workspaceFolder}/business/.venv",
   "python.analysis.extraPaths": [
     "${workspaceFolder}/business/src"
   ],

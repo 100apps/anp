@@ -11,9 +11,11 @@ import urllib.request
 from pathlib import Path
 
 import psutil
+from manage import read_env
 
 ROOT = Path(__file__).resolve().parents[1]
 RUN = ROOT / "var/run"
+BUSINESS_PORT = os.getenv('BUSINESS_PORT') or read_env(ROOT/'.env').get('BUSINESS_PORT','20260')
 
 
 def url_json(url):
@@ -24,7 +26,7 @@ def url_json(url):
 def verify_frontend():
     try:
         value = url_json("http://127.0.0.1:51760/__anp_workspace")
-        return value.get("project") == "anp3" and Path(value["root"]).resolve() == ROOT / "business/ui"
+        return value.get("project") == "anp" and Path(value["root"]).resolve() == ROOT / "business/ui"
     except (OSError, ValueError, KeyError):
         return False
 
@@ -66,7 +68,7 @@ def stop_role(role):
 def serve(role):
     RUN.mkdir(parents=True, exist_ok=True)
     if role == "frontend" and verify_frontend():
-        print("ANP3_FRONTEND_READY", flush=True)
+        print("ANP_FRONTEND_READY", flush=True)
         return
     path = RUN / (role + ".json")
     if path.exists():
@@ -74,7 +76,7 @@ def serve(role):
     me = psutil.Process()
     path.write_text(json.dumps({"pid": os.getpid(), "created": me.create_time()}))
     if role == "frontend":
-        print("ANP3_FRONTEND_START", flush=True)
+        print("ANP_FRONTEND_START", flush=True)
         # 依赖仍由pnpm锁定安装。直接运行已安装的Vite，避免Windows包管理器包装进程
         # 在非交互任务中提前退出，连带关闭前端服务。
         command = [shutil.which("node.exe") or shutil.which("node") or "node",
@@ -85,12 +87,16 @@ def serve(role):
         command = [sys.executable, str(ROOT / "scripts/agent_dev.py")]
         cwd = ROOT / "business"
     env = os.environ.copy()
+    if role != 'frontend':
+        for key,value in read_env(ROOT/'business/.env').items():env.setdefault(key,value)
+        env['BUSINESS_PORT']=BUSINESS_PORT
     if role == "frontend":
         # Vite 在无交互 stdin 结束时会退出；IDE/后台任务仍需保持 HMR 服务。
         env["CI"] = "true"
+        env.setdefault('ANP_AGENT_URL','http://127.0.0.1:'+BUSINESS_PORT)
     if role == "backend-debug":
         env["ANP_DEBUG_PORT"] = "56796"
-        print("ANP3_BACKEND_START", flush=True)
+        print("ANP_BACKEND_START", flush=True)
     log_dir = ROOT / "var/logs/dev"
     log_dir.mkdir(parents=True, exist_ok=True)
     windows_options = {}
@@ -121,7 +127,7 @@ def serve(role):
             deadline = time.monotonic() + 90
             while time.monotonic() < deadline and child.poll() is None:
                 if verify_frontend():
-                    print("ANP3_FRONTEND_READY", flush=True)
+                    print("ANP_FRONTEND_READY", flush=True)
                     break
                 time.sleep(0.3)
             else:
@@ -130,8 +136,8 @@ def serve(role):
             deadline = time.monotonic() + 90
             while time.monotonic() < deadline and child.poll() is None:
                 try:
-                    if url_json("http://127.0.0.1:20260/api/health").get("service") == "anp3":
-                        print("ANP3_BACKEND_READY", flush=True)
+                    if url_json("http://127.0.0.1:"+BUSINESS_PORT+"/api/health").get("service") == "anp":
+                        print("ANP_BACKEND_READY", flush=True)
                         break
                 except (OSError, ValueError):
                     pass

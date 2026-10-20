@@ -72,7 +72,7 @@ def environment(service):
 def log_output(name,stream):
     logger=LOGGERS.get(name)
     if not logger:
-        logger=logging.getLogger('anp3.'+name); logger.setLevel(logging.INFO); logger.propagate=False
+        logger=logging.getLogger('anp.'+name); logger.setLevel(logging.INFO); logger.propagate=False
         handler=RotatingFileHandler(DATA/'logs'/name/'current.log',maxBytes=int(LIMITS['log_max_mb'])*1048576,
                                     backupCount=int(LIMITS['log_backups']),encoding='utf-8')
         handler.setFormatter(logging.Formatter('%(message)s')); logger.addHandler(handler); LOGGERS[name]=logger
@@ -116,7 +116,7 @@ def bootstrap_postgres(service):
         return "'"+value.replace("'","''")+"'"
     roles={'langfuse':'LANGFUSE_DB_PASSWORD','litellm':'LITELLM_DB_PASSWORD',
            'supabase_auth_admin':'AUTH_DB_PASSWORD','supabase_storage_admin':'STORAGE_DB_PASSWORD',
-           'authenticator':'REST_DB_PASSWORD','anp3_studio_reader':'POSTGRES_PASSWORD'}
+           'authenticator':'REST_DB_PASSWORD','anp_studio_reader':'POSTGRES_PASSWORD'}
     sql=''
     for role,key in roles.items():
         sql+=f"DO $$ BEGIN IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='{role}') THEN CREATE ROLE {role} LOGIN; END IF; END $$;\n"
@@ -124,7 +124,7 @@ def bootstrap_postgres(service):
     for role in ('anon','authenticated','service_role'):
         sql+=f"DO $$ BEGIN IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='{role}') THEN CREATE ROLE {role} NOLOGIN; END IF; END $$;\n"
     sql+='ALTER ROLE service_role BYPASSRLS; GRANT anon,authenticated,service_role TO authenticator,supabase_storage_admin;\n'
-    sql+='GRANT pg_read_all_data,pg_read_all_stats TO anp3_studio_reader; ALTER ROLE anp3_studio_reader SET default_transaction_read_only=on;\n'
+    sql+='GRANT pg_read_all_data,pg_read_all_stats TO anp_studio_reader; ALTER ROLE anp_studio_reader SET default_transaction_read_only=on;\n'
     sql+='CREATE SCHEMA IF NOT EXISTS extensions; CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;\n'
     sql+='CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions; CREATE EXTENSION IF NOT EXISTS pg_stat_statements;\n'
     sql+='CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION supabase_auth_admin; CREATE SCHEMA IF NOT EXISTS storage AUTHORIZATION supabase_storage_admin;\n'
@@ -163,7 +163,7 @@ def bootstrap_s3():
     for attempt in range(30):
         try:
             names={item['Name'] for item in client.list_buckets()['Buckets']}
-            for bucket in ('langfuse','supabase','anp3-dubbing'):
+            for bucket in ('langfuse','supabase','anp-dubbing'):
                 if bucket not in names:
                     client.create_bucket(Bucket=bucket)
             emit('独立 S3 桶已就绪'); return
@@ -273,7 +273,7 @@ def main():
     SECRET,LIMITS=prepare()
     services=definitions(SECRET,LIMITS)
     ACTIVE_SERVICES=services
-    ordered=selection(os.getenv('ANP3_SERVICES','all'),services,os.getenv('ANP3_AUTO_DEPS','1')!='0')
+    ordered=selection(os.getenv('ANP_SERVICES','all'),services,os.getenv('ANP_AUTO_DEPS','1')!='0')
     STATE['selected']=ordered
     for sig in (signal.SIGTERM,signal.SIGINT):
         signal.signal(sig,lambda *_: STOP.set())
@@ -298,7 +298,7 @@ def main():
             for name in ordered:
                 if STOP.is_set(): break
                 proc=PROCESSES.get(name)
-                dependencies=services[name]['deps'] if os.getenv('ANP3_AUTO_DEPS','1')!='0' else []
+                dependencies=services[name]['deps'] if os.getenv('ANP_AUTO_DEPS','1')!='0' else []
                 if proc is None or proc.poll() is not None:
                     if retries[name]>=3: continue
                     if not all(STATE['services'].get(dep,{}).get('state')=='ready' for dep in dependencies):

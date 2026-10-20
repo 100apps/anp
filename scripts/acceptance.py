@@ -1,4 +1,4 @@
-"""新项目真实验收：单镜像、选服、四存储恢复、本地业务和同源平台。只操作 anp3。"""
+"""新项目真实验收：单镜像、选服、四存储恢复、本地业务和同源平台。只操作 anp。"""
 import asyncio
 import argparse
 from datetime import datetime, timezone
@@ -13,11 +13,11 @@ import uuid
 import check
 import check_platforms
 import check_platform_operations
-from manage import ROOT, compose
+from manage import ROOT, PROJECT, compose
 
 
 def inspect():
-    return json.loads(subprocess.check_output(['docker','inspect','anp3-toolbox-1'],text=True))[0]
+    return json.loads(subprocess.check_output(['docker','inspect',PROJECT+'-toolbox-1'],text=True))[0]
 
 
 def status():
@@ -29,7 +29,7 @@ def status():
 
 
 def up(services,data_root=None):
-    env=os.environ.copy(); env['ANP3_SERVICES']=services
+    env=os.environ.copy(); env['ANP_SERVICES']=services
     if data_root: env['ANP_DATA_ROOT']=data_root
     compose('up','-d','--no-build','--wait','--wait-timeout','900','toolbox',env=env)
     return status()
@@ -41,10 +41,10 @@ def benchmark():
     with check.postgres() as conn:
         actions={
             'postgres_select1':lambda:conn.execute('SELECT 1').fetchone(),
-            'redis_set_get':lambda:(cache.set('anp3:benchmark','value'),cache.get('anp3:benchmark')),
+            'redis_set_get':lambda:(cache.set('anp:benchmark','value'),cache.get('anp:benchmark')),
             'clickhouse_sum_100000':lambda:check.ch('SELECT sum(number) FROM numbers(100000)'),
-            's3_1mib_put_get':lambda:(s3.put_object(Bucket='anp3-smoke',Key='benchmark.bin',Body=payload),
-                                    s3.get_object(Bucket='anp3-smoke',Key='benchmark.bin')['Body'].read()),
+            's3_1mib_put_get':lambda:(s3.put_object(Bucket='anp-smoke',Key='benchmark.bin',Body=payload),
+                                    s3.get_object(Bucket='anp-smoke',Key='benchmark.bin')['Body'].read()),
         }
         values={}
         for name,action in actions.items():
@@ -64,17 +64,27 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--fresh',action='store_true',help='额外使用数据根内的全新子目录验证首次初始化')
     args=parser.parse_args()
-    output=ROOT/'docs/evidence/anp3-acceptance.json'
-    result={'project':'anp3','time':datetime.now(timezone.utc).isoformat(),'passed':False}
+    output=ROOT/'docs/evidence/anp-acceptance.json'
+    result={'project':'anp','compose_project':PROJECT,'time':datetime.now(timezone.utc).isoformat(),'passed':False}
     try:
         up('all')
-        initial=inspect(); assert initial['Config']['Labels']['com.docker.compose.project']=='anp3'
+        initial=inspect(); assert initial['Config']['Labels']['com.docker.compose.project']==PROJECT
         assert len(initial['Mounts'])==1 and initial['Mounts'][0]['Destination']=='/data'
         result['image_id']=initial['Image']; result['data_root']=initial['Mounts'][0]['Source']
         result['initial_services']=status()
         assert len(result['initial_services']['selected'])==14
         result['storage_versions']=check.write_storage(); check.read_storage()
         result['storage_read_write']=True
+        expected=json.loads((ROOT/'docs/evidence/postgres-extensions-baseline.json').read_text(encoding='utf-8'))
+        with check.postgres() as connection:
+            actual=dict(connection.execute('SELECT name,default_version FROM pg_available_extensions').fetchall())
+        missing=sorted(set(dict(expected))-set(actual))
+        assert not missing,'缺少原镜像PostgreSQL扩展：'+str(missing)
+        result['postgres_extensions']={'baseline_count':len(expected),'available_count':len(actual),'all_preserved':True}
+        modules=check.resources()[0].execute_command('MODULE','LIST')
+        names=[(m if isinstance(m,dict) else dict(zip(m[::2],m[1::2])))['name'] for m in modules]
+        assert 'vectorset' in names,'Redis缺少内置vectorset'
+        result['redis_builtin_modules']=names
         if args.fresh:
             root=initial['Mounts'][0]['Source'].rstrip('/\\')+'/acceptance-fresh-'+uuid.uuid4().hex[:10]
             try:
@@ -82,7 +92,7 @@ def main():
                 assert len(fresh['selected'])==14
                 assert inspect()['Mounts'][0]['Source']!=initial['Mounts'][0]['Source']
                 with check.postgres() as connection:
-                    assert connection.execute("SELECT count(*) FROM pg_namespace WHERE nspname='anp3_smoke'").fetchone()[0]==0
+                    assert connection.execute("SELECT count(*) FROM pg_namespace WHERE nspname='anp_smoke'").fetchone()[0]==0
                 result['fresh_initialization']={'passed':True,'isolated_data_root':root,'services':14}
             finally:
                 up('all')
@@ -107,8 +117,8 @@ def main():
         result['platforms']=asyncio.run(check_platforms.check('http://127.0.0.1:51760',True))
         result['platform_operations']=check_platform_operations.check()
         result['benchmark']=benchmark()
-        result['docker_stats']=json.loads(subprocess.check_output(['docker','stats','--no-stream','--format','{{json .}}','anp3-toolbox-1'],text=True))
-        result['tuning']=json.loads(subprocess.check_output(['docker','exec','anp3-toolbox-1','cat','/data/config/effective/tuning.json'],text=True))
+        result['docker_stats']=json.loads(subprocess.check_output(['docker','stats','--no-stream','--format','{{json .}}',PROJECT+'-toolbox-1'],text=True))
+        result['tuning']=json.loads(subprocess.check_output(['docker','exec',PROJECT+'-toolbox-1','cat','/data/config/effective/tuning.json'],text=True))
         result['image_size_bytes']=json.loads(subprocess.check_output(['docker','image','inspect',result['image_id']],text=True))[0]['Size']
         result['protected']=check.protected(); result['passed']=True
     finally:

@@ -1,0 +1,38 @@
+{
+  "dbx/Dockerfile.in": {
+    "upstream": "dbx/deploy/Dockerfile",
+    "source_sha": "dc57c632280b65ce15513f9564b5e42e163f507d",
+    "upstream_dockerfile_sha256": "4f4bc4dc5b80054dcfec238d55dbaed891ad996f5ab2b471114aadc1a070b256",
+    "template_sha256": "d74eacf099b35bb17b34cdd19bf5674b506bcba4566bd086340b617d36169eb8"
+  },
+  "langfuse/web.Dockerfile.in": {
+    "upstream": "langfuse/web/Dockerfile",
+    "source_sha": "71c840e0e9cc945df9c250bdf182f99497584d3a",
+    "upstream_dockerfile_sha256": "60a39d3130003c5697c7298636adcaf418a98c01e64c1f957ca9c05c2c61709a",
+    "template_sha256": "4b6f1bbd23591aa3208313cf84c293c637677de375d2f819d672012582c187e3"
+  },
+  "langfuse/worker.Dockerfile.in": {
+    "upstream": "langfuse/worker/Dockerfile",
+    "source_sha": "71c840e0e9cc945df9c250bdf182f99497584d3a",
+    "upstream_dockerfile_sha256": "2a0f7b6021963bc5a481f1096e739688637c336e30d039b117e499b3e8cb2049",
+    "template_sha256": "df1ef570ffb1e6d464f88c241447f8fff99d4ea36b71d7789ece059f7109e47a"
+  },
+  "supabase/meta.Dockerfile.in": {
+    "upstream": "components/postgres-meta/Dockerfile",
+    "source_sha": "9a2effd147f2f028fa36553ec2c7eeec80d7f8fc",
+    "upstream_dockerfile_sha256": "f70307c2836b8e791516557268c9e51a990af0a4b41cdfb1f07cd254a6df9451",
+    "template_sha256": "0a164b513020fee598cb42a1334514cf2659c5db51c728ff0b6759339b6e4565"
+  },
+  "supabase/storage.Dockerfile.in": {
+    "upstream": "components/storage/Dockerfile",
+    "source_sha": "f31599e188d7c9c854b1daa76a11b41c6d179462",
+    "upstream_dockerfile_sha256": "041cceef935c0e743f78edc1e7d7a3f1a56ef82893575719b2d831728e0cad08",
+    "template_sha256": "cd7ca9e549c30779755ee881be2aad4d902c65c4964fd4015a7ea3442f603f7b"
+  },
+  "supabase/studio.Dockerfile.in": {
+    "upstream": "supabase/apps/studio/Dockerfile",
+    "source_sha": "86854671e95be31e24fa0785cded0579fe692fcb",
+    "upstream_dockerfile_sha256": "950fa4fc07f056e847487221e3989f982c25f6b6ad7ad05a3af8c94948ae4c1e",
+    "template_sha256": "3d0a0fd79c0f000e681ba4e04c4584daae10093f71d16d74af7bb955ab4eb29f"
+  }
+}

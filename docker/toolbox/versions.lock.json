@@ -1,99 +1,69 @@
 {
   "verified_at": "2026-10-20T14:04:42.090637+00:00",
-  "architecture": "linux/amd64",
   "components": {
     "dbx": {
       "version": "0.6.49",
       "upstream_ref": "v0.6.49",
-      "source_sha": "dc57c632280b65ce15513f9564b5e42e163f507d",
-      "image": "anp3/dbx:source",
-      "image_id": "sha256:a035c45193f7b27e935bd6e3e9681f805d764448946c05ce82a2bc3a6775105c"
+      "source_sha": "dc57c632280b65ce15513f9564b5e42e163f507d"
     },
     "langfuse-web": {
       "version": "4.64.0",
       "upstream_ref": "v4.64.0",
-      "source_sha": "71c840e0e9cc945df9c250bdf182f99497584d3a",
-      "image": "anp3/langfuse-web:source",
-      "image_id": "sha256:88b19bc86cace33d601afe892a824a0954bd35fb223295a83f1d066ef5f16975"
+      "source_sha": "71c840e0e9cc945df9c250bdf182f99497584d3a"
     },
     "langfuse-worker": {
       "version": "4.64.0",
       "upstream_ref": "v4.64.0",
-      "source_sha": "71c840e0e9cc945df9c250bdf182f99497584d3a",
-      "image": "anp3/langfuse-worker:source",
-      "image_id": "sha256:94f95ca134c431a5fc1abd9a83eb015b534e56d284e3029386be2400ae7888a3"
+      "source_sha": "71c840e0e9cc945df9c250bdf182f99497584d3a"
     },
     "litellm": {
       "version": "1.106.0",
       "upstream_ref": "v1.106.0",
-      "source_sha": "955bdaafa8b72b2b6ff728048f272fbc06049f63",
-      "image": "anp3/litellm:source",
-      "image_id": "sha256:3fb5bdea149de4fba59315fcb905b54d48d564c78582d38d38d4b4bc3819020a"
+      "source_sha": "955bdaafa8b72b2b6ff728048f272fbc06049f63"
     },
     "supabase-studio": {
       "version": "1.26.08",
       "upstream_ref": "v1.26.08",
-      "source_sha": "86854671e95be31e24fa0785cded0579fe692fcb",
-      "image": "anp3/supabase-studio:source",
-      "image_id": "sha256:2cf2ca8f31d5bd8b81b6f9bb759911c6c834737ffc9219bdef233cf1d49fa66a"
+      "source_sha": "86854671e95be31e24fa0785cded0579fe692fcb"
     },
     "supabase-auth": {
       "version": "2.197.0",
       "upstream_ref": "v2.197.0",
-      "source_sha": "4eee58f296d9698a1c2c0ae14d7a0b379c7622d3",
-      "image": "anp3/supabase-auth:source",
-      "image_id": "sha256:694d05cdc548537842fc6050ec426f6e1e80a2bd7ec8791a07a5633087b6c790"
+      "source_sha": "4eee58f296d9698a1c2c0ae14d7a0b379c7622d3"
     },
     "supabase-rest": {
       "version": "14.18",
       "upstream_ref": "v14.18",
-      "source_sha": "6fafa601d13b15f9875e3a70e733ddd6f38f633e",
-      "image": "anp3/supabase-rest:source",
-      "image_id": "sha256:101ee3c0fcceb306971e14cb09ea0289285681191deadbfdf2fc8b532eaf9116"
+      "source_sha": "6fafa601d13b15f9875e3a70e733ddd6f38f633e"
     },
     "supabase-meta": {
       "version": "0.100.0",
       "upstream_ref": "v0.100.0",
-      "source_sha": "9a2effd147f2f028fa36553ec2c7eeec80d7f8fc",
-      "image": "anp3/supabase-meta:source",
-      "image_id": "sha256:3601107ff00857e5aa063ea041f2b62a02e4ebf552b77e57011f46a080494313"
+      "source_sha": "9a2effd147f2f028fa36553ec2c7eeec80d7f8fc"
     },
     "supabase-storage": {
       "version": "1.81.0",
       "upstream_ref": "v1.81.0",
-      "source_sha": "f31599e188d7c9c854b1daa76a11b41c6d179462",
-      "image": "anp3/supabase-storage:source",
-      "image_id": "sha256:43ab65e215456310ac70865412c0dc240b0cb682825891836fa37410f5481b0c"
+      "source_sha": "f31599e188d7c9c854b1daa76a11b41c6d179462"
     },
     "postgres": {
       "version": "17.6.1.136",
-      "image": "supabase/postgres:17.6.1.136",
-      "image_id": "sha256:f371b5f3f2ac0a05703f33d6e6134515fb2498cab708fb948a0aeb7481467c00"
+      "source_sha": "d156ba65c14694c12cc5e782bc15b9b8ed2d1376"
     },
     "redis": {
-      "version": "8.10.2",
-      "image": "redis:8.10.2-trixie",
-      "image_id": "sha256:a2d0d2c53ca2e3aba4be7719116db00e4b66584509acd97bd2e61725bcacd6dd"
+      "version": "8.10.2"
     },
     "clickhouse": {
-      "version": "26.9.22.3-stable",
-      "image": "clickhouse/clickhouse-server:26.9.22.3",
-      "image_id": "sha256:cb608f05c88d97584edf9fd9e0660bd54c9a8ce973093e374c96be80573f25ff"
+      "version": "26.9.22.3-stable"
     },
     "rustfs": {
-      "version": "1.0.3",
-      "image": "rustfs/rustfs:1.0.3",
-      "image_id": "sha256:ebd18f1cb68d03b8174b4bf663fea0420c3166b9ee06490ec17479212862849b"
+      "version": "1.0.3"
     },
     "node": {
-      "version": "24 LTS",
-      "image": "node:24-bookworm-slim",
-      "image_id": "sha256:550f22d087ea646e2c4be2882fbdc42591809b1262d2b6197bd8415d31de999b"
+      "version": "24 LTS"
     },
     "supabase-gateway": {
-      "version": "1.39.1",
-      "image": "envoyproxy/envoy:v1.39.1",
-      "image_id": "sha256:f9831c8399584a8aea0fdab8421a1961b49878dcfddc30f49010fca19935d5fb"
+      "version": "1.39.1"
     }
   },
   "compatibility_notes": [
@@ -101,5 +71,67 @@
     "ClickHouse26.9稳定分支满足Langfuse4大于等于25.12的约束",
     "LiteLLM采用官方正式release1.106.0，不采用main的1.107开发版本",
     "Studio从官方最新公开release v1.26.08生产重建路径前缀；不冒充2026.10.12预构建镜像"
-  ]
+  ],
+  "architectures": [
+    "linux/amd64",
+    "linux/arm64"
+  ],
+  "artifacts": {
+    "rustfs": {
+      "amd64": {
+        "url": "https://github.com/rustfs/rustfs/releases/download/1.0.3/rustfs-linux-x86_64-gnu-v1.0.3.zip",
+        "sha256": "0cb0924df93734d14f708004eff4b0e48a147fbdc074756ca0d6b8ec919629b8"
+      },
+      "arm64": {
+        "url": "https://github.com/rustfs/rustfs/releases/download/1.0.3/rustfs-linux-aarch64-gnu-v1.0.3.zip",
+        "sha256": "1c667c8b138fae0ba41786709af49c0b99107f037428d36c8a43ba0627b2408b"
+      }
+    },
+    "auth": {
+      "amd64": {
+        "url": "https://github.com/supabase/auth/releases/download/v2.197.0/auth-v2.197.0-amd64.tar.xz",
+        "sha256": "b5c2991d1df760c9b099c1c2395a94bd1c2f83ed58901934921997179dc9f7ea"
+      },
+      "arm64": {
+        "url": "https://github.com/supabase/auth/releases/download/v2.197.0/auth-v2.197.0-arm64.tar.xz",
+        "sha256": "a9da2e668137cb280c830d900df4081b3fdd42a289469485634426a7587f9f76"
+      }
+    },
+    "postgrest": {
+      "amd64": {
+        "url": "https://github.com/PostgREST/postgrest/releases/download/v14.18/postgrest-v14.18-linux-static-x86-64.tar.xz",
+        "sha256": "98de1c0be7787aea5f5e11a25f303ea0077634d6fc1000b687bfa825fd27d299"
+      },
+      "arm64": {
+        "url": "https://github.com/PostgREST/postgrest/releases/download/v14.18/postgrest-v14.18-ubuntu-aarch64.tar.xz",
+        "sha256": "960676de3fb8102393adfff7f74d40aa131b52abe0ba63b6a5594c44c3a67569"
+      }
+    },
+    "envoy": {
+      "amd64": {
+        "url": "https://github.com/envoyproxy/envoy/releases/download/v1.39.1/envoy-1.39.1-linux-x86_64",
+        "sha256": "002c6e1c69ed0fa0ea381887247cadadfaec9481375fa8d8d2b1731eeabf40b8"
+      },
+      "arm64": {
+        "url": "https://github.com/envoyproxy/envoy/releases/download/v1.39.1/envoy-1.39.1-linux-aarch_64",
+        "sha256": "8565ad0af4b1d1d3c986e5165c027add3073579182f398dd7f4d728d25e9ec62"
+      }
+    },
+    "redis-source": {
+      "all": {
+        "url": "https://github.com/redis/redis/releases/download/8.10.2/redis-full.tar.gz",
+        "sha256": "ae6973de9b6ad8e6cf21b1e764abccab59200689af6aabce10d4cf6bbb2e253f"
+      }
+    },
+    "clickhouse": {
+      "amd64": {
+        "url": "https://github.com/ClickHouse/ClickHouse/releases/download/v26.9.22.3-stable/clickhouse-common-static-26.9.22.3-amd64.tgz",
+        "sha256": "d61726376a7e7be67318206351cbf630ec8acee0bdb786be8de93e6ff5ef9f68"
+      },
+      "arm64": {
+        "url": "https://github.com/ClickHouse/ClickHouse/releases/download/v26.9.22.3-stable/clickhouse-common-static-26.9.22.3-arm64.tgz",
+        "sha256": "aecd5eff1dd07a4c2ad8f45084772eb5b05894b116f8777d97a8df9730b02aa7"
+      }
+    }
+  }
 }

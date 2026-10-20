@@ -2,10 +2,15 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "ANP3: 准备依赖与四存储",
+      "label": "ANP: 准备依赖与工具服务",
       "type": "process",
-      "command": "python",
+      "command": "uv",
       "args": [
+        "run",
+        "--project",
+        "business",
+        "--frozen",
+        "python",
         "scripts/manage.py",
         "prepare"
       ],
@@ -15,7 +20,7 @@
       "problemMatcher": []
     },
     {
-      "label": "ANP3: 前端 HMR",
+      "label": "ANP: 前端 HMR",
       "type": "process",
       "command": "uv",
       "args": [
@@ -32,19 +37,19 @@
       },
       "isBackground": true,
       "problemMatcher": {
-        "owner": "anp3-frontend",
+        "owner": "anp-frontend",
         "pattern": {
           "regexp": "^(?!)$"
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "ANP3_FRONTEND_START",
-          "endsPattern": "ANP3_FRONTEND_READY"
+          "beginsPattern": "ANP_FRONTEND_START",
+          "endsPattern": "ANP_FRONTEND_READY"
         }
       }
     },
     {
-      "label": "ANP3: 后端 HMR 与调试",
+      "label": "ANP: 后端 HMR 与调试",
       "type": "process",
       "command": "uv",
       "args": [
@@ -61,29 +66,29 @@
       },
       "isBackground": true,
       "problemMatcher": {
-        "owner": "anp3-backend",
+        "owner": "anp-backend",
         "pattern": {
           "regexp": "^(?!)$"
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "ANP3_BACKEND_START",
-          "endsPattern": "ANP3_BACKEND_READY"
+          "beginsPattern": "ANP_BACKEND_START",
+          "endsPattern": "ANP_BACKEND_READY"
         }
       }
     },
     {
-      "label": "ANP3: 准备调试",
+      "label": "ANP: 准备调试",
       "dependsOrder": "sequence",
       "dependsOn": [
-        "ANP3: 准备依赖与四存储",
-        "ANP3: 前端 HMR",
-        "ANP3: 后端 HMR 与调试"
+        "ANP: 准备依赖与工具服务",
+        "ANP: 前端 HMR",
+        "ANP: 后端 HMR 与调试"
       ],
       "problemMatcher": []
     },
     {
-      "label": "ANP3: 停止开发",
+      "label": "ANP: 停止开发",
       "type": "process",
       "command": "uv",
       "args": [

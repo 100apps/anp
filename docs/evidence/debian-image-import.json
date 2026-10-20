@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "original_index": "sha256:acac63e4b3a7aed45676488082f541c1335dd393079582966de0bf8a5b456cea",
+  "imported_index": "sha256:dc63d080438a73395767069eb9c52302ded48d3068f8674294ba09bc30e14e9b",
+  "rootfs_equal": true,
+  "config_equal": true,
+  "platform": "linux/amd64"
+}

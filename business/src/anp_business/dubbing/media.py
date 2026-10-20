@@ -70,7 +70,7 @@ def save_asset(run, path, kind, **metadata):
     path = Path(path)
     sha = digest(path)
     key = f"{run['workspace_id']}/{run['project_id']}/{run['id']}/{sha}{path.suffix}"
-    bucket = os.getenv("ANP_DUB_S3_BUCKET", "anp3-dubbing")
+    bucket = os.getenv("ANP_DUB_S3_BUCKET", "anp-dubbing")
     existing = db.rows("assets", bucket=bucket, object_key=key)
     if existing:
         return existing[0]

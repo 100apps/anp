@@ -58,7 +58,7 @@ def health():
 
 def main():
     debug=Debug(); result={}
-    debug.response(debug.send('initialize',{'adapterID':'debugpy','clientID':'anp3-acceptance','pathFormat':'path',
+    debug.response(debug.send('initialize',{'adapterID':'debugpy','clientID':'anp-acceptance','pathFormat':'path',
                                             'linesStartAt1':True,'columnsStartAt1':True,'supportsRunInTerminalRequest':False}))
     debug.send('attach',{'justMyCode':True,'subProcess':True})
     debug.wait(lambda value:value.get('event')=='initialized')
@@ -67,7 +67,7 @@ def main():
     child=debug.wait(lambda value:value.get('event')=='debugpyAttach')['body']
     parent=debug
     debug=Debug(child.get('connect',{}).get('port',56796))
-    debug.response(debug.send('initialize',{'adapterID':'debugpy','clientID':'anp3-child','pathFormat':'path','linesStartAt1':True,'columnsStartAt1':True}))
+    debug.response(debug.send('initialize',{'adapterID':'debugpy','clientID':'anp-child','pathFormat':'path','linesStartAt1':True,'columnsStartAt1':True}))
     debug.send('attach',{**child,'justMyCode':True})
     debug.wait(lambda value:value.get('event')=='initialized')
     source=ROOT/'business/src/anp_business/workflow_demo/nodes.py'

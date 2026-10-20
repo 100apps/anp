@@ -1,15 +1,16 @@
-name: anp3
+name: ${ANP_COMPOSE_PROJECT:-anp-next}
 services:
   toolbox:
-    image: ${ANP3_IMAGE:-anp3/toolbox:local}
-    build: {context: ., dockerfile: docker/toolbox/Dockerfile}
+    labels:
+      dev.anp.workspace: ${ANP_WORKSPACE_ID:-uninitialized}
+    image: ${ANP_IMAGE:-ghcr.io/100apps/anp:latest}
     env_file: [.env]
     environment:
-      ANP3_SERVICES: ${ANP3_SERVICES:-all}
-      ANP3_AUTO_DEPS: ${ANP3_AUTO_DEPS:-1}
-      ANP3_MEMORY_MB: ${ANP3_MEMORY_MB:-16384}
-      ANP3_CPU_THREADS: ${ANP3_CPU_THREADS:-8}
-      ANP3_PUBLIC_URL: ${ANP3_PUBLIC_URL:-http://127.0.0.1:51760}
+      ANP_SERVICES: ${ANP_SERVICES:-all}
+      ANP_AUTO_DEPS: ${ANP_AUTO_DEPS:-1}
+      ANP_MEMORY_MB: ${ANP_MEMORY_MB:-16384}
+      ANP_CPU_THREADS: ${ANP_CPU_THREADS:-8}
+      ANP_PUBLIC_URL: ${ANP_PUBLIC_URL:-http://127.0.0.1:51760}
     volumes: ['${ANP_DATA_ROOT:-./var/data}:/data']
     ports:
       - '127.0.0.1:${PG_PORT:-57432}:5432'
@@ -24,8 +25,8 @@ services:
       - '127.0.0.1:${STUDIO_PORT:-53401}:3200'
       - '127.0.0.1:${SUPABASE_API_PORT:-58400}:8000'
       - '127.0.0.1:${HEALTH_PORT:-57501}:9750'
-    mem_limit: ${ANP3_MEMORY_MB:-16384}m
-    cpus: ${ANP3_CPU_THREADS:-8}
+    mem_limit: ${ANP_MEMORY_MB:-16384}m
+    cpus: ${ANP_CPU_THREADS:-8}
     shm_size: 256mb
     ulimits:
       nofile: {soft: 262144, hard: 262144}

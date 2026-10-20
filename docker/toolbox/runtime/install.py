@@ -8,8 +8,8 @@ passwd = Path('/etc/passwd')
 group = Path('/etc/group')
 with passwd.open('a') as p, group.open('a') as g:
     for number, name in enumerate(NAMES,20001):
-        p.write(f'anp3-{name}:x:{number}:{number}:ANP3 {name}:/data/{name}:/bin/sh\n')
-        g.write(f'anp3-{name}:x:{number}:\n')
+        p.write(f'anp-{name}:x:{number}:{number}:ANP {name}:/data/{name}:/bin/sh\n')
+        g.write(f'anp-{name}:x:{number}:\n')
 # LiteLLM 以运行配置改写静态 UI；仅将此必要目录交给它的专属用户。
 for p in Path('/app/.venv/lib').glob('python*/site-packages/litellm/proxy/_experimental'):
     for base, dirs, files in os.walk(p):

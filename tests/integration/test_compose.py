@@ -7,18 +7,19 @@ ROOT=Path(__file__).resolve().parents[2]
 
 
 def render(file='compose.yaml'):
-    return json.loads(subprocess.check_output(['docker','compose','-p','anp3','-f',file,'config','--format','json'],
+    return json.loads(subprocess.check_output(['docker','compose','-p','anp-next','-f',file,'config','--format','json'],
                                             cwd=ROOT,text=True,encoding='utf-8'))
 
 
 def test_runtime_has_one_toolbox_and_one_persistent_root():
     data=render()
-    assert data['name']=='anp3'
+    assert data['name']=='anp-next'
     assert set(data['services'])=={'toolbox'}
+    assert not data['services']['toolbox'].get('build')
     mounts=data['services']['toolbox']['volumes']
     assert len(mounts)==1 and mounts[0]['type']=='bind' and mounts[0]['target']=='/data'
     source=mounts[0]['source'].replace('\\','/').lower()
-    assert '/anp3/' in source and '/anp2/' not in source and '/anp/' not in source
+    assert '/anp2/' not in source and source!='/var/lib/anp/data'
 
 
 def test_runtime_does_not_require_docker_socket_or_privileged_access():
@@ -30,28 +31,22 @@ def test_runtime_does_not_require_docker_socket_or_privileged_access():
     assert service['init'] and int(service['mem_limit'])>0
 
 
-def test_production_component_builds_are_separate_from_runtime():
-    data=render('compose.build.yaml')
-    assert len(data['services'])==9
-    for name,service in data['services'].items():
-        assert not service.get('ports') and not service.get('volumes')
-        context=Path(service['build']['context'])
-        assert (context/'.git').is_file(), name
-        assert (context/service['build']['dockerfile']).is_file(), name
-        assert service['image']=='anp3/'+name+':source'
-    assert data['services']['langfuse-web']['build']['args']['NEXT_PUBLIC_BASE_PATH']=='/langfuse'
-    assert data['services']['supabase-studio']['build']['args']['NEXT_PUBLIC_BASE_PATH']=='/supabase'
+def test_build_is_single_file_and_has_no_local_component_image_inputs():
+    text=(ROOT/'docker/toolbox/Dockerfile').read_text(encoding='utf-8')
+    assert 'FROM debian:trixie-slim AS assembled' in text
+    assert ':source' not in text and 'anp3/' not in text
+    assert 'AS postgres-build' in text and 'AS dbx-backend' in text
+    assert '"$TARGETARCH"' in text
 
 
 def test_locked_sources_match_real_submodule_commits():
     lock=json.loads((ROOT/'docker/toolbox/versions.lock.json').read_text(encoding='utf-8'))
-    for component in lock['components'].values():
-        assert ':latest' not in component['image']
+    assert lock['architectures']==['linux/amd64','linux/arm64']
     assert lock['components']['litellm']['upstream_ref']=='v1.106.0'
     assert lock['components']['supabase-studio']['upstream_ref']=='v1.26.08'
     folders={'dbx':'dbx','langfuse-web':'langfuse','langfuse-worker':'langfuse','litellm':'litellm',
              'supabase-studio':'supabase','supabase-auth':'components/auth','supabase-rest':'components/postgrest',
-             'supabase-meta':'components/postgres-meta','supabase-storage':'components/storage'}
+             'supabase-meta':'components/postgres-meta','supabase-storage':'components/storage','postgres':'components/postgres'}
     for name,folder in folders.items():
-        sha=subprocess.check_output(['git','-C',str(ROOT/'platform/sources'/folder),'rev-parse','HEAD'],text=True).strip()
+        sha=subprocess.check_output(['git','ls-files','--stage','platform/sources/'+folder],cwd=ROOT,text=True).split()[1]
         assert sha==lock['components'][name]['source_sha'], name

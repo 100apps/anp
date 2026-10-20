@@ -4,19 +4,20 @@ import hashlib
 import hmac
 import json
 import os
+import platform
 from pathlib import Path
 import secrets
 from urllib.parse import quote
 from xml.sax.saxutils import escape
 
-DATA = Path(os.getenv('ANP3_DATA_DIR','/data'))
+DATA = Path(os.getenv('ANP_DATA_DIR','/data'))
 NAMES = ['postgres','redis','clickhouse','rustfs','dbx','langfuse-web','langfuse-worker','litellm',
          'supabase-studio','supabase-meta','supabase-auth','supabase-rest','supabase-storage','supabase-gateway']
 UIDS = {name: number for number,name in enumerate(NAMES,20001)}
 PG = '/nix/var/nix/profiles/default/bin/'
-NODE = '/opt/node24/bin/node'
-NODE22 = '/opt/node22/bin/node'
-COMPAT = '/opt/lib/compat'
+NODE = '/opt/anp/runtimes/node24/bin/node'
+NODE22 = '/opt/anp/runtimes/node22/bin/node'
+COMPAT = ''
 
 
 def atomic(path,content,uid=0,mode=0o600):
@@ -50,7 +51,7 @@ def credentials():
     values={key:os.getenv(key) or secrets.token_hex(32) for key in keys}
     if not values['LITELLM_MASTER_KEY'].startswith('sk-'):
         values['LITELLM_MASTER_KEY']='sk-'+values['LITELLM_MASTER_KEY']
-    values['S3_ACCESS_KEY']=os.getenv('S3_ACCESS_KEY','anp3admin')
+    values['S3_ACCESS_KEY']=os.getenv('S3_ACCESS_KEY','anpadmin')
     values['ANON_KEY']=jwt('anon',values['JWT_SECRET'])
     values['SERVICE_KEY']=jwt('service_role',values['JWT_SECRET'])
     atomic(path,json.dumps(values,indent=2)+'\n')
@@ -63,11 +64,11 @@ def tuning():
         atomic(path,json.dumps({'postgres_connections':100,'postgres_work_mem_mb':4,'log_max_mb':10,
                                'log_backups':3,'memory_mb':16384,'cpu_threads':8},indent=2)+'\n')
     values=json.loads(path.read_text())
-    memory=int(os.getenv('ANP3_MEMORY_MB',values['memory_mb']))
+    memory=int(os.getenv('ANP_MEMORY_MB',values['memory_mb']))
     limit=Path('/sys/fs/cgroup/memory.max')
     if limit.exists() and limit.read_text().strip()!='max':
         memory=min(memory,int(limit.read_text())//1048576)
-    cpu=max(1,int(os.getenv('ANP3_CPU_THREADS',values['cpu_threads'])))
+    cpu=max(1,int(os.getenv('ANP_CPU_THREADS',values['cpu_threads'])))
     values.update(memory_mb=memory,cpu_threads=cpu,postgres_shared_mb=max(128,min(1024,memory//12)),
                   postgres_cache_mb=max(256,memory//3),clickhouse_mb=max(256,min(4096,memory//4)),
                   redis_mb=max(64,min(512,memory//32)),node_web_mb=max(256,min(1536,memory//10)),
@@ -201,9 +202,10 @@ def definitions(secret,limits):
     conf=DATA/'config/effective'
     def url(user,key,database='postgres'):
         return f'postgresql://{user}:{quote(secret[key],safe="")}@127.0.0.1:5432/{database}'
-    public=os.getenv('ANP3_PUBLIC_URL','http://127.0.0.1:51760').rstrip('/')
+    engine = 'linux-arm64-openssl-3.0.x' if platform.machine() == 'aarch64' else 'debian-openssl-3.0.x'
+    public=os.getenv('ANP_PUBLIC_URL','http://127.0.0.1:51760').rstrip('/')
     pgurl=url('postgres','POSTGRES_PASSWORD')
-    common={'NODE_ENV':'production','TZ':'UTC','PATH':'/opt/node24/bin:/opt/bin:/usr/bin:/bin',
+    common={'NODE_ENV':'production','TZ':'UTC','PATH':'/opt/anp/runtimes/node24/bin:/opt/anp/bin:/usr/bin:/bin',
             'LD_LIBRARY_PATH':COMPAT,'NODE_OPTIONS':'--max-old-space-size=512','HOSTNAME':'0.0.0.0'}
     lf={'DATABASE_URL':url('langfuse','LANGFUSE_DB_PASSWORD','langfuse')+'?connection_limit=5&pool_timeout=30',
         'DIRECT_URL':url('langfuse','LANGFUSE_DB_PASSWORD','langfuse'),
@@ -217,41 +219,41 @@ def definitions(secret,limits):
         'LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT':'http://127.0.0.1:9002','LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE':'true',
         'LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID':secret['S3_ACCESS_KEY'],'LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY':secret['S3_SECRET_KEY'],
         'LANGFUSE_S3_MEDIA_UPLOAD_BUCKET':'langfuse','LANGFUSE_S3_MEDIA_UPLOAD_REGION':'us-east-1',
-        'LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT':os.getenv('ANP3_S3_PUBLIC_URL','http://127.0.0.1:'+os.getenv('S3_API_PORT','59402')),
+        'LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT':os.getenv('ANP_S3_PUBLIC_URL','http://127.0.0.1:'+os.getenv('S3_API_PORT','59402')),
         'LANGFUSE_S3_MEDIA_UPLOAD_INTERNAL_ENDPOINT':'http://127.0.0.1:9002','LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE':'true',
         'LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID':secret['S3_ACCESS_KEY'],'LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY':secret['S3_SECRET_KEY'],
-        'PRISMA_SCHEMA_ENGINE_BINARY':'/opt/langfuse-tools/lib/node_modules/prisma/node_modules/@prisma/engines/schema-engine-rhel-openssl-3.0.x',
-        'PRISMA_QUERY_ENGINE_LIBRARY':'/opt/langfuse-tools/lib/node_modules/prisma/node_modules/@prisma/engines/libquery_engine-rhel-openssl-3.0.x.so.node'}
+        'PRISMA_SCHEMA_ENGINE_BINARY':f'/opt/langfuse-tools/lib/node_modules/prisma/node_modules/@prisma/engines/schema-engine-{engine}',
+        'PRISMA_QUERY_ENGINE_LIBRARY':f'/opt/langfuse-tools/lib/node_modules/prisma/node_modules/@prisma/engines/libquery_engine-{engine}.so.node'}
     studio={'STUDIO_PG_META_URL':'http://127.0.0.1:8080','POSTGRES_HOST':'127.0.0.1','POSTGRES_PORT':'5432',
             'POSTGRES_DB':'postgres','POSTGRES_PASSWORD':secret['POSTGRES_PASSWORD'],'POSTGRES_USER':'postgres',
-            'POSTGRES_USER_READ_WRITE':'postgres','POSTGRES_USER_READ_ONLY':'anp3_studio_reader',
+            'POSTGRES_USER_READ_WRITE':'postgres','POSTGRES_USER_READ_ONLY':'anp_studio_reader',
             'PG_META_CRYPTO_KEY':hashlib.sha256((secret['JWT_SECRET']+':studio-pg-meta').encode()).hexdigest(),
             'SUPABASE_URL':'http://127.0.0.1:8000','SUPABASE_PUBLIC_URL':public+'/supabase',
             'SUPABASE_ANON_KEY':secret['ANON_KEY'],'SUPABASE_SERVICE_KEY':secret['SERVICE_KEY'],
             'AUTH_JWT_SECRET':secret['JWT_SECRET'],'NEXT_PUBLIC_BASE_PATH':'/supabase','NEXT_PUBLIC_ENABLE_LOGS':'false',
-            'DEFAULT_PROJECT_NAME':'ANP3 本机平台','DEFAULT_ORGANIZATION_NAME':'ANP3','PORT':'3200',
+            'DEFAULT_PROJECT_NAME':'ANP 本机平台','DEFAULT_ORGANIZATION_NAME':'ANP','PORT':'3200',
             'NODE_OPTIONS':f"--max-old-space-size={limits['node_studio_mb']}"}
     result={}
-    def add(name,command,port,env=None,deps=(),path=None,cwd='/opt/anp3',timeout=300):
+    def add(name,command,port,env=None,deps=(),path=None,cwd='/opt/anp',timeout=300):
         result[name]={'name':name,'command':command,'port':port,'env':{**common,**(env or {})},
                       'deps':list(deps),'health':path,'cwd':cwd,'timeout':timeout,'uid':UIDS[name]}
     add('postgres',[PG+'postgres','-D',str(DATA/'postgres'),'-c','config_file='+str(conf/'postgresql.conf')],5432,
         {'PATH':PG+':/usr/bin:/bin','LD_LIBRARY_PATH':'','HOME':str(DATA/'postgres')})
-    add('redis',['/opt/bin/redis-server',str(conf/'redis.conf')],6379)
-    add('clickhouse',['/opt/bin/clickhouse','server','--config-file='+str(conf/'clickhouse.xml')],8123,path='/ping')
-    add('rustfs',['/opt/bin/rustfs',str(DATA/'rustfs')],9002,{'RUSTFS_ACCESS_KEY':secret['S3_ACCESS_KEY'],
+    add('redis',['/opt/anp/bin/redis-server',str(conf/'redis.conf')],6379)
+    add('clickhouse',['/opt/anp/bin/clickhouse','server','--config-file='+str(conf/'clickhouse.xml')],8123,path='/ping')
+    add('rustfs',['/opt/anp/bin/rustfs',str(DATA/'rustfs')],9002,{'RUSTFS_ACCESS_KEY':secret['S3_ACCESS_KEY'],
         'RUSTFS_SECRET_KEY':secret['S3_SECRET_KEY'],'RUSTFS_ADDRESS':'0.0.0.0:9002','RUSTFS_CONSOLE_ADDRESS':'0.0.0.0:9003',
         'RUSTFS_CONSOLE_ENABLE':'true','RUSTFS_LOGS_DIR':str(DATA/'logs/rustfs'),'RUST_LOG':'warn','LD_LIBRARY_PATH':''})
-    add('dbx',['/opt/bin/dbx-web'],4224,{'DBX_PASSWORD':secret['DBX_PASSWORD'],'DBX_PUBLIC_BASE_PATH':'/dbx',
-        'DBX_STATIC_DIR':'/opt/apps/dbx/static','DBX_DATA_DIR':str(DATA/'dbx'),'DBX_BACKUP_ROOT':str(DATA/'dbx/backups'),
-        'DBX_JAVA_BIN':'/usr/lib/jvm/java-17-openjdk-amd64/bin/java'},path='/dbx/')
+    add('dbx',['/opt/anp/bin/dbx-web'],4224,{'DBX_PASSWORD':secret['DBX_PASSWORD'],'DBX_PUBLIC_BASE_PATH':'/dbx',
+        'DBX_STATIC_DIR':'/opt/anp/services/dbx/static','DBX_DATA_DIR':str(DATA/'dbx'),'DBX_BACKUP_ROOT':str(DATA/'dbx/backups'),
+        'DBX_JAVA_BIN':'/usr/bin/java'},path='/dbx/')
     add('langfuse-web',['/bin/sh','web/entrypoint.sh',NODE,'web/server.js','--keepAliveTimeout','110000'],3100,
         {**lf,'PORT':'3100','PATH':'/opt/langfuse-tools/bin:'+common['PATH'],
          'NODE_OPTIONS':f"--max-old-space-size={limits['node_web_mb']}"},
-        ('postgres','clickhouse','redis','rustfs'),'/langfuse/api/public/health','/opt/apps/langfuse-web',600)
+        ('postgres','clickhouse','redis','rustfs'),'/langfuse/api/public/health','/opt/anp/services/langfuse-web',600)
     add('langfuse-worker',['/bin/sh','worker/entrypoint.sh',NODE,'worker/dist/index.js'],3130,
         {**lf,'PORT':'3130','NODE_OPTIONS':f"--max-old-space-size={limits['node_worker_mb']}"},
-        ('langfuse-web',),'/api/health','/opt/apps/langfuse-worker',600)
+        ('langfuse-web',),'/api/health','/opt/anp/services/langfuse-worker',600)
     add('litellm',['/app/.venv/bin/litellm','--config',str(DATA/'config/litellm.yaml'),'--port','4000'],4000,
         {'DATABASE_URL':url('litellm','LITELLM_DB_PASSWORD','litellm'),'LITELLM_MASTER_KEY':secret['LITELLM_MASTER_KEY'],
          'LITELLM_LOCAL_MODEL_COST_MAP':'true','STORE_MODEL_IN_DB':'true','SERVER_ROOT_PATH':'/litellm',
@@ -262,32 +264,32 @@ def definitions(secret,limits):
     add('supabase-meta',[NODE22,'dist/server/server.js'],8080,{'PG_META_DB_HOST':'127.0.0.1','PG_META_DB_PORT':'5432',
         'PG_META_DB_NAME':'postgres','PG_META_DB_USER':'postgres','PG_META_DB_PASSWORD':secret['POSTGRES_PASSWORD'],
         'CRYPTO_KEY':studio['PG_META_CRYPTO_KEY'],
-        'PG_META_PORT':'8080','PORT':'8080'},('postgres',),'/health','/opt/apps/supabase-meta')
-    add('supabase-auth',['/opt/bin/supabase-auth'],9999,{'GOTRUE_API_HOST':'0.0.0.0','GOTRUE_API_PORT':'9999',
+        'PG_META_PORT':'8080','PORT':'8080'},('postgres',),'/health','/opt/anp/services/supabase-meta')
+    add('supabase-auth',['/opt/anp/bin/supabase-auth'],9999,{'GOTRUE_API_HOST':'0.0.0.0','GOTRUE_API_PORT':'9999',
         'API_EXTERNAL_URL':public+'/supabase/auth/v1','GOTRUE_SITE_URL':public+'/workbench/',
         'GOTRUE_DB_DRIVER':'postgres','GOTRUE_DB_DATABASE_URL':url('supabase_auth_admin','AUTH_DB_PASSWORD'),
         'GOTRUE_JWT_SECRET':secret['JWT_SECRET'],'GOTRUE_JWT_AUD':'authenticated',
         'GOTRUE_JWT_ADMIN_ROLES':'service_role','GOTRUE_JWT_DEFAULT_GROUP_NAME':'authenticated',
         'GOTRUE_EXTERNAL_EMAIL_ENABLED':'true','GOTRUE_MAILER_AUTOCONFIRM':'true',
-        'GOTRUE_DB_MIGRATIONS_PATH':'/opt/apps/supabase-auth/migrations'},('postgres',),'/health')
-    add('supabase-rest',['/opt/bin/postgrest'],3300,{'PGRST_DB_URI':url('authenticator','REST_DB_PASSWORD'),
+        'GOTRUE_DB_MIGRATIONS_PATH':'/opt/anp/services/supabase-auth/migrations'},('postgres',),'/health')
+    add('supabase-rest',['/opt/anp/bin/postgrest'],3300,{'PGRST_DB_URI':url('authenticator','REST_DB_PASSWORD'),
         'PGRST_DB_SCHEMAS':'public','PGRST_DB_EXTRA_SEARCH_PATH':'public,extensions','PGRST_DB_ANON_ROLE':'anon',
         'PGRST_JWT_SECRET':secret['JWT_SECRET'],'PGRST_SERVER_PORT':'3300','PGRST_DB_POOL':'5',
         'PGRST_DB_MAX_ROWS':'1000'},('postgres',),'/')
-    add('supabase-storage',['/opt/runtime/storage/node','dist/start/server.js'],5000,
-        {'LD_LIBRARY_PATH':'/opt/runtime/storage/lib:/opt/runtime/storage/usr/lib:/opt/runtime/storage/usr/local/lib',
+    add('supabase-storage',[NODE,'dist/start/server.js'],5000,
+        {'LD_LIBRARY_PATH':'',
          'SERVER_PORT':'5000','PORT':'5000','HOST':'0.0.0.0','ANON_KEY':secret['ANON_KEY'],
          'SERVICE_KEY':secret['SERVICE_KEY'],'AUTH_JWT_SECRET':secret['JWT_SECRET'],
          'POSTGREST_URL':'http://127.0.0.1:3300','DATABASE_URL':url('supabase_storage_admin','STORAGE_DB_PASSWORD'),
          'STORAGE_BACKEND':'s3','GLOBAL_S3_BUCKET':'supabase','GLOBAL_S3_ENDPOINT':'http://127.0.0.1:9002',
          'GLOBAL_S3_PROTOCOL':'http','GLOBAL_S3_FORCE_PATH_STYLE':'true','AWS_ACCESS_KEY_ID':secret['S3_ACCESS_KEY'],
-         'AWS_SECRET_ACCESS_KEY':secret['S3_SECRET_KEY'],'REGION':'us-east-1','TENANT_ID':'anp3','FILE_SIZE_LIMIT':'52428800',
+         'AWS_SECRET_ACCESS_KEY':secret['S3_SECRET_KEY'],'REGION':'us-east-1','TENANT_ID':'anp','FILE_SIZE_LIMIT':'52428800',
          'ENABLE_IMAGE_TRANSFORMATION':'false','STORAGE_PUBLIC_URL':public+'/supabase',
-         'REQUEST_ALLOW_X_FORWARDED_PATH':'true'},('supabase-auth','supabase-rest','rustfs'),'/status','/opt/apps/supabase-storage')
-    add('supabase-gateway',['/opt/bin/envoy','-c',str(conf/'envoy.yaml'),'--concurrency','2','--log-level','warning',
+         'REQUEST_ALLOW_X_FORWARDED_PATH':'true'},('supabase-auth','supabase-rest','rustfs'),'/status','/opt/anp/services/supabase-storage')
+    add('supabase-gateway',['/opt/anp/bin/envoy','-c',str(conf/'envoy.yaml'),'--concurrency','2','--log-level','warning',
         '--base-id','3'],8000,deps=('supabase-auth','supabase-rest','supabase-storage'),path='/auth/v1/health')
     add('supabase-studio',[NODE22,'apps/studio/server.js'],3200,studio,
-        ('supabase-meta','supabase-gateway'),'/supabase/api/platform/profile','/opt/apps/supabase-studio')
+        ('supabase-meta','supabase-gateway'),'/supabase/api/platform/profile','/opt/anp/services/supabase-studio')
     override=DATA/'config/services.json'
     if override.exists():
         for name,env in json.loads(override.read_text()).items():

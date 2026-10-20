@@ -48,30 +48,30 @@ def resources():
 def write_storage():
     cache, s3 = resources()
     with postgres() as conn:
-        conn.execute("CREATE SCHEMA IF NOT EXISTS anp3_smoke")
-        conn.execute("CREATE TABLE IF NOT EXISTS anp3_smoke.probe (id integer PRIMARY KEY, token text NOT NULL)")
-        conn.execute("INSERT INTO anp3_smoke.probe VALUES (1,%s) ON CONFLICT (id) DO UPDATE SET token=EXCLUDED.token", (TOKEN,))
+        conn.execute("CREATE SCHEMA IF NOT EXISTS anp_smoke")
+        conn.execute("CREATE TABLE IF NOT EXISTS anp_smoke.probe (id integer PRIMARY KEY, token text NOT NULL)")
+        conn.execute("INSERT INTO anp_smoke.probe VALUES (1,%s) ON CONFLICT (id) DO UPDATE SET token=EXCLUDED.token", (TOKEN,))
         version = conn.execute("SHOW server_version").fetchone()[0]
-    cache.set("anp3:smoke", TOKEN)
-    ch("CREATE DATABASE IF NOT EXISTS anp3_smoke")
-    ch("CREATE TABLE IF NOT EXISTS anp3_smoke.probe (token String) ENGINE=MergeTree ORDER BY token")
-    ch("INSERT INTO anp3_smoke.probe VALUES ('" + TOKEN + "')")
-    if "anp3-smoke" not in {b["Name"] for b in s3.list_buckets()["Buckets"]}:
-        s3.create_bucket(Bucket="anp3-smoke")
-    s3.put_object(Bucket="anp3-smoke", Key="probe.txt", Body=TOKEN.encode())
+    cache.set("anp:smoke", TOKEN)
+    ch("CREATE DATABASE IF NOT EXISTS anp_smoke")
+    ch("CREATE TABLE IF NOT EXISTS anp_smoke.probe (token String) ENGINE=MergeTree ORDER BY token")
+    ch("INSERT INTO anp_smoke.probe VALUES ('" + TOKEN + "')")
+    if "anp-smoke" not in {b["Name"] for b in s3.list_buckets()["Buckets"]}:
+        s3.create_bucket(Bucket="anp-smoke")
+    s3.put_object(Bucket="anp-smoke", Key="probe.txt", Body=TOKEN.encode())
     return {"postgres": version, "redis": cache.info("server")["redis_version"],
             "clickhouse": ch("SELECT version()"), "rustfs_image": json.loads(
-                (ROOT / 'docker/toolbox/versions.lock.json').read_text(encoding='utf-8'))['components']['rustfs']['image']}
+                (ROOT / 'docker/toolbox/versions.lock.json').read_text(encoding='utf-8'))['components']['rustfs']['version']}
 
 
 def read_storage():
     cache, s3 = resources()
     with postgres() as conn:
-        assert conn.execute("SELECT token FROM anp3_smoke.probe WHERE id=1").fetchone()[0] == TOKEN
-    assert cache.get("anp3:smoke") == TOKEN
-    assert ch("SELECT count() FROM anp3_smoke.probe WHERE token='" + TOKEN + "'") == "1"
-    assert s3.get_object(Bucket="anp3-smoke", Key="probe.txt")["Body"].read().decode() == TOKEN
-    url = s3.generate_presigned_url("get_object", Params={"Bucket": "anp3-smoke", "Key": "probe.txt"}, ExpiresIn=60)
+        assert conn.execute("SELECT token FROM anp_smoke.probe WHERE id=1").fetchone()[0] == TOKEN
+    assert cache.get("anp:smoke") == TOKEN
+    assert ch("SELECT count() FROM anp_smoke.probe WHERE token='" + TOKEN + "'") == "1"
+    assert s3.get_object(Bucket="anp-smoke", Key="probe.txt")["Body"].read().decode() == TOKEN
+    url = s3.generate_presigned_url("get_object", Params={"Bucket": "anp-smoke", "Key": "probe.txt"}, ExpiresIn=60)
     with urllib.request.urlopen(url, timeout=10) as response:
         assert response.read().decode() == TOKEN
 

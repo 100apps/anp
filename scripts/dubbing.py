@@ -27,19 +27,19 @@ def migrate():
     from anp_business.dubbing.settings import required
     from psycopg.types.json import Jsonb
     with psycopg.connect(required("ANP_DUB_DATABASE_URL")) as conn:
-        conn.execute("CREATE TABLE IF NOT EXISTS public.anp3_schema_migrations(name text PRIMARY KEY, applied_at timestamptz DEFAULT now())")
-        conn.execute("REVOKE ALL ON public.anp3_schema_migrations FROM PUBLIC, anon, authenticated")
+        conn.execute("CREATE TABLE IF NOT EXISTS public.anp_schema_migrations(name text PRIMARY KEY, applied_at timestamptz DEFAULT now())")
+        conn.execute("REVOKE ALL ON public.anp_schema_migrations FROM PUBLIC, anon, authenticated")
         for path in sorted((ROOT / "business/supabase/migrations").glob("*.sql")):
-            if not conn.execute("SELECT 1 FROM public.anp3_schema_migrations WHERE name=%s", (path.name,)).fetchone():
+            if not conn.execute("SELECT 1 FROM public.anp_schema_migrations WHERE name=%s", (path.name,)).fetchone():
                 conn.execute(path.read_text(encoding="utf-8"))
-                conn.execute("INSERT INTO public.anp3_schema_migrations(name) VALUES (%s)", (path.name,))
+                conn.execute("INSERT INTO public.anp_schema_migrations(name) VALUES (%s)", (path.name,))
         user = required("ANP_DUB_ACTOR_ID")
         conn.execute("INSERT INTO auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data) VALUES (%s,'authenticated','authenticated',%s,%s,%s) ON CONFLICT(id) DO NOTHING",
-                     (user, f"anp3-{user}@local.invalid", Jsonb({"provider": "local-development"}), Jsonb({})))
+                     (user, f"anp-{user}@local.invalid", Jsonb({"provider": "local-development"}), Jsonb({})))
         conn.execute("INSERT INTO dubbing.workspaces(id,name) VALUES (%s,'本机译配工作空间') ON CONFLICT DO NOTHING", (required("ANP_DUB_WORKSPACE_ID"),))
         conn.execute("INSERT INTO dubbing.memberships(workspace_id,user_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (required("ANP_DUB_WORKSPACE_ID"), user))
     client = s3()
-    bucket = os.getenv("ANP_DUB_S3_BUCKET", "anp3-dubbing")
+    bucket = os.getenv("ANP_DUB_S3_BUCKET", "anp-dubbing")
     if bucket not in {b["Name"] for b in client.list_buckets()["Buckets"]}:
         client.create_bucket(Bucket=bucket)
     print("Supabase 对象迁移、RLS、本机开发成员与私有桶已就绪。")

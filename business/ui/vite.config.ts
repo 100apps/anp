@@ -1,14 +1,16 @@
+import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
+  resolve: {alias: {"@": fileURLToPath(new URL("./src", import.meta.url))}},
   plugins: [react(), tailwindcss(), {
     name: "anp-workspace",
     configureServer(server) {
       server.middlewares.use("/__anp_workspace", (_req, res) => {
         res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({root: process.cwd(), project: "anp3"}));
+        res.end(JSON.stringify({root: process.cwd(), project: "anp"}));
       });
     }
   }],

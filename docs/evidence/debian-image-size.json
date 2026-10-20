@@ -1,0 +1,29 @@
+{
+  "images": [
+    {
+      "image": "anp3/toolbox:baseline-full",
+      "id": "sha256:fc4331ee8d503aad389577ed89b4404581787352d8bff87ed81bb642d3c2a7f9",
+      "docker_size_bytes": 10976096031,
+      "platform": "linux/amd64"
+    },
+    {
+      "image": "anp3/toolbox:zstd-candidate",
+      "id": "sha256:20608ea3ae59cb517cbacf2da0fc611c1335465c8ababbae94ff6969ee9675e9",
+      "docker_size_bytes": 8723688187,
+      "platform": "linux/amd64"
+    },
+    {
+      "image": "anp/toolbox:debian-verified",
+      "id": "sha256:97d7d7eb2fe17f3fb7008300b7b95aac0a638d08f91dab71fc7d8cd9070c5b7f",
+      "docker_size_bytes": 9046083694,
+      "platform": "linux/amd64"
+    },
+    {
+      "image": "anp/toolbox:local",
+      "id": "sha256:acac63e4b3a7aed45676488082f541c1335dd393079582966de0bf8a5b456cea",
+      "docker_size_bytes": 8535946040,
+      "platform": "linux/amd64"
+    }
+  ],
+  "gzip_and_zstd_rootfs_equal": true
+}

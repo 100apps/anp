@@ -1,0 +1,9 @@
+# 构建阶段生成输入
+
+recipes内的.in是锁定上游生产配方的快照，不是独立镜像构建入口。scripts/generate_dockerfile.py将它们改为唯一Dockerfile的命名构建阶段；基础运行系统统一Debian，源码上下文统一从仓库根目录读取。
+
+recipes.lock.json记录上游文件、提交、原始配方校验值及快照校验值。Langfuse的UBI运行系统和Storage的musl环境由生成器适配为Debian；保留原生模块生产编译、生成的Prisma客户端、数据库迁移和第三方NOTICE。Studio保留/supabase生产路径补丁。
+
+安装方式优先级为官方固定二进制、官方包、固定源码编译。Auth/PostgREST/Envoy/RustFS/ClickHouse使用官方发行包；Redis构建服务器核心及TLS，保留其内置vectorset；PostgreSQL从同版Supabase源码和官方Nix缓存得到完整扩展集合。LiteLLM使用锁定uv依赖并构建管理UI，其余生产前端和原生依赖在构建阶段完成。
+
+更新组件时同步submodule、版本锁和所用配方，执行生成器并验证两个架构；不能只修改镜像tag。构建可使用缓存，但任何阶段都不能依赖本机anp组件镜像。

@@ -1,7 +1,12 @@
-# 源码构建与持续集成
+# GitHub构建
 
-本轮为独立本地目录anp3，尚未配置GitHub remote，没有修改原anp仓库和流水线。保留的CI只执行锁定依赖、离线业务/代理/运行时测试与前端生产构建，真实数据库权限测试会明确跳过；不冒充线上验收。
+唯一流水线为.github/workflows/ci.yaml，main推送、版本tag和手动触发会运行；PR仅运行测试。
 
-组件生产构建定义在 `compose.build.yaml`，先 `python scripts/source_recipes.py`，再构建九个目标。上游多阶段配方包含锁定依赖、静态资产、生产裁剪；必要前缀/公开包源适配记录在 `docker/source-recipes.json`，没有修改submodule源码。统一镜像仅复制运行产物，保留ABI运行库隔离与LICENSE。手工构建完成后运行 `python scripts/lock_versions.py --require-images` 再 `make build`，将真实镜像身份写进统一镜像。
+1. 锁定uv/pnpm依赖，运行离线业务与代理/运行时测试，构建工作台。
+2. 原生ubuntu-24.04与ubuntu-24.04-arm分别构建linux/amd64和linux/arm64，验证源码版本和生成Dockerfile。
+3. 推送带完整提交SHA和架构后缀的候选镜像；在对应架构启动候选、执行四存储恢复、选服、平台页面/API和两个业务图验收。
+4. 只有两个架构都通过，才合并manifest并更新latest和sha-<提交SHA>；版本tag另外生成同名镜像tag。
 
-完整平台构建需要较大内存、磁盘和时间，默认GitHub免费runner不适合作为全栈构建与验收机器。部署前应在明确规格的runner构建、做漏洞扫描并按镜像digest发布。该工作区验收不依赖GitHub执行成功。
+构建使用GITHUB_TOKEN写入GHCR，不需要把本机供应商Key、数据和.env放入Actions secrets。首次发布后需确认GHCR包为public，才能让匿名clone用户直接拉取。固定SHA标签用于回溯；latest是便利入口，不是组件版本锁。
+
+输出SBOM与构建来源证明，Actions固定提交SHA；原生架构分别缓存，每个架构内构建阶段并发限制为1，避免重型编译挤占共享内存；两个架构并行运行。首次全量构建较慢，候选完成前不更新已发布latest。流水线和本机结果分别记录，不以配置文件存在代替远程成功。

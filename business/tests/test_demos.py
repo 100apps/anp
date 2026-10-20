@@ -37,5 +37,5 @@ async def test_deep_agent_really_calls_tool(monkeypatch):
 
 def test_extension_health():
     value = TestClient(app).get("/api/health").json()
-    assert value["service"] == "anp3"
+    assert value["service"] == "anp"
     assert value["model_mode"] == "demo"

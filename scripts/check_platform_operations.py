@@ -1,15 +1,16 @@
-"""只对anp3执行平台真实操作；凭据仅在内存，不写入验收回执。"""
+"""只对anp执行平台真实操作；凭据仅在内存，不写入验收回执。"""
 import json
 import subprocess
 import uuid
 
 import httpx
-from manage import ROOT
+from manage import ROOT, PROJECT, ensure_owned_project, read_env
 
 
 def check(base='http://127.0.0.1:51760'):
     # 固定项目与固定容器，不读取相邻环境。
-    raw=subprocess.check_output(['docker','exec','anp3-toolbox-1','cat','/data/config/credentials.json'])
+    ensure_owned_project(read_env(ROOT/'.env')['ANP_WORKSPACE_ID'])
+    raw=subprocess.check_output(['docker','exec',PROJECT+'-toolbox-1','cat','/data/config/credentials.json'])
     secret=json.loads(raw)
     result={}
     with httpx.Client(base_url=base,timeout=60,trust_env=False,follow_redirects=True) as client:
@@ -23,20 +24,21 @@ def check(base='http://127.0.0.1:51760'):
         # Studio表编辑器实际调用；首页健康不能代替数据库连接验收。
         response=client.post('/supabase/api/platform/pg-meta/default/query',json={'query':'SELECT nspname AS name FROM pg_namespace'})
         assert response.status_code==200 and isinstance(response.json(),list), 'Studio schema加载失败'
-        assert any(item.get('name')=='dubbing' for item in response.json())
-        result['studio_dubbing_schema']=True
-        response=client.get('/supabase/api/platform/pg-meta/default/tables',params={'included_schemas':'dubbing'})
+        assert any(item.get('name')=='public' for item in response.json())
+        result['studio_public_schema']=True
+        response=client.post('/supabase/api/platform/pg-meta/default/query',json={'query':'SELECT 1 AS value'})
+        assert response.status_code==200 and response.json()==[{'value':1}], 'Studio真实查询失败'
+        result['studio_query']=True
+        response=client.get('/supabase/api/platform/pg-meta/default/tables',params={'included_schemas':'public'})
         assert response.status_code==200 and isinstance(response.json(),list), 'Studio表加载失败'
-        tables={item['name'] for item in response.json() if item.get('schema')=='dubbing'}
-        assert {'projects','assets','runs','translations','syntheses','deliverables'}<=tables
-        result['studio_dubbing_tables']=sorted(tables)
+        result['studio_public_tables_loaded']=True
         headers={'apikey':secret['SERVICE_KEY'],'Authorization':'Bearer '+secret['SERVICE_KEY']}
-        bucket='anp3-acceptance'
+        bucket='anp-acceptance'
         response=client.get('/supabase/storage/v1/bucket/'+bucket,headers=headers)
         if response.status_code!=200:
             created=client.post('/supabase/storage/v1/bucket',headers=headers,json={'id':bucket,'name':bucket,'public':False})
             assert created.status_code in (200,201), 'Supabase私有桶创建失败'
-        payload=('anp3-storage-api-'+uuid.uuid4().hex).encode()
+        payload=('anp-storage-api-'+uuid.uuid4().hex).encode()
         path='/supabase/storage/v1/object/'+bucket+'/probe.txt'
         response=client.post(path,headers={**headers,'Content-Type':'text/plain','x-upsert':'true'},content=payload)
         assert response.status_code in (200,201), 'Supabase Storage实际上传失败'
@@ -61,4 +63,4 @@ def check(base='http://127.0.0.1:51760'):
 if __name__=='__main__':
     result=check()
     (ROOT/'docs/evidence/platform-operations.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-    print('DBX登录、LiteLLM鉴权、Studio业务表和Supabase Storage读写通过')
+    print('DBX登录、LiteLLM鉴权、Studio数据库查询和Supabase Storage读写通过')

@@ -84,8 +84,10 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=sha-${{ github.sha }}
           outputs: type=image,push=true,compression=zstd,compression-level=15,force-compression=true
-          cache-from: type=gha,scope=anp-${{ matrix.arch }}
-          cache-to: type=gha,scope=anp-${{ matrix.arch }},mode=max
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ matrix.arch }}
+            type=gha,scope=anp-${{ matrix.arch }}
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ matrix.arch }},mode=max,compression=zstd,compression-level=3,ignore-error=true
           provenance: mode=max
           sbom: true
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884

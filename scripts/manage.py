@@ -32,12 +32,20 @@ def run(args,cwd=ROOT,env=None):
     subprocess.run([str(arg) for arg in args],cwd=cwd,env=env,check=True)
 
 
+def default_cpu_threads():
+    try:
+        result=subprocess.run(['docker','info','--format','{{.NCPU}}'],capture_output=True,text=True,check=True,timeout=5)
+        return str(min(8,max(1,int(result.stdout.strip()))))
+    except (OSError,ValueError,subprocess.SubprocessError):
+        return '8'
+
+
 def init():
     path=ROOT/'.env'; values=read_env(path)
     for name in ('POSTGRES_PASSWORD','REDIS_PASSWORD','CLICKHOUSE_PASSWORD','S3_SECRET_KEY','JWT_SECRET'):
         if not values.get(name): values[name]=secrets.token_hex(32)
     defaults={'ANP_IMAGE':'ghcr.io/100apps/anp:latest','ANP_SERVICES':'all','ANP_AUTO_DEPS':'1',
-              'ANP_MEMORY_MB':'16384','ANP_CPU_THREADS':'8','ANP_PUBLIC_URL':'http://127.0.0.1:51760','BUSINESS_PORT':'20260',
+              'ANP_MEMORY_MB':'16384','ANP_CPU_THREADS':values.get('ANP_CPU_THREADS') or default_cpu_threads(),'ANP_PUBLIC_URL':'http://127.0.0.1:51760','BUSINESS_PORT':'20260',
               'ANP_DATA_ROOT':'/var/lib/anp-next/data' if os.name=='nt' else str(ROOT/'var/data'),
               'S3_ACCESS_KEY':'anpadmin','PG_PORT':'57432','REDIS_PORT':'57379','CH_PORT':'59223',
               'CH_NATIVE_PORT':'59400','S3_API_PORT':'59402','S3_CONSOLE_PORT':'59403','DBX_PORT':'54424',

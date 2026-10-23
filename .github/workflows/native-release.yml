@@ -275,15 +275,43 @@ jobs:
           repo = os.environ['GITHUB_REPOSITORY']
           tag = 'native-v' + os.environ['ANP_VERSION']
           files = sorted(Path('artifacts').iterdir())
-          args = ['gh', 'release', 'create', tag, '--repo', repo, '--draft', '--target', os.environ['GITHUB_SHA'], '--title', 'ANP ' + os.environ['ANP_VERSION'], '--notes-file', 'release-notes.md']
-          if '-' in os.environ['ANP_VERSION']: args.append('--prerelease')
-          subprocess.run([*args, *map(str, files)], check=True)
-          release = json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/releases/tags/{tag}']))
+          expected = {path.name: {'size': path.stat().st_size,
+                      'digest': 'sha256:' + hashlib.file_digest(path.open('rb'), 'sha256').hexdigest()} for path in files}
+          def api(endpoint, payload=None):
+              args = ['gh', 'api', endpoint]
+              if payload is None:
+                  return json.loads(subprocess.check_output(args))
+              return json.loads(subprocess.check_output([*args, '--method', 'PATCH', '--input', '-'],
+                                input=json.dumps(payload).encode()))
+          def find_release():
+              pages = json.loads(subprocess.check_output(['gh', 'api', '--paginate', '--slurp',
+                                 f'repos/{repo}/releases?per_page=100']))
+              matches = [item for page in pages for item in page if item['tag_name'] == tag]
+              assert len(matches) <= 1, '同一版本存在多个 Release'
+              return matches[0] if matches else None
+          release = find_release()
+          if release is None:
+              args = ['gh', 'release', 'create', tag, '--repo', repo, '--draft', '--target', os.environ['GITHUB_SHA'], '--title', 'ANP ' + os.environ['ANP_VERSION'], '--notes-file', 'release-notes.md']
+              if '-' in os.environ['ANP_VERSION']: args.append('--prerelease')
+              subprocess.run([*args, *map(str, files)], check=True)
+              release = find_release()
+          assert release is not None, '创建后未找到 Release'
+          assert release['target_commitish'] == os.environ['GITHUB_SHA'], '已有 Release 的源码提交不一致'
+          # 新标签在草稿公开前可能不存在，必须用不可变 Release ID 查询和发布。
+          endpoint = f"repos/{repo}/releases/{release['id']}"
+          release = api(endpoint)
           assets = {item['name']: item for item in release['assets']}
-          assert len(assets) == len(files), 'Release 附件数量不一致'
+          pending = [path for path in files if assets.get(path.name, {}).get('digest') != expected[path.name]['digest']
+                     or assets.get(path.name, {}).get('size') != expected[path.name]['size']]
+          if pending and release['draft']:
+              subprocess.run(['gh', 'release', 'upload', tag, '--repo', repo, '--clobber', *map(str, pending)], check=True)
+              release = api(endpoint)
+          assets = {item['name']: item for item in release['assets']}
+          assert set(assets) == set(expected), 'Release 附件集合不一致'
           for path in files:
               asset = assets[path.name]
-              expected = 'sha256:' + hashlib.file_digest(path.open('rb'), 'sha256').hexdigest()
-              assert asset.get('digest') == expected and asset['size'] == path.stat().st_size, '服务端制品摘要不一致'
-          subprocess.run(['gh', 'release', 'edit', tag, '--repo', repo, '--draft=false'], check=True)
+              assert asset.get('digest') == expected[path.name]['digest'] and asset['size'] == expected[path.name]['size'], '服务端制品摘要不一致'
+          if release['draft']:
+              release = api(endpoint, {'draft': False})
+          assert release['draft'] is False, 'Release 尚未公开'
           PY

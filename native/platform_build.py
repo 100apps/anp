@@ -14,6 +14,14 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "var/native"
 
 
+def artifact_binary(directory, name):
+    """官方归档可能含同名目录；只能安装唯一的真实普通文件。"""
+    candidates = [p for p in directory.rglob(name) if p.is_file() and not p.is_symlink()]
+    if len(candidates) != 1:
+        raise RuntimeError("官方归档必须有唯一普通文件 " + name + "，实际：" + str(len(candidates)))
+    return candidates[0]
+
+
 def strip_runtime_environment_files(directory):
     """发行目录只接受启动器注入的环境；不读取上游默认环境文件的值。"""
     names = {".env", ".env.local", ".env.production", ".env.production.local",
@@ -143,7 +151,7 @@ def install(bundle, fetch, copy_tree, target="macos-arm64"):
                 folder = folder / item["root"]
             if item.get("binary"):
                 destination.mkdir(parents=True, exist_ok=True)
-                candidate = next(folder.rglob(item["binary"]))
+                candidate = artifact_binary(folder, item["binary"])
                 installed_name = item.get("installed_name", item["binary"])
                 shutil.copy2(candidate, destination / installed_name)
                 (destination / installed_name).chmod(0o755)

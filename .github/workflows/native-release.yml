@@ -99,6 +99,18 @@ jobs:
           compression-level: 0
           if-no-files-found: error
 
+      - name: 保存失败的构建日志
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: build-diagnostics-macos
+          path: |
+            var/native/langfuse-*.log
+            var/native/dbx-*.log
+            var/native/redis-build.log
+            var/native/native-tools.log
+          if-no-files-found: ignore
+
   linux:
     needs: version
     runs-on: ubuntu-24.04
@@ -153,6 +165,18 @@ jobs:
           path: var/release/linux-amd64/
           compression-level: 0
           if-no-files-found: error
+
+      - name: 保存失败的构建日志
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: build-diagnostics-linux
+          path: |
+            var/native/langfuse-*.log
+            var/native/dbx-*.log
+            var/native/redis-build.log
+            var/native/native-tools.log
+          if-no-files-found: ignore
 
   release:
     if: github.ref == 'refs/heads/master'

@@ -454,3 +454,18 @@ def test_macho_audit_ignores_install_id_and_fat_headers_but_checks_loaded_librar
     else:
         result = builder.macho_audit(tmp_path)
         assert result["mach_o_files"] == 1 and result["external_dependencies"] == []
+
+
+
+def test_official_binary_selection_ignores_same_named_directory_and_rejects_ambiguity(tmp_path):
+    builder = module("native_platform_binary", "native/platform_build.py")
+    (tmp_path / "usr/share/clickhouse").mkdir(parents=True)
+    executable = tmp_path / "usr/bin/clickhouse"
+    executable.parent.mkdir(parents=True)
+    executable.write_bytes(b"ELF fixture")
+    assert builder.artifact_binary(tmp_path, "clickhouse") == executable
+    duplicate = tmp_path / "extra/clickhouse"
+    duplicate.parent.mkdir()
+    duplicate.write_bytes(b"another executable")
+    with pytest.raises(RuntimeError, match="唯一"):
+        builder.artifact_binary(tmp_path, "clickhouse")

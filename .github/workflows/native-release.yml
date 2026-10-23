@@ -67,6 +67,40 @@ jobs:
           if simulators.exists(): subprocess.run(['sudo', 'rm', '-rf', str(simulators)], check=True)
           subprocess.run(['df', '-h', '.'], check=True)
           PYCODE
+      - id: native-cache-env
+        name: 记录编译器与 SDK 缓存边界
+        run: |
+          python3 - <<'PY'
+          import hashlib, os, platform, subprocess
+          from pathlib import Path
+          values = [str(Path.cwd()), platform.platform(), os.environ.get('ImageVersion', ''),
+                    subprocess.check_output(['/usr/bin/clang', '--version'], text=True),
+                    subprocess.check_output(['/usr/bin/xcrun', '--show-sdk-version'], text=True)]
+          sdk = hashlib.sha256('\n'.join(values).encode()).hexdigest()[:20]
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output: output.write('sdk=' + sdk + '\n')
+          PY
+      - id: native-components-cache
+        name: 恢复匹配源码与 SDK 的组件编译缓存
+        continue-on-error: true
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          key: native-components-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-cache-env.outputs.sdk }}-${{ hashFiles('native/langfuse_build.py', 'native/platform_build.py', 'native/dbx_build.py', 'native/locks/*macos-arm64.json', 'native/packages/*/package-lock.json') }}
+          path: |
+            var/native/langfuse-build/runtime
+            var/native/langfuse-build/work/packages/native
+            var/native/cargo-home/registry
+            var/native/cargo-home/git
+            var/native/rust
+            var/native/dbx-target/release/dbx-web
+            var/native/dbx-build/build.json
+      - name: 恢复失败时清理本轮临时缓存
+        if: steps.native-components-cache.outcome == 'failure'
+        run: |
+          python3 - <<'PY'
+          import shutil
+          # 全新 runner 尚未构建；此处仅有刚恢复的组件缓存，没有运行数据。
+          shutil.rmtree('var/native', ignore_errors=True)
+          PY
       - name: 确认原生 ARM64 并构建
         run: |
           test "$(uname -m)" = arm64
@@ -74,6 +108,20 @@ jobs:
           echo "$PWD/var/native/build/anp-macos-arm64/tools/uv" >> "$GITHUB_PATH"
           echo "$PWD/var/native/build/anp-macos-arm64/tools/node/bin" >> "$GITHUB_PATH"
           echo "$PWD/native/packages/business-tools/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: 验收前保存已成功构建的组件
+        if: steps.native-components-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          key: ${{ steps.native-components-cache.outputs.cache-primary-key }}
+          path: |
+            var/native/langfuse-build/runtime
+            var/native/langfuse-build/work/packages/native
+            var/native/cargo-home/registry
+            var/native/cargo-home/git
+            var/native/rust
+            var/native/dbx-target/release/dbx-web
+            var/native/dbx-build/build.json
       - name: 回归与独立目录验收
         run: |
           make test

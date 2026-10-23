@@ -29,11 +29,13 @@ def main(bundle=None):
     bundle = bundle or BASE / "build/anp-macos-arm64"
     node = bundle / "tools/node/bin"
     tools = BASE / "dbx-tools"
+    profile = {"CARGO_BUILD_JOBS": "2", "CARGO_PROFILE_RELEASE_LTO": "thin",
+               "CARGO_PROFILE_RELEASE_CODEGEN_UNITS": "8"}
     environment = {**os.environ, "PATH": f"{node}:{tools}/node_modules/.bin:{BASE}/rust/bin:/usr/bin:/bin:/usr/sbin:/sbin",
                    "HUSKY": "0", "CI": "1", "DBX_PUBLIC_BASE_PATH": "/dbx",
                    "NPM_CONFIG_REGISTRY": "https://registry.npmjs.org/", "NPM_CONFIG_USERCONFIG": "/dev/null",
                    "CARGO_HOME": str(BASE / "cargo-home"), "CARGO_TARGET_DIR": str(BASE / "dbx-target"),
-                   "CARGO_BUILD_JOBS": "3", "CARGO_INCREMENTAL": "0"}
+                   "CARGO_INCREMENTAL": "0", **profile}
     def run(args, **kw):
         subprocess.run([str(x) for x in args], env=environment, check=True, **kw)
     if not work.exists():
@@ -56,7 +58,7 @@ def main(bundle=None):
          "embed-static,duckdb-sidecar,dynamodb,mq-admin,dbx-core/sqlite-bundled"], cwd=work)
     (BASE / "dbx-build/build.json").write_text(json.dumps({"version": "0.6.51", "commit": COMMIT,
         "source": "https://github.com/t8y2/dbx.git", "frontend_base": "/dbx", "native_web": True,
-        "recipe_sha256": fingerprint, "binary_sha256": hashlib.file_digest(binary.open("rb"), "sha256").hexdigest()}, indent=2) + "\n")
+        "compiler_profile": profile, "recipe_sha256": fingerprint, "binary_sha256": hashlib.file_digest(binary.open("rb"), "sha256").hexdigest()}, indent=2) + "\n")
 
 
 if __name__ == "__main__":

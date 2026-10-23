@@ -104,8 +104,16 @@ Langfuse 输入使用本地合成追踪，验证的是真实接收、队列、�
 
 提交 `03b078cf5bf3f64ce00d9aab85ac5afe2499a1d6` 已推送 `master`，触发 [Actions 39885663463](https://github.com/100apps/anp/actions/runs/39885663463)，本次版本 `0.3.1`。Mac 和 Linux 作业都已进入全新构建，尚未记为通过；Release 仍待双平台目录、归档验收及资产摘要核对。
 
-首轮 Linux 全新构建在安装 ClickHouse 时失败：官方归档的 `usr/share/clickhouse` 目录与 `usr/bin/clickhouse` 文件同名，旧代码取遍历结果的第一项，产生 `IsADirectoryError`。真实归档补验还发现同名 shell 补全文件；最终按 ELF/Mach-O 文件头选择唯一原生文件，排除目录、符号链接和补全脚本，多个真实二进制则明确拒绝。文件系统回归覆盖这三类同名项及歧义，ssh-ecs 的官方归档实测选中 `usr/bin/clickhouse`；本机使用该选择流程的两个官方 Mac 原生组件（RustFS、ClickHouse）也通过检查。Mac 首轮在 DBX 工具安装失败：`native/packages/dbx-tools/package-lock.json` 包含内网 npm 归档地址，GitHub runner 连接超时。改为 npm 官方 URL，固定 pnpm 10.34.7 与原有 SHA512；已实际下载官方归档并确认完整性相同，再在空 npm 缓存、禁用用户 npm 配置的临时目录安装成功。已逐个检查全部已提交锁文件，其他包下载地址为官方 registry/PyPI；新增原生 npm 锁回归，防止内网地址重新进入发行链路。
+首轮 Linux 全新构建在安装 ClickHouse 时失败：官方归档的 `usr/share/clickhouse` 目录与 `usr/bin/clickhouse` 文件同名，旧代码取遍历结果的第一项，产生 `IsADirectoryError`。真实归档补验还发现同名 shell 补全文件；最终按 ELF/Mach-O 文件头选择唯一原生文件，排除目录、符号链接和补全脚本，多个真实二进制则明确拒绝。文件系统回归覆盖这三类同名项及歧义，ssh-ecs 的官方归档实测选中 `usr/bin/clickhouse`；本机使用该选择流程的两个官方 Mac 原生组件（RustFS、ClickHouse）也通过检查。Mac 首轮在 DBX 工具安装失败：`native/packages/dbx-tools/package-lock.json` 包含内网 npm 归档地址，GitHub runner 连接超时。改为 npm 官方 URL，固定 pnpm 10.34.7 与原有 SHA512；已实际下载官方归档并确认完整性相同，再在空 npm 缓存、禁用用户 npm 配置的临时目录安装成功。已逐个检查全部已提交锁文件，没有发现其他内网下载地址；新增原生 npm 锁回归，防止内网地址重新进入发行链路。
+
+最新提交 `d2b8ed5138142253450ea7ef58d918ccf3d94a80` 已触发 [第四轮流水线 39889128231](https://github.com/100apps/anp/actions/runs/39889128231)，版本 `0.3.4`。第三轮由同分支并发控制取消，旧失败版本不发布。第四轮 Linux 已全部通过：全新构建、两个干净系统的目录及归档各 23 项检查、Business 各 24 项和 Actions 产物上传均成功；四份回执文件清单一致。Mac 和最终 Release 仍待完成。
 
 本机 Mac 和 ssh-ecs 干净 Linux 的完整归档验收门禁已通过。工作流成功、Release 公开及服务端资产摘要核对前，不将远程发行记为完成。
 
 远程仅使用本轮 `anp-native-*` 容器和 `/data0/anp-native/` 工作目录，没有停止或清理其他项目的容器及数据。
+
+### 第四轮 Mac 结果与修复
+
+第四轮 Mac 源码构建成功；随后回归的两项 Compose 配置检查因 runner 没有 Docker CLI 而失败（86 通过、2 失败），因此没有进入 Mac 目录、归档或 Release。修复为直接校验源配置，不读取私有 .env；无 Docker PATH 下四项配置检查通过，完整回归 88 项通过。独立临时空配置也经本机 Compose 解析通过。
+
+DBX 的完整 LTO 在第四轮耗时较长，改用 ThinLTO、2 个编译作业与 8 个 codegen units。本机全量源码构建已成功，耗时约 17 分 42 秒；这只是本机构建证据，不能替代新一轮 CI 和实际功能验收。增加按 SDK、源码及锁文件隔离的组件缓存，在功能测试前保存。新一轮结果待实际运行后补充。

@@ -70,3 +70,11 @@ def test_platform_paths_and_private_data_paths_remain_separate(graph):
     assert graph['langfuse-web']['env']['NEXT_PUBLIC_BASE_PATH']=='/langfuse'
     assert graph['supabase-studio']['env']['NEXT_PUBLIC_BASE_PATH']=='/supabase'
     assert graph['postgres']['command'][0].startswith('/nix/')
+
+
+def test_realtime_group_includes_postgres_auth_and_gateway(graph):
+    order=supervisor.selection('supabase',graph)
+    assert 'supabase-realtime' in order
+    assert order.index('postgres') < order.index('supabase-realtime') < order.index('supabase-gateway')
+    assert graph['supabase-realtime']['env']['SELF_HOST_TENANT_NAME']=='realtime-dev'
+    assert not {'pgbouncer','supavisor','vector','logflare','imgproxy','edge-runtime'} & set(graph)

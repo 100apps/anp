@@ -5,8 +5,9 @@ from typing import Any
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
+from anp_business.shared.config import configuration
 
-MATERIAL = "本项目采用三层架构。存储层提供 PostgreSQL、Redis、ClickHouse 和 RustFS。平台源码独立构建后与存储组合为统一工具镜像，启动时选择服务，可连接本地或外部资源。业务代码在宿主运行，使用 LangGraph 与 Deep Agents，内置 HTTP 扩展按路径代理平台。"
+MATERIAL = "本项目采用三层架构。存储层提供 PostgreSQL、Redis、ClickHouse 和 RustFS。原生发行目录按工具、存储、平台和业务组织，解压后通过 anp 命令管理服务，也可配置外部资源。业务代码使用 LangGraph 与 Deep Agents，内置 Agent Server 的 HTTP 扩展提供工作台和平台代理。业务对象通过 Supabase Data API/RPC 管理，文件通过 Supabase Storage 管理。"
 
 
 class DemoModel(BaseChatModel):
@@ -31,7 +32,7 @@ class DemoModel(BaseChatModel):
 
 
 def model_mode() -> str:
-    return os.getenv("ANP_MODEL_MODE", "demo")
+    return os.getenv("ANP_MODEL_MODE", configuration()["model"]["mode"])
 
 
 def get_model() -> BaseChatModel:
@@ -40,6 +41,7 @@ def get_model() -> BaseChatModel:
     if model_mode() != "openai":
         raise ValueError("ANP_MODEL_MODE 只能为 demo 或 openai")
     from langchain_openai import ChatOpenAI
-    return ChatOpenAI(model=os.getenv("ANP_MODEL", "gpt-4.1-mini"),
-                      base_url=os.getenv("ANP_MODEL_BASE_URL") or None,
+    config = configuration()["model"]
+    return ChatOpenAI(model=os.getenv("ANP_MODEL", config["name"]),
+                      base_url=os.getenv("ANP_MODEL_BASE_URL", config["base_url"]) or None,
                       api_key=os.environ["ANP_MODEL_API_KEY"], temperature=0)

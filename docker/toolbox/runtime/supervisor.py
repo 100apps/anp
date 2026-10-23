@@ -116,13 +116,18 @@ def bootstrap_postgres(service):
         return "'"+value.replace("'","''")+"'"
     roles={'langfuse':'LANGFUSE_DB_PASSWORD','litellm':'LITELLM_DB_PASSWORD',
            'supabase_auth_admin':'AUTH_DB_PASSWORD','supabase_storage_admin':'STORAGE_DB_PASSWORD',
-           'authenticator':'REST_DB_PASSWORD','anp_studio_reader':'POSTGRES_PASSWORD'}
+           'authenticator':'REST_DB_PASSWORD','anp_studio_reader':'POSTGRES_PASSWORD','supabase_admin':'REALTIME_DB_PASSWORD'}
     sql=''
     for role,key in roles.items():
         sql+=f"DO $$ BEGIN IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='{role}') THEN CREATE ROLE {role} LOGIN; END IF; END $$;\n"
         sql+=f'ALTER ROLE {role} PASSWORD {literal(SECRET[key])};\n'
-    for role in ('anon','authenticated','service_role'):
+    for role in ('anon','authenticated','service_role','dashboard_user'):
         sql+=f"DO $$ BEGIN IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='{role}') THEN CREATE ROLE {role} NOLOGIN; END IF; END $$;\n"
+    sql+='ALTER ROLE supabase_admin LOGIN SUPERUSER REPLICATION;\n'
+    # PG17 的 GRANTED BY 要求指定授予者自身持有 ADMIN OPTION。
+    sql+='GRANT anon,authenticated,service_role TO supabase_admin WITH ADMIN OPTION;\n'
+    sql+='CREATE SCHEMA IF NOT EXISTS _realtime AUTHORIZATION supabase_admin;\n'
+    sql+="DO $$ BEGIN IF NOT EXISTS(SELECT FROM pg_publication WHERE pubname='supabase_realtime') THEN CREATE PUBLICATION supabase_realtime; END IF; END $$;\n"
     sql+='ALTER ROLE service_role BYPASSRLS; GRANT anon,authenticated,service_role TO authenticator,supabase_storage_admin;\n'
     sql+='GRANT pg_read_all_data,pg_read_all_stats TO anp_studio_reader; ALTER ROLE anp_studio_reader SET default_transaction_read_only=on;\n'
     sql+='CREATE SCHEMA IF NOT EXISTS extensions; CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;\n'
@@ -134,8 +139,12 @@ def bootstrap_postgres(service):
     sql+='ALTER ROLE supabase_auth_admin SET search_path=auth,public,extensions;\n'
     sql+='ALTER ROLE supabase_storage_admin SET search_path=storage,public,extensions;\n'
     sql+="CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS 'SELECT coalesce(nullif(current_setting(''request.jwt.claim.sub'',true),''''),current_setting(''request.jwt.claims'',true)::jsonb->>''sub'')::uuid';\n"
-    sql+='GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated,anon,service_role;\n'
-    sql+='ALTER FUNCTION auth.uid() OWNER TO supabase_auth_admin;\n'
+    sql+="CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS 'SELECT coalesce(nullif(current_setting(''request.jwt.claim.role'',true),''''),current_setting(''request.jwt.claims'',true)::jsonb->>''role'')';\n"
+    sql+="CREATE OR REPLACE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS 'SELECT coalesce(nullif(current_setting(''request.jwt.claims'',true),''''),''{}'')::jsonb';\n"
+    # Auth 首次迁移会替换这些函数，必须由迁移角色拥有它们。
+    for name in ('uid','role','jwt'):
+        sql+=f'GRANT EXECUTE ON FUNCTION auth.{name}() TO authenticated,anon,service_role;\n'
+        sql+=f'ALTER FUNCTION auth.{name}() OWNER TO supabase_auth_admin;\n'
     for database in ('langfuse','litellm'):
         sql+=f"SELECT 'CREATE DATABASE {database} OWNER {database}' WHERE NOT EXISTS(SELECT FROM pg_database WHERE datname='{database}')\\gexec\n"
         sql+=f'REVOKE ALL ON DATABASE {database} FROM PUBLIC;\n'
@@ -163,7 +172,7 @@ def bootstrap_s3():
     for attempt in range(30):
         try:
             names={item['Name'] for item in client.list_buckets()['Buckets']}
-            for bucket in ('langfuse','supabase','anp-dubbing'):
+            for bucket in ('langfuse','supabase'):
                 if bucket not in names:
                     client.create_bucket(Bucket=bucket)
             emit('独立 S3 桶已就绪'); return
@@ -189,8 +198,11 @@ def probe(service):
             return subprocess.run([PG+'pg_isready','-h','127.0.0.1','-U','postgres'],
                                   env=environment(service),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
                                   timeout=3).returncode==0
+        if service['name']=='supabase-realtime' and not (DATA/'run/supabase-realtime/initialized').exists():
+            return False
         if service.get('health'):
             headers={'X-ClickHouse-User':'anp','X-ClickHouse-Key':SECRET['CLICKHOUSE_PASSWORD']} if service['name']=='clickhouse' else {}
+            if service['name']=='supabase-realtime': headers={'Authorization':'Bearer '+SECRET['ANON_KEY']}
             request=urllib.request.Request(f"http://127.0.0.1:{service['port']}{service['health']}",headers=headers)
             with HTTP.open(request,timeout=3) as r:
                 return r.status<400

@@ -39,3 +39,9 @@ def test_extension_health():
     value = TestClient(app).get("/api/health").json()
     assert value["service"] == "anp"
     assert value["model_mode"] == "demo"
+
+
+def test_workbench_only_exposes_supported_business():
+    client = TestClient(app)
+    assert client.get("/api/workbench").json()["graphs"] == ["workflow_demo", "deepagent_demo"]
+    assert client.get("/api/dubbing/runs").status_code == 404

@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "checks": {
+    "anonymous_threads_denied": true,
+    "create_supabase_user_0": true,
+    "supabase_login_0": true,
+    "trusted_role_0": true,
+    "create_supabase_user_1": true,
+    "supabase_login_1": true,
+    "trusted_role_1": true,
+    "create_supabase_user_2": true,
+    "supabase_login_2": true,
+    "trusted_role_2": true,
+    "platform_admin_only": true,
+    "cross_origin_write_denied": true,
+    "thread_owner_cannot_be_forged": true,
+    "cross_user_read_denied": true,
+    "cross_user_read_denied_state": true,
+    "cross_user_read_denied_runs": true,
+    "cross_user_run_denied": true,
+    "thread_search_isolation": true,
+    "workflow_real_server_offline_model": true,
+    "deepagent_thread": true,
+    "deepagent_real_tool_execution_offline_model": true,
+    "cleanup_thread_01a1665e-8b96-70c2-9933-72e5916aaf30": true,
+    "cleanup_thread_01a1665e-9055-761c-8f75-36a341421c0a": true,
+    "logout_revokes_browser_session": true
+  },
+  "model": "offline-demo",
+  "external_supplier_call_verified": false
+}

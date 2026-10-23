@@ -18,6 +18,7 @@ from anp_business.server.platforms import PLATFORMS, router, target_url
 def upstream():
     app = FastAPI()
 
+    @app.websocket("/up/realtime/v1/websocket")
     @app.websocket("/up/ws")
     async def echo(websocket: WebSocket):
         await websocket.accept(subprotocol="echo")
@@ -87,7 +88,13 @@ def client(monkeypatch, upstream):
 @pytest.mark.parametrize("name", ["dbx", "langfuse", "litellm", "supabase"])
 def test_canonical_entry_and_query(client, name):
     response = client.get(f"/{name}?next=%2Fhome", follow_redirects=False)
-    if name in ("langfuse", "supabase"):
+    if name == "supabase":
+        assert response.status_code == 307 and response.headers["location"].endswith("/up/")
+        return
+    if name == "litellm":
+        assert response.status_code == 307 and response.headers["location"].endswith("/up/ui/")
+        return
+    if name == "langfuse":
         assert response.status_code == 200 and response.json()["query"] == "next=%2Fhome"
         return
     assert response.status_code == 307
@@ -135,7 +142,7 @@ def test_compressed_assets_sse_and_range(client):
     assert ranged.headers["content-range"] == "bytes 2-5/10"
 
 
-@pytest.mark.parametrize("branch", ["auth", "rest", "storage"])
+@pytest.mark.parametrize("branch", ["auth", "rest", "storage", "realtime"])
 def test_supabase_apis_do_not_hit_studio(client, branch):
     assert client.get(f"/supabase/{branch}/v1/items").json()["path"] == f"{branch}/v1/items"
 
@@ -169,3 +176,10 @@ def test_platform_list_only_exposes_public_links(client):
     result = client.get("/api/platforms").json()
     assert len(result) == 4 and all(item["status"] == "available" for item in result)
     assert all(set(item) == {"id", "name", "path", "status"} for item in result)
+
+
+def test_realtime_websocket_uses_gateway_instead_of_studio(client,monkeypatch):
+    monkeypatch.setenv('ANP_PLATFORM_SUPABASE_URL','http://127.0.0.1:1/studio-only')
+    with client.websocket_connect('/supabase/realtime/v1/websocket',subprotocols=['echo']) as websocket:
+        websocket.send_text('realtime-via-api')
+        assert websocket.receive_text()=='realtime-via-api'

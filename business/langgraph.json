@@ -4,11 +4,14 @@
   ],
   "graphs": {
     "workflow_demo": "./src/anp_business/workflow_demo/graph.py:graph",
-    "deepagent_demo": "./src/anp_business/deepagent_demo/agent.py:agent",
-    "video_dubbing": "./src/anp_business/dubbing/graph.py:entry_graph"
+    "deepagent_demo": "./src/anp_business/deepagent_demo/agent.py:agent"
   },
   "http": {
     "app": "./src/anp_business/server/http.py:app"
+  },
+  "auth": {
+    "path": "./src/anp_business/server/auth.py:auth",
+    "disable_studio_auth": true
   },
   "env": ".env"
 }

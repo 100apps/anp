@@ -10,6 +10,7 @@ from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from websockets.asyncio.client import connect
 from websockets.exceptions import WebSocketException
+from anp_business.shared.config import configuration
 
 router = APIRouter()
 HOP_HEADERS = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer",
@@ -33,7 +34,8 @@ class Platform:
     @property
     def target(self):
         name = self.env_name or "ANP_PLATFORM_" + self.key.upper() + "_URL"
-        target = os.getenv(name, f"http://127.0.0.1:{self.port}{self.upstream_path}").rstrip("/") + "/"
+        fallback = configuration()["supabase"]["url"] if self.env_name == "ANP_PLATFORM_SUPABASE_API_URL" else configuration()["platforms"].get(self.key, f"http://127.0.0.1:{self.port}{self.upstream_path}")
+        target = os.getenv(name, fallback).rstrip("/") + "/"
         parsed = urlsplit(target)
         if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
             raise ValueError(f"{name} 必须是无凭据、查询参数及片段的 HTTP(S) 地址")
@@ -65,7 +67,19 @@ def forwarded_headers(request, platform, websocket=False):
     excluded = HOP_HEADERS | connection | {"forwarded", "x-forwarded-host", "x-forwarded-for", "x-forwarded-proto", "x-forwarded-prefix"}
     if websocket:
         excluded |= {"sec-websocket-key", "sec-websocket-version", "sec-websocket-extensions", "sec-websocket-protocol"}
-    headers = [(key, value) for key, value in request.headers.items() if key.lower() not in excluded]
+    headers = []
+    for key, value in request.headers.items():
+        if key.lower() in excluded:
+            continue
+        if key.lower() == "authorization" and value == "Bearer " + request.scope.get("anp_auth_token", ""):
+            continue
+        if key.lower() == "cookie":
+            cookie = SimpleCookie()
+            cookie.load(value)
+            value = "; ".join(name + "=" + item.coded_value for name, item in cookie.items() if name != "anp_session")
+            if not value:
+                continue
+        headers.append((key, value))
     headers.extend([("x-forwarded-host", request.headers.get("host", "")),
                     ("x-forwarded-proto", "https" if request.url.scheme in ("https", "wss") else "http"),
                     ("x-forwarded-prefix", platform.prefix)])
@@ -123,7 +137,7 @@ def unavailable(platform, request):
     headers = {"Retry-After": "5", "Cache-Control": "no-store"}
     if "text/html" in request.headers.get("accept", ""):
         return HTMLResponse(f"""<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>{platform.label}暂不可用</title>
-<body style="font:16px/1.8 system-ui;max-width:680px;margin:12vh auto;padding:24px"><h1>{platform.label}暂不可用</h1>
+<body style="font:16px/1.8 system-ui;margin:0;padding:24px"><h1>{platform.label}暂不可用</h1>
 <p>统一入口已配置，上游服务尚未启动或当前不可达。</p><p>启动本项目对应平台后刷新即可。连接外部平台时，请配置后台的平台上游地址。</p>
 <p><a href="/workbench/">返回工作台</a></p></body></html>""", status_code=503, headers=headers)
     return JSONResponse({"platform": platform.key, "status": "unavailable", "detail": "上游平台尚未启动或不可达"}, status_code=503, headers=headers)
@@ -194,6 +208,10 @@ async def proxy_websocket(websocket, platform, path):
 
 def register(platform):
     async def index(request: Request):
+        # 官方 Studio 的 Next.js 产物使用根路径，无法仅靠反向代理变成子路径。
+        # 管理入口跳转至配置的独立 Studio 地址，避免资源和 API 路径损坏。
+        if platform.key in {"supabase", "litellm"}:
+            return RedirectResponse(platform.target + platform.entry, status_code=307)
         if not platform.root_slash and not platform.entry:
             return await proxy_http(request, platform, "")
         query = request.url.query
@@ -203,7 +221,7 @@ def register(platform):
     async def socket(websocket: WebSocket, path: str):
         await proxy_websocket(websocket, platform, path)
     router.add_api_route(platform.prefix, index, methods=["GET", "HEAD"], include_in_schema=False)
-    if platform.entry:
+    if platform.entry or platform.key == "supabase":
         router.add_api_route(platform.prefix + "/", index, methods=["GET", "HEAD"], include_in_schema=False)
     router.add_api_route(platform.prefix + "/{path:path}", endpoint,
                          methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], include_in_schema=False)
@@ -211,7 +229,7 @@ def register(platform):
 
 
 # Supabase 控制台与 REST/Auth/Storage 共用一个目录，API 分支先匹配。
-for branch in ("rest", "auth", "storage"):
+for branch in ("rest", "auth", "storage", "realtime"):
     def api_endpoint(branch):
         async def supabase_api(request: Request, path: str):
             return await proxy_http(request, api_gateway(), f"{branch}/v1/{path}")
@@ -223,6 +241,11 @@ for branch in ("rest", "auth", "storage"):
 def api_gateway():
     # 与Studio的上游配置独立，避免API请求递归进入管理台。
     return Platform("supabase", "Supabase API", 58400, "", env_name="ANP_PLATFORM_SUPABASE_API_URL")
+
+
+@router.websocket('/supabase/realtime/v1/{path:path}')
+async def supabase_realtime_socket(websocket: WebSocket, path: str):
+    await proxy_websocket(websocket, api_gateway(), 'realtime/v1/' + path)
 
 
 for platform in PLATFORMS.values():
@@ -238,5 +261,5 @@ async def list_platforms():
             status = "available" if response.status_code < 500 else "unavailable"
         except (ValueError, httpx.HTTPError):
             status = "unavailable"
-        return {"id": platform.key, "name": platform.label, "path": platform.prefix + "/", "status": status}
+        return {"id": platform.key, "name": platform.label, "path": platform.prefix + ("" if platform.key in {"supabase", "litellm"} else "/"), "status": status}
     return await asyncio.gather(*(probe(platform) for platform in PLATFORMS.values()))

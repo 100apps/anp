@@ -1,0 +1,39 @@
+{
+  "bind": "127.0.0.1",
+  "ports": {
+    "postgres": 55432,
+    "redis": 56379,
+    "clickhouse": 58123,
+    "clickhouse-native": 59000,
+    "rustfs": 59002,
+    "auth": 59999,
+    "postgrest": 53300,
+    "storage-api": 55000,
+    "meta": 58080,
+    "meta-admin": 58081,
+    "studio": 53200,
+    "langfuse-web": 53100,
+    "langfuse-worker": 53130,
+    "litellm": 54000,
+    "gateway": 58000,
+    "dbx": 54424,
+    "business": 20260
+  },
+  "services": [
+    "postgres",
+    "redis",
+    "clickhouse",
+    "rustfs",
+    "auth",
+    "postgrest",
+    "storage-api",
+    "meta",
+    "studio",
+    "langfuse-web",
+    "langfuse-worker",
+    "litellm",
+    "dbx",
+    "business",
+    "gateway"
+  ]
+}

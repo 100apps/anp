@@ -10,3 +10,6 @@ var/
 business/.langgraph_api/
 *.pyc
 *.tsbuildinfo
+
+# Agent 插件运行标记，不属于 ANP 源码
+oneagent-plugin-entities/

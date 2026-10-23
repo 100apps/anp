@@ -1,0 +1,96 @@
+{
+  "target": "linux-amd64",
+  "profile": "platform",
+  "artifacts": {
+    "auth": {
+      "version": "v2.197.0",
+      "url": "https://github.com/supabase/auth/releases/download/v2.197.0/auth-v2.197.0-amd64.tar.xz",
+      "sha256": "b5c2991d1df760c9b099c1c2395a94bd1c2f83ed58901934921997179dc9f7ea",
+      "destination": "platform/auth"
+    },
+    "storage-api": {
+      "version": "v1.79.18",
+      "url": "https://github.com/supabase/slim-services/releases/download/storage-v1.79.18/storage-v1.79.18-linux-amd64.tar.zst",
+      "sha256": "465d59e556d766de5d731f0525d14282a8f8d973d05b00513ffea33ed029ad4a",
+      "destination": "platform/storage-api",
+      "upstream_source_commit": "708cbbf6368e2b7e32316f272fc9c0e3ed496cf8",
+      "manifest_sha256": "5fe6b536f445c2445bea393c45603448bc2a728013788e7cbdbc3db84e223970"
+    },
+    "meta": {
+      "version": "v0.99.0",
+      "url": "https://github.com/supabase/slim-services/releases/download/pgmeta-v0.99.0/pgmeta-v0.99.0-linux-amd64.tar.zst",
+      "sha256": "5002b1fb15a68fc16a2556ec32901870a1585549b1efbc804f7c1529a86ddc75",
+      "destination": "platform/meta",
+      "upstream_source_commit": "f380cc5be21edef4e77d9838c732d1f20af0b3c0",
+      "manifest_sha256": "2d5442662ce172312b6c58a60195228234c3619121bf87b3613bb23ea8a03c8f"
+    },
+    "studio": {
+      "version": "2026.09.21-sha-512201d",
+      "url": "https://github.com/supabase/slim-services/releases/download/studio-2026.09.21-sha-512201d/studio-2026.09.21-sha-512201d-linux-amd64.tar.zst",
+      "sha256": "f430ab53dcf50fb217c665c85ccad70e5116e50c657929371af7014afe01ab58",
+      "destination": "platform/studio",
+      "upstream_source_commit": "512201dcd07ffddec20f437077f7c862989fcdf2",
+      "manifest_sha256": "2aeeecf8ac366193f2f6ea3b58bebca87a0bf01c5aec68d12f54f7aae3df850f"
+    },
+    "rustfs": {
+      "version": "1.0.3",
+      "url": "https://github.com/rustfs/rustfs/releases/download/1.0.3/rustfs-linux-x86_64-gnu-v1.0.3.zip",
+      "sha256": "0cb0924df93734d14f708004eff4b0e48a147fbdc074756ca0d6b8ec919629b8",
+      "destination": "storage/rustfs",
+      "binary": "rustfs"
+    },
+    "gateway": {
+      "version": "2.11.2",
+      "url": "https://github.com/caddyserver/caddy/releases/download/v2.11.2/caddy_2.11.2_linux_amd64.tar.gz",
+      "sha256": "94391dfefe1f278ac8f387ab86162f0e88d87ff97df367f360e51e3cda3df56f",
+      "destination": "platform/gateway"
+    },
+    "migrate": {
+      "version": "4.19.1",
+      "url": "https://github.com/golang-migrate/migrate/releases/download/v4.19.1/migrate.linux-amd64.tar.gz",
+      "sha256": "2ac648fbd1b127b69ab5a7b33cf96212178f71e22379fc50573630c6f4c7ce18",
+      "destination": "platform/migrate"
+    },
+    "clickhouse": {
+      "version": "26.9.22.3",
+      "url": "https://github.com/ClickHouse/ClickHouse/releases/download/v26.9.22.3-stable/clickhouse-common-static-26.9.22.3-amd64.tgz",
+      "sha256": "d61726376a7e7be67318206351cbf630ec8acee0bdb786be8de93e6ff5ef9f68",
+      "destination": "storage/clickhouse",
+      "binary": "clickhouse"
+    },
+    "dbx": {
+      "version": "0.6.51",
+      "url": "https://github.com/t8y2/dbx/releases/download/v0.6.51/DBX_0.6.51_x64-browser-static.tar.gz",
+      "sha256": "ed86590df4db05a3aa7110e706facd25065ffe38ac239eb3a4dfb22713ba304d",
+      "destination": "platform/dbx",
+      "binary": "dbx-web-bin",
+      "installed_name": "dbx-web"
+    }
+  },
+  "sources": {
+    "langfuse": {
+      "path": "platform/sources/langfuse",
+      "commit": "71c840e0e9cc945df9c250bdf182f99497584d3a",
+      "version": "v4.64.0",
+      "repository": "https://github.com/langfuse/langfuse.git"
+    }
+  },
+  "licenses": {
+    "dbx-LICENSE": {
+      "url": "https://raw.githubusercontent.com/t8y2/dbx/46b773d05e3162170a5358805588ce1fa60f3306/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  },
+  "prisma_engines": {
+    "libquery_engine-debian-openssl-3.0.x.so.node": {
+      "url": "https://binaries.prisma.sh/all_commits/c2990dca591cba766e3b7ef5d9e8a84796e47ab7/debian-openssl-3.0.x/libquery_engine.so.node.gz",
+      "uncompressed_sha256": "a2924eab1c78a0a7bb67edac5738939fa10589ef073af5542f53812a22e4a7d8",
+      "checksum_url": "https://binaries.prisma.sh/all_commits/c2990dca591cba766e3b7ef5d9e8a84796e47ab7/debian-openssl-3.0.x/libquery_engine.so.node.sha256"
+    },
+    "schema-engine-debian-openssl-3.0.x": {
+      "url": "https://binaries.prisma.sh/all_commits/c2990dca591cba766e3b7ef5d9e8a84796e47ab7/debian-openssl-3.0.x/schema-engine.gz",
+      "uncompressed_sha256": "5d42b181631fd20bb0ecc5abcdba72575e7f467a0d52f4d5ef1ff28f0c74e6e9",
+      "checksum_url": "https://binaries.prisma.sh/all_commits/c2990dca591cba766e3b7ef5d9e8a84796e47ab7/debian-openssl-3.0.x/schema-engine.sha256"
+    }
+  }
+}

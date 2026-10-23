@@ -13,11 +13,19 @@ import uuid
 import check
 import check_platforms
 import check_platform_operations
+import check_realtime
 from manage import ROOT, PROJECT, compose
 
 
 def inspect():
     return json.loads(subprocess.check_output(['docker','inspect',PROJECT+'-toolbox-1'],text=True))[0]
+
+
+def data_mount(container):
+    mounts=[mount for mount in container['Mounts'] if mount['Type']=='bind']
+    assert len(mounts)==1 and mounts[0]['Destination']=='/data'
+    assert '/data/run' in container['HostConfig'].get('Tmpfs',{})
+    return mounts[0]
 
 
 def status():
@@ -64,36 +72,39 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--fresh',action='store_true',help='额外使用数据根内的全新子目录验证首次初始化')
     args=parser.parse_args()
-    output=ROOT/'docs/evidence/anp-acceptance.json'
+    output=ROOT/'var/evidence/anp-acceptance.json'
     result={'project':'anp','compose_project':PROJECT,'time':datetime.now(timezone.utc).isoformat(),'passed':False}
     try:
         up('all')
         initial=inspect(); assert initial['Config']['Labels']['com.docker.compose.project']==PROJECT
-        assert len(initial['Mounts'])==1 and initial['Mounts'][0]['Destination']=='/data'
-        result['image_id']=initial['Image']; result['data_root']=initial['Mounts'][0]['Source']
+        mount=data_mount(initial)
+        result['image_id']=initial['Image']; result['data_root']=mount['Source']
+        result['runtime_tmpfs']=True
         result['initial_services']=status()
-        assert len(result['initial_services']['selected'])==14
+        assert len(result['initial_services']['selected'])==15
         result['storage_versions']=check.write_storage(); check.read_storage()
         result['storage_read_write']=True
-        expected=json.loads((ROOT/'docs/evidence/postgres-extensions-baseline.json').read_text(encoding='utf-8'))
+        expected=json.loads((ROOT/'tests/baselines/postgres-extensions-baseline.json').read_text(encoding='utf-8'))
         with check.postgres() as connection:
             actual=dict(connection.execute('SELECT name,default_version FROM pg_available_extensions').fetchall())
         missing=sorted(set(dict(expected))-set(actual))
         assert not missing,'缺少原镜像PostgreSQL扩展：'+str(missing)
-        result['postgres_extensions']={'baseline_count':len(expected),'available_count':len(actual),'all_preserved':True}
+        changed={name:{'expected':version,'actual':actual[name]} for name,version in expected if name in actual and actual[name]!=version}
+        result['postgres_extensions']={'baseline_count':len(expected),'available_count':len(actual),'version_changes':changed,'all_preserved':not changed}
+        assert not changed,'PostgreSQL扩展版本发生变化：'+str(changed)
         modules=check.resources()[0].execute_command('MODULE','LIST')
         names=[(m if isinstance(m,dict) else dict(zip(m[::2],m[1::2])))['name'] for m in modules]
         assert 'vectorset' in names,'Redis缺少内置vectorset'
         result['redis_builtin_modules']=names
         if args.fresh:
-            root=initial['Mounts'][0]['Source'].rstrip('/\\')+'/acceptance-fresh-'+uuid.uuid4().hex[:10]
+            root=mount['Source'].rstrip('/\\')+'/acceptance-fresh-'+uuid.uuid4().hex[:10]
             try:
                 fresh=up('all',data_root=root)
-                assert len(fresh['selected'])==14
-                assert inspect()['Mounts'][0]['Source']!=initial['Mounts'][0]['Source']
+                assert len(fresh['selected'])==15
+                assert data_mount(inspect())['Source']!=mount['Source']
                 with check.postgres() as connection:
                     assert connection.execute("SELECT count(*) FROM pg_namespace WHERE nspname='anp_smoke'").fetchone()[0]==0
-                result['fresh_initialization']={'passed':True,'isolated_data_root':root,'services':14}
+                result['fresh_initialization']={'passed':True,'isolated_data_root':root,'services':15}
             finally:
                 up('all')
             check.read_storage(); result['original_data_after_fresh_test']=True
@@ -116,6 +127,7 @@ def main():
         result['demo_mode']='离线确定性模型；执行真实 LangGraph/Deep Agents 图与工具调用，不计作供应商模型验收'
         result['platforms']=asyncio.run(check_platforms.check('http://127.0.0.1:51760',True))
         result['platform_operations']=check_platform_operations.check()
+        result['realtime']=asyncio.run(check_realtime.verify())
         result['benchmark']=benchmark()
         result['docker_stats']=json.loads(subprocess.check_output(['docker','stats','--no-stream','--format','{{json .}}',PROJECT+'-toolbox-1'],text=True))
         result['tuning']=json.loads(subprocess.check_output(['docker','exec',PROJECT+'-toolbox-1','cat','/data/config/effective/tuning.json'],text=True))
@@ -124,7 +136,7 @@ def main():
     finally:
         output.parent.mkdir(parents=True,exist_ok=True)
         output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-    print(json.dumps({'passed':result['passed'],'evidence':str(output),'services':14},ensure_ascii=False))
+    print(json.dumps({'passed':result['passed'],'evidence':str(output),'services':15},ensure_ascii=False))
 
 
 if __name__=='__main__': main()

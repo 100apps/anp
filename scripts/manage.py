@@ -56,17 +56,10 @@ def init():
     values.setdefault('ANP_WORKSPACE_ID',str(uuid4()))
     for name,value in defaults.items(): values.setdefault(name,value)
     path.write_text('\n'.join(f'{key}={value}' for key,value in values.items())+'\n',encoding='utf-8')
-    for name in ('run','logs/dev','evidence','dubbing/inputs','config/dubbing'):
+    for name in ('run','logs/dev','evidence','cache','exports'):
         (ROOT/'var'/name).mkdir(parents=True,exist_ok=True)
     business=ROOT/'business/.env'; local=read_env(business)
     local.setdefault('ANP_MODEL_MODE','demo'); local.setdefault('LANGSMITH_TRACING','false'); local.setdefault('BUSINESS_PORT',values['BUSINESS_PORT'])
-    local.setdefault('ANP_DUB_DATABASE_URL',f"postgresql://postgres:{values['POSTGRES_PASSWORD']}@127.0.0.1:{values['PG_PORT']}/postgres")
-    local.setdefault('ANP_DUB_ACTOR_ID',str(uuid4())); local.setdefault('ANP_DUB_WORKSPACE_ID',str(uuid4()))
-    local.setdefault('ANP_DUB_ROOT',(ROOT/'var/dubbing').as_posix())
-    local.setdefault('ANP_DUB_INPUT_ROOTS',(ROOT/'var/dubbing/inputs').as_posix())
-    local.setdefault('ANP_DUB_S3_ENDPOINT',f"http://127.0.0.1:{values['S3_API_PORT']}")
-    local.setdefault('ANP_DUB_S3_ACCESS_KEY',values['S3_ACCESS_KEY']); local.setdefault('ANP_DUB_S3_SECRET_KEY',values['S3_SECRET_KEY'])
-    local.setdefault('ANP_DUB_S3_BUCKET','anp-dubbing')
     business.write_text('\n'.join(f'{key}={value}' for key,value in local.items())+'\n',encoding='utf-8')
     print('ANP 配置就绪；统一数据根：'+values['ANP_DATA_ROOT'],flush=True)
 

@@ -1,0 +1,20 @@
+{
+  "target": "macos-arm64",
+  "artifacts": {
+    "rustc": {
+      "version": "1.98.0",
+      "url": "https://static.rust-lang.org/dist/rustc-1.98.0-aarch64-apple-darwin.tar.xz",
+      "sha256": "287edbc2e285b9c23ef7b085413b90cb8539909eda9c4b49f2a55ec0b52819d4"
+    },
+    "rust-std": {
+      "version": "1.98.0",
+      "url": "https://static.rust-lang.org/dist/rust-std-1.98.0-aarch64-apple-darwin.tar.xz",
+      "sha256": "48c05269ed36fb5f0a8438065156891fe59fcb868d90cfed9b7209540d54b2ce"
+    },
+    "cargo": {
+      "version": "1.98.0",
+      "url": "https://static.rust-lang.org/dist/cargo-1.98.0-aarch64-apple-darwin.tar.xz",
+      "sha256": "2c2a8bbf3cba4353c0ca2cf1ba8280603f3ca82ceebb538fee4a1a987147f743"
+    }
+  }
+}

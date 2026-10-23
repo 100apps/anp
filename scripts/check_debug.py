@@ -9,6 +9,8 @@ import time
 import urllib.request
 import uuid
 
+import psutil
+
 import check
 from manage import ROOT
 
@@ -56,6 +58,19 @@ def health():
         return json.load(response)
 
 
+def application_subprocess(event):
+    if event.get('event') != 'debugpyAttach':
+        return False
+    try:
+        arguments = psutil.Process(event['body']['subProcessId']).cmdline()
+    except (KeyError, psutil.NoSuchProcess, psutil.AccessDenied):
+        return False
+    # macOS/Linux 的 spawn 还会注册资源跟踪器等辅助进程；它们不执行业务图。
+    # 参数只用于分类，不输出；debugpy 可能在参数中携带临时调试令牌。
+    return not any(name in argument for argument in arguments
+                   for name in ('multiprocessing.resource_tracker', 'multiprocessing.forkserver'))
+
+
 def main():
     debug=Debug(); result={}
     debug.response(debug.send('initialize',{'adapterID':'debugpy','clientID':'anp-acceptance','pathFormat':'path',
@@ -64,7 +79,8 @@ def main():
     debug.wait(lambda value:value.get('event')=='initialized')
     debug.response(debug.send('configurationDone',{}))
     # 热重载的应用在子进程；VSCode的subProcess=true也会自动创建此子调试会话。
-    child=debug.wait(lambda value:value.get('event')=='debugpyAttach')['body']
+    child=debug.wait(application_subprocess)['body']
+    result['application_subprocess_pid']=child['subProcessId']
     parent=debug
     debug=Debug(child.get('connect',{}).get('port',56796))
     debug.response(debug.send('initialize',{'adapterID':'debugpy','clientID':'anp-child','pathFormat':'path','linesStartAt1':True,'columnsStartAt1':True}))
@@ -117,7 +133,8 @@ def main():
     else: raise AssertionError('后端源码恢复后尚未重新加载')
     result['source_restored']=True
     result['scope']='验证F5所用CLI、debugpy断点、继续执行与源码热重载；未操作IDE菜单'
-    (ROOT/'docs/evidence/debug-acceptance.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    (ROOT/'var/evidence').mkdir(parents=True,exist_ok=True)
+    (ROOT/'var/evidence/debug-acceptance.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print('调试断点、继续执行、后端热重载与源码恢复通过')
 
 

@@ -6,12 +6,14 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from anp_business.shared.models import model_mode
-from anp_business.dubbing.api import router as dubbing_router
 from anp_business.server.platforms import router as platform_router
+from anp_business.server.auth import router as auth_router
+from anp_business.server.security import PlatformAccess
 
 app = FastAPI(title="ANP 业务扩展", docs_url=None, openapi_url=None)
-app.include_router(dubbing_router)
 app.include_router(platform_router)
+app.include_router(auth_router)
+app.add_middleware(PlatformAccess)
 
 
 @app.get("/api/health")
@@ -21,8 +23,8 @@ def health():
 
 @app.get("/api/workbench")
 def workbench():
-    return {"title": "ANP 工作台", "graphs": ["workflow_demo", "deepagent_demo", "video_dubbing"],
-            "model_mode": model_mode(), "auth_mode": "local-only"}
+    return {"title": "ANP 工作台", "graphs": ["workflow_demo", "deepagent_demo"],
+            "model_mode": model_mode(), "auth_mode": "supabase"}
 
 
 @app.get("/")

@@ -1,0 +1,91 @@
+"""认证边界契约；真实 Supabase 验收另有运行证据。"""
+import httpx
+import pytest
+from fastapi import FastAPI, WebSocket
+from fastapi.testclient import TestClient
+from langgraph_sdk import Auth
+from starlette.websockets import WebSocketDisconnect
+
+from anp_business.server import auth, security
+from anp_business.server.platforms import PLATFORMS, forwarded_headers
+from starlette.requests import Request
+
+
+@pytest.mark.asyncio
+async def test_only_trusted_app_metadata_grants_admin(monkeypatch):
+    async def response(*args, **kwargs):
+        return httpx.Response(200, json={"id": "u1", "user_metadata": {"anp_role": "admin"}, "app_metadata": {}})
+    monkeypatch.setattr(auth, "supabase", response)
+    assert (await auth.current_user({"authorization": "Bearer test"}))["role"] == "user"
+
+
+@pytest.mark.asyncio
+async def test_missing_or_rejected_identity_does_not_authenticate(monkeypatch):
+    async def rejected(*args, **kwargs):
+        return httpx.Response(401)
+    monkeypatch.setattr(auth, "supabase", rejected)
+    for headers in ({}, {"authorization": "Bearer expired"}):
+        with pytest.raises(Auth.exceptions.HTTPException) as error:
+            await auth.current_user(headers)
+        assert error.value.status_code == 401
+
+
+@pytest.fixture
+def client(monkeypatch):
+    async def user(headers):
+        token = auth.access_token(headers)
+        if not token:
+            raise Auth.exceptions.HTTPException(status_code=401, detail="请先登录")
+        return {"id": "u", "role": "admin" if token == "admin" else "user"}
+    monkeypatch.setattr(security, "current_user", user)
+    app = FastAPI()
+    app.include_router(auth.router)
+    @app.get("/api/platforms")
+    def platforms():
+        return {"ok": True}
+    @app.post("/dbx/write")
+    def write():
+        return {"ok": True}
+    @app.websocket("/dbx/ws")
+    async def websocket(ws: WebSocket):
+        await ws.accept()
+        await ws.send_text("ok")
+        await ws.close()
+    app.add_middleware(security.PlatformAccess)
+    with TestClient(app) as result:
+        yield result
+
+
+def test_anonymous_and_non_admin_cannot_access_platforms(client):
+    assert client.get("/api/platforms").status_code == 401
+    assert client.get("/api/platforms", headers={"authorization": "Bearer user"}).status_code == 403
+    assert client.get("/api/platforms", headers={"authorization": "Bearer admin"}).status_code == 200
+
+
+def test_cross_origin_writes_and_websockets_are_denied(client):
+    headers = {"authorization": "Bearer admin", "origin": "https://foreign.invalid"}
+    assert client.post("/dbx/write", headers=headers).status_code == 403
+    with pytest.raises(WebSocketDisconnect) as error:
+        with client.websocket_connect("/dbx/ws", headers=headers):
+            pass
+    assert error.value.code == 4403
+    with client.websocket_connect("/dbx/ws", headers={**headers, "origin": "http://testserver"}) as websocket:
+        assert websocket.receive_text() == "ok"
+
+
+def test_proxy_strips_business_identity_but_preserves_vendor_token():
+    def headers(token):
+        scope = {"type": "http", "method": "GET", "path": "/dbx/", "scheme": "http", "server": ("localhost", 80),
+                 "headers": [(b"cookie", b"anp_session=business; dbx_session=vendor"), (b"authorization", token)],
+                 "anp_auth_token": "business"}
+        return dict(forwarded_headers(Request(scope), PLATFORMS["dbx"]))
+    own = headers(b"Bearer business")
+    assert "authorization" not in own and own["cookie"] == "dbx_session=vendor"
+    vendor = headers(b"Bearer vendor")
+    assert vendor["authorization"] == "Bearer vendor"
+    assert auth.access_token({"cookie": "anp_session=business", "authorization": "Bearer vendor"}) == "business"
+
+
+def test_login_rejects_malformed_json_and_foreign_origin(client):
+    assert client.post("/api/auth/login", json=[]).status_code == 400
+    assert client.post("/api/auth/login", json={}, headers={"origin": "https://foreign.invalid"}).status_code == 403

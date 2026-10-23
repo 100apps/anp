@@ -1,60 +1,56 @@
 # 自动生成：python scripts/generate_dockerfile.py；固定源码和产物见versions.lock.json。
 # 所有组件在本文件构建，最终使用Debian slim；不依赖预先存在的anp组件镜像。
 ARG STUDIO_FRAMEWORK=next
-FROM debian:trixie-slim AS downloader
+FROM debian:trixie-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad AS artifact-fetch
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends ca-certificates curl python3 xz-utils && rm -rf /var/lib/apt/lists/*
 COPY docker/toolbox/fetch.py /build/fetch.py
 COPY docker/toolbox/versions.lock.json /build/versions.lock.json
 ARG TARGETARCH
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; python3 /build/fetch.py clickhouse "$TARGETARCH" /downloads/clickhouse && python3 /build/fetch.py rustfs "$TARGETARCH" /downloads/rustfs && python3 /build/fetch.py auth "$TARGETARCH" /downloads/auth && python3 /build/fetch.py postgrest "$TARGETARCH" /downloads/postgrest && python3 /build/fetch.py envoy "$TARGETARCH" /downloads/envoy
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; mkdir -p /out/bin /out/auth && cp $(find /downloads/clickhouse -type f -path '*/usr/bin/clickhouse' | head -1) /out/bin/clickhouse && cp $(find /downloads/rustfs -type f -name rustfs | head -1) /out/bin/rustfs && cp $(find /downloads/auth -type f -name auth | head -1) /out/bin/supabase-auth && cp $(find /downloads/postgrest -type f -name postgrest | head -1) /out/bin/postgrest && cp /downloads/envoy/envoy /out/bin/envoy && chmod 755 /out/bin/*
+FROM artifact-fetch AS downloader
+RUN --mount=type=cache,target=/root/.cache/anp-artifacts export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; python3 /build/fetch.py clickhouse "$TARGETARCH" /downloads/clickhouse && python3 /build/fetch.py rustfs "$TARGETARCH" /downloads/rustfs && python3 /build/fetch.py auth "$TARGETARCH" /downloads/auth && python3 /build/fetch.py postgrest "$TARGETARCH" /downloads/postgrest && python3 /build/fetch.py envoy "$TARGETARCH" /downloads/envoy && python3 /build/fetch.py migrate "$TARGETARCH" /downloads/migrate && python3 /build/fetch.py dbx "$TARGETARCH" /downloads/dbx && python3 /build/fetch.py redis-server "$TARGETARCH" /downloads/redis && python3 /build/fetch.py redis-tools "$TARGETARCH" /downloads/redis
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; mkdir -p /out/bin /out/auth && cp $(find /downloads/clickhouse -type f -path '*/usr/bin/clickhouse' | head -1) /out/bin/clickhouse && cp $(find /downloads/rustfs -type f -name rustfs | head -1) /out/bin/rustfs && cp $(find /downloads/auth -type f -name auth | head -1) /out/bin/supabase-auth && cp $(find /downloads/postgrest -type f -name postgrest | head -1) /out/bin/postgrest && cp /downloads/envoy/envoy /out/bin/envoy && cp $(find /downloads/dbx -type f -name dbx-web-bin | head -1) /out/bin/dbx-web && cp -a /downloads/redis/usr/bin/* /out/bin/ && cp $(find /downloads/migrate -type f -name migrate | head -1) /out/bin/migrate && chmod 755 /out/bin/*
 
-FROM downloader AS redis-build
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends build-essential pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; python3 /build/fetch.py redis-source all /redis
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; cd "$(dirname "$(dirname "$(find /redis -type f -path '*/src/server.c' | head -1)")")" && make -C src -j2 BUILD_TLS=yes && make -C src PREFIX=/out/redis BUILD_TLS=yes install
+FROM artifact-fetch AS runtimes
+RUN --mount=type=cache,target=/root/.cache/anp-artifacts export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; python3 /build/fetch.py node24 "$TARGETARCH" /downloads/node24 && python3 /build/fetch.py node22 "$TARGETARCH" /downloads/node22 && python3 /build/fetch.py uv "$TARGETARCH" /downloads/uv
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; mkdir -p /out/bin /out/node24 /out/node22 && cp -a /downloads/node24/node-*/. /out/node24/ && cp -a /downloads/node22/node-*/. /out/node22/ && cp $(find /downloads/uv -type f -name uv | head -1) /out/bin/uv && chmod 755 /out/bin/uv
 
-FROM redis-build AS pgbouncer-build
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends libevent-dev && rm -rf /var/lib/apt/lists/*
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; curl -fsSL --retry 5 https://www.pgbouncer.org/downloads/files/1.26.0/pgbouncer-1.26.0.tar.gz -o /tmp/pgbouncer.tgz && echo 'afd25dd61ee6775d37b40629b87ce08736b3e6955f3057bb212e410fbf21c71d  /tmp/pgbouncer.tgz' | sha256sum -c - && mkdir /pgbouncer && tar xzf /tmp/pgbouncer.tgz --strip-components=1 -C /pgbouncer && cd /pgbouncer && ./configure --prefix=/out/pgbouncer --with-openssl=/usr && make -j2 pgbouncer && mkdir -p /out/pgbouncer/bin && cp pgbouncer /out/pgbouncer/bin/pgbouncer
+FROM artifact-fetch AS cargo-tools
+COPY docker/build/tools.lock.json /build/versions.lock.json
+RUN --mount=type=cache,target=/root/.cache/anp-artifacts export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; python3 /build/fetch.py cargo-about "$TARGETARCH" /downloads/about && python3 /build/fetch.py cargo-auditable "$TARGETARCH" /downloads/auditable
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; mkdir -p /out/bin && cp $(find /downloads/about -type f -name cargo-about | head -1) /out/bin/ && cp $(find /downloads/auditable -type f -name cargo-auditable | head -1) /out/bin/ && chmod 755 /out/bin/* && /out/bin/cargo-about --version
 
-FROM debian:trixie-slim AS postgres-build
+FROM debian:trixie-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad AS postgres-build
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends nix-bin ca-certificates git curl xz-utils && rm -rf /var/lib/apt/lists/*
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; mkdir -p /etc/nix && printf '%s\n' 'experimental-features = nix-command flakes' 'sandbox = false' 'build-users-group = nixbld' 'extra-substituters = https://nix-postgres-artifacts.s3.amazonaws.com' 'extra-trusted-public-keys = nix-postgres-artifacts:dGZlQOvKcNEjvT7QEAJbcV6b6uk7VF/hWMjhYleiaLI=' > /etc/nix/nix.conf && (getent group nixbld || groupadd -r nixbld) && for i in 1 2 3 4; do id nixbld$i >/dev/null 2>&1 || useradd -r -g nixbld -G nixbld -M -N -s /usr/sbin/nologin nixbld$i; done
 COPY platform/sources/components/postgres /src
 WORKDIR /src
 ARG TARGETARCH
-RUN --mount=type=cache,id=anp-nix-${TARGETARCH},target=/nix,sharing=locked export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; nix profile install --profile /tmp/anp-pg-profile 'path:.#psql_17_slim/bin' 'path:.#supabase-groonga' && mkdir -p /out/nix/store /out/nix/var/nix/profiles /out/init && for path in $(nix-store --query --requisites "$(readlink -f /tmp/anp-pg-profile)"); do cp -a "$path" /out/nix/store/; done && ln -s "$(readlink -f /tmp/anp-pg-profile)" /out/nix/var/nix/profiles/default && test -x /out/nix/var/nix/profiles/default/bin/postgres && cp -a migrations/db/. /out/init/ && cp ansible/files/pgbouncer_config/pgbouncer_auth_schema.sql /out/init/init-scripts/00-schema.sql && cp ansible/files/stat_extension.sql /out/init/migrations/00-extension.sql
+RUN --mount=type=cache,id=anp-nix-${TARGETARCH},target=/nix,sharing=locked export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; nix profile install --profile /tmp/anp-pg-profile 'path:.#psql_17_slim/bin' 'path:.#supabase-groonga' && mkdir -p /out/nix/store /out/nix/var/nix/profiles /out/init && for path in $(nix-store --query --requisites "$(readlink -f /tmp/anp-pg-profile)"); do cp -a "$path" /out/nix/store/; done && ln -s "$(readlink -f /tmp/anp-pg-profile)" /out/nix/var/nix/profiles/default && test -x /out/nix/var/nix/profiles/default/bin/postgres && cp -a migrations/db/. /out/init/ && cp ansible/files/stat_extension.sql /out/init/migrations/00-extension.sql
 
-
-# Stage 1: Build frontend (native, no emulation)
-FROM --platform=$BUILDPLATFORM node:22-slim AS dbx-frontend
-ARG VITE_DBX_BASE_PATH=/dbx
-ENV VITE_DBX_BASE_PATH=$VITE_DBX_BASE_PATH
-WORKDIR /app
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm i -g pnpm
-# Keep the workspace package available because Vite resolves it directly from source.
-COPY platform/sources/dbx/package.json platform/sources/dbx/pnpm-lock.yaml platform/sources/dbx/pnpm-workspace.yaml ./
-COPY platform/sources/dbx/packages/mongo-shell/ packages/mongo-shell/
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; \
-    pnpm install --frozen-lockfile
-COPY platform/sources/dbx/apps/desktop/ apps/desktop/
-# The vite connection-types plugin runs scripts/sync-connection-types.mjs during
-# `pnpm build`, which reads plugins/connection-types + plugins/dialects and
-# regenerates the manifest and generated TS types in place.
-COPY platform/sources/dbx/scripts/ scripts/
-COPY platform/sources/dbx/plugins/ plugins/
-COPY platform/sources/dbx/crates/dbx-core/assets/database-drivers.manifest.json crates/dbx-core/assets/database-drivers.manifest.json
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; pnpm build
-
-
-FROM rust:1-bookworm AS dbx-backend
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends build-essential cmake pkg-config libfontconfig1-dev libfreetype6-dev libssl-dev && rm -rf /var/lib/apt/lists/*
+FROM hexpm/elixir:1.19.5-erlang-28.5.0.4-debian-trixie-20260713-slim@sha256:d18b9b65d8a7c01d7f3de2adbddd836693d2f73bd94e0092b318a2db6a77b07f AS realtime-build
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends build-essential git ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=runtimes /out/node24/ /usr/local/
+ENV MIX_ENV=prod ERL_FLAGS="+S 4:4"
 WORKDIR /src
-COPY platform/sources/dbx/ .
-RUN --mount=type=cache,target=/usr/local/cargo/registry --mount=type=cache,target=/src/target export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; cargo build --locked --release -p dbx-web && mkdir -p /out && cp target/release/dbx-web /out/dbx-web
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; mix local.hex --force && mix local.rebar --force
+COPY platform/sources/components/realtime/mix.exs platform/sources/components/realtime/mix.lock ./
+COPY platform/sources/components/realtime/forum forum
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; cp mix.lock /tmp/mix.lock && mix deps.get --only prod && cmp mix.lock /tmp/mix.lock
+COPY platform/sources/components/realtime/config/config.exs platform/sources/components/realtime/config/prod.exs config/
+# 仅在跨架构仿真时显式传入 +JMsingle true；原生构建默认沿用上游 JIT。
+ARG REALTIME_BUILD_ERL_AFLAGS=
+ENV ERL_AFLAGS=$REALTIME_BUILD_ERL_AFLAGS
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; mix deps.compile
+COPY platform/sources/components/realtime/priv priv
+COPY platform/sources/components/realtime/lib lib
+COPY platform/sources/components/realtime/assets assets
+RUN --mount=type=cache,target=/root/.cache export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; cd assets && npm ci --cache=/root/.cache/npm --maxsockets=4 --fetch-retries=5 --omit=dev
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; mix assets.deploy && mix compile
+COPY platform/sources/components/realtime/config/runtime.exs config/
+COPY platform/sources/components/realtime/rel rel
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; mix release && test -x _build/prod/rel/realtime/bin/realtime
 
-FROM node:24-bookworm-slim AS lf-web-base
+FROM node:24-bookworm-slim@sha256:91acba91b842bec0bf7ea6f5e09c644c7ccad72c4996ed9616d861d1c7cd60d4 AS lf-web-base
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends build-essential python3 curl git openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 FROM lf-web-base AS lf-web-build-base
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm install -g turbo@2.11.7 pnpm@12.8.2
@@ -62,30 +58,15 @@ ARG NODE_USE_ENV_PROXY
 FROM lf-web-base AS lf-web-runtime-base
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; groupadd -g 1001 nodejs && useradd -u 1001 -g nodejs nextjs && groupadd -g 1002 expressjs && useradd -u 1002 -g expressjs expressjs
 FROM --platform=${TARGETPLATFORM:-linux/amd64} lf-web-build-base AS lf-web-web-tools
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm install -g --prefix /opt/prisma-cli --no-package-lock --no-save prisma@6.19.3
+RUN --mount=type=cache,target=/root/.cache export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm install -g --cache=/root/.cache/npm --maxsockets=4 --fetch-retries=5 --fetch-retry-mintimeout=2000 --fetch-retry-maxtimeout=20000 --prefix /opt/prisma-cli --no-package-lock --no-save prisma@6.19.3
 ARG NEXT_PUBLIC_LANGFUSE_CLOUD_REGION
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; mkdir -p /opt/dd/node_modules && \
     if [ -n "$NEXT_PUBLIC_LANGFUSE_CLOUD_REGION" ]; then \
     cd /opt/dd && npm install --no-package-lock --no-save dd-trace@5.109.0; \
     fi
 
-FROM --platform=${BUILDPLATFORM} golang:1.26 AS lf-web-migrate-builder
-ARG TARGETOS
-ARG TARGETARCH
-ENV CGO_ENABLED=0 \
-    GOBIN=/out \
-    GOOS=${TARGETOS} \
-    GOARCH=${TARGETARCH}
-# Build against the validated Go Cryptographic Module snapshot (Go >= 1.24) so
-# the migrate CLI's ClickHouse TLS uses FIPS-approved crypto; GOFIPS140 also
-# defaults GODEBUG=fips140=on at runtime.
-ENV GOFIPS140=v1.0.0
-# Build only the ClickHouse migrate CLI Langfuse uses at runtime.
-# compile this ourselves instead of downloading the upstream release
-# because prebuilt bins bundle many unused drivers and thus inherit CVEs
-# eg.: https://github.com/golang-migrate/migrate/issues/1357
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; /usr/local/go/bin/go install -trimpath -tags 'clickhouse' -ldflags='-s -w' \
-    github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+FROM debian:trixie-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad AS lf-web-migrate-builder
+COPY --from=downloader /out/bin/migrate /out/migrate
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} lf-web-build-base AS lf-web-pruner
 
@@ -103,7 +84,7 @@ COPY --from=lf-web-pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=lf-web-pruner /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=lf-web-pruner /app/out/json/ .
 
-RUN --mount=type=cache,target=/root/.cache/pnpm export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; pnpm install --frozen-lockfile --store-dir /root/.cache/pnpm
+RUN --mount=type=cache,target=/root/.cache/pnpm export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; pnpm install --frozen-lockfile --store-dir /root/.cache/pnpm --network-concurrency=8
 
 # pnpm can verify dependencies before each `pnpm run`, so every command
 # spawned by turbo re-checks node_modules via file mtimes. Cached install
@@ -183,7 +164,7 @@ RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_
     chmod 755 ./packages/shared/clickhouse/migrations/clustered ./packages/shared/clickhouse/migrations/unclustered
 
 # remove middleware.ts if it exists - not needed in self-hosted environments
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; rm -f ./web/src/middleware.ts
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; rm -f ./web/src/middleware.ts && python3 -c 'from pathlib import Path; p=Path('"'"'web/next.config.mjs'"'"'); s=p.read_text(); old='"'"'\n  experimental: {'"'"'; assert s.count(old)==1; p.write_text(s.replace(old,old+'"'"'\n    cpus: 2,'"'"',1))'
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -193,7 +174,7 @@ ENV NEXT_MANUAL_SIG_HANDLE true
 # set the CI flag to true to get CI specific logs
 ENV CI true
 
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; NODE_OPTIONS='--max-old-space-size-percentage=75' turbo run build --filter=web...
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; NEXT_IGNORE_BUILD_ERRORS=true NODE_OPTIONS='--max-old-space-size=4096' turbo run build --filter=web... && NODE_OPTIONS='--max-old-space-size-percentage=75' pnpm --filter web run typecheck
 
 # Production image, copy all the files and run next
 FROM --platform=${TARGETPLATFORM:-linux/amd64} lf-web-runtime-base AS lf-web-runner
@@ -265,7 +246,7 @@ CMD if [ -n "$NEXT_PUBLIC_LANGFUSE_CLOUD_REGION" ]; then \
     node ./web/server.js --keepAliveTimeout 110000; \
     fi
 
-FROM node:24-bookworm-slim AS lf-worker-base
+FROM node:24-bookworm-slim@sha256:91acba91b842bec0bf7ea6f5e09c644c7ccad72c4996ed9616d861d1c7cd60d4 AS lf-worker-base
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends build-essential python3 curl git openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 FROM lf-worker-base AS lf-worker-build-base
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm install -g turbo@2.11.7 pnpm@12.8.2
@@ -316,11 +297,9 @@ RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_
 # versions with their own lockfiles; keep the versions in sync with
 # ai-gateway/Dockerfile. `napi build` spawns $CARGO instead of cargo when it is
 # set, so the build step points it at a wrapper that runs `cargo auditable`.
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; cargo install --locked --root /usr/local --features cli cargo-about@0.9.2 && \
-    cargo install --locked --root /usr/local cargo-auditable@0.7.7 && \
-    rm -rf "${CARGO_HOME:-$HOME/.cargo}/registry" && \
-    printf '#!/bin/sh\nexec /usr/local/bin/cargo auditable "$@"\n' > /usr/local/bin/cargo-auditable-shim && \
-    chmod 0755 /usr/local/bin/cargo-auditable-shim
+COPY --from=cargo-tools /out/bin/ /usr/local/bin/
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; cargo auditable --version && printf '#!/bin/sh\nexec /usr/local/bin/cargo auditable "$@"\n' > /usr/local/bin/cargo-auditable-shim && chmod 0755 /usr/local/bin/cargo-auditable-shim
+
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} lf-worker-toolchain AS lf-worker-builder
 
@@ -331,7 +310,7 @@ COPY --from=lf-worker-pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=lf-worker-pruner /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=lf-worker-pruner /app/out/json/ .
 
-RUN --mount=type=cache,target=/root/.cache/pnpm export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; pnpm install --frozen-lockfile --store-dir /root/.cache/pnpm
+RUN --mount=type=cache,target=/root/.cache/pnpm export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; pnpm install --frozen-lockfile --store-dir /root/.cache/pnpm --network-concurrency=8
 
 # pnpm can verify dependencies before each `pnpm run`, so every command
 # spawned by turbo re-checks node_modules via file mtimes. Cached install
@@ -432,7 +411,7 @@ CMD ["node", "worker/dist/index.js"]
 # trees), not at container start.
 
 
-FROM node:22-bookworm-slim AS studio-base
+FROM node:22-bookworm-slim@sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9 AS studio-base
 ENV pnpm_config_verify_deps_before_run=false pnpm_config_store_dir=/root/.cache/pnpm
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -465,13 +444,13 @@ COPY --from=studio-turbo /app/out/pnpm-lock.yaml ./
 COPY platform/sources/supabase/patches/ ./patches
 
 # No need to clean cache because production uses standalone build
-RUN --mount=type=cache,target=/root/.cache/pnpm export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; pnpm install --frozen-lockfile --store-dir /root/.cache/pnpm
+RUN --mount=type=cache,target=/root/.cache/pnpm export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; pnpm install --frozen-lockfile --store-dir /root/.cache/pnpm --network-concurrency=8
 
 # dev contains dependencies and source code not compiled
 FROM studio-deps AS studio-dev
 COPY --from=studio-turbo /app/out/full ./
 ENTRYPOINT ["docker-entrypoint.sh"]
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; python3 -c 'exec('"'"'"""仅在镜像构建目录修复锁定 Studio 源码中的根路径假设。"""\nfrom pathlib import Path\n\n\ndef replace(relative, old, new, count):\n    path = Path("apps/studio") / relative\n    text = path.read_text()\n    assert text.count(old) == count, f"上游已变更，请重新审核目录补丁：{relative}"\n    path.write_text(text.replace(old, new))\n\n\nreplace("lib/constants/index.ts", "return \'"'"'/api\'"'"'",\n        "return (process.env.NEXT_PUBLIC_BASE_PATH ?? \'"'"'\'"'"') + \'"'"'/api\'"'"'", 2)\nreplace("lib/constants/api.ts", "${PUBLIC_URL.origin}/rest/v1/",\n        "${PUBLIC_URL.origin}${PUBLIC_URL.pathname.replace(/\\\\/$/, \'"'"'\'"'"')}/rest/v1/", 1)\nreplace("lib/constants/api.ts", "PROJECT_ENDPOINT = PUBLIC_URL.host",\n        "PROJECT_ENDPOINT = PUBLIC_URL.host + PUBLIC_URL.pathname.replace(/\\\\/$/, \'"'"'\'"'"')", 1)\nfor name, variable in (("public-url", "publicUrl"), ("sign", "signedUrl"), ("sign-multi", "signedUrl")):\n    replace(f"pages/api/platform/storage/[ref]/buckets/[id]/objects/{name}.ts",\n            f"{variable}.port = parsed.port",\n            f"{variable}.port = parsed.port\\n  {variable}.pathname = parsed.pathname.replace(/\\\\/$/, \'"'"'\'"'"') + {variable}.pathname", 1)\n'"'"')'
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; python3 -c 'exec('"'"'"""仅在镜像构建目录适配锁定 Studio 的统一入口和构建资源。"""\nfrom pathlib import Path\n\n\ndef replace(relative, old, new, count):\n    path = Path("apps/studio") / relative\n    text = path.read_text()\n    assert text.count(old) == count, f"上游已变更，请重新审核目录补丁：{relative}"\n    path.write_text(text.replace(old, new))\n\n\nreplace("lib/constants/index.ts", "return \'"'"'/api\'"'"'",\n        "return (process.env.NEXT_PUBLIC_BASE_PATH ?? \'"'"'\'"'"') + \'"'"'/api\'"'"'", 2)\nreplace("lib/constants/api.ts", "${PUBLIC_URL.origin}/rest/v1/",\n        "${PUBLIC_URL.origin}${PUBLIC_URL.pathname.replace(/\\\\/$/, \'"'"'\'"'"')}/rest/v1/", 1)\nreplace("lib/constants/api.ts", "PROJECT_ENDPOINT = PUBLIC_URL.host",\n        "PROJECT_ENDPOINT = PUBLIC_URL.host + PUBLIC_URL.pathname.replace(/\\\\/$/, \'"'"'\'"'"')", 1)\nfor name, variable in (("public-url", "publicUrl"), ("sign", "signedUrl"), ("sign-multi", "signedUrl")):\n    replace(f"pages/api/platform/storage/[ref]/buckets/[id]/objects/{name}.ts",\n            f"{variable}.port = parsed.port",\n            f"{variable}.port = parsed.port\\n  {variable}.pathname = parsed.pathname.replace(/\\\\/$/, \'"'"'\'"'"') + {variable}.pathname", 1)\n\n# Next 16.2 默认 os.cpus().length-1，忽略 Docker CPU 配额，32 核宿主会启动31个页面 worker。\n# 显式限制页面生成并发；不关闭编译、页面生成或既有检查。\nreplace("next.config.ts", "clientRouterFilter: false,", "clientRouterFilter: false,\\n    cpus: 2,\\n    turbopackMemoryLimit: 6 * 1024 ** 3,", 1)\n'"'"')'
 EXPOSE 8082
 CMD ["pnpm", "dev:studio"]
 
@@ -479,7 +458,8 @@ CMD ["pnpm", "dev:studio"]
 FROM studio-dev AS studio-build-next
 ARG NEXT_PUBLIC_BASE_PATH=/supabase
 ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; pnpm --filter studio exec next build
+ENV NEXT_PUBLIC_DISABLED_FEATURES=project_edge_function:all,logs:all
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter studio exec next build
 
 # Assemble the runtime tree at /srv in the layout the production stage
 # serves from: Next's self-contained standalone output is the app root,
@@ -494,6 +474,7 @@ RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_
 FROM studio-dev AS studio-build-tanstack
 ARG NEXT_PUBLIC_BASE_PATH=/supabase
 ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
+ENV NEXT_PUBLIC_DISABLED_FEATURES=project_edge_function:all,logs:all
 # build:tanstack = vite build --mode production, then a smoke test that
 # boots the server bundle so module-scope crashes fail the image build.
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter studio run build:tanstack
@@ -544,32 +525,13 @@ ENTRYPOINT ["docker-entrypoint.sh"]
 HEALTHCHECK --interval=5s --timeout=5s --retries=3 CMD node -e "fetch('http://localhost:3000/supabase/api/platform/profile').then((r) => {if (r.status !== 200) throw new Error(r.status)})"
 CMD ["node", "apps/studio/server.js"]
 
-FROM node:22-bookworm-slim AS meta-build
+FROM node:22-bookworm-slim@sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9 AS meta-build
 WORKDIR /usr/src/app
-# Do `npm ci` separately so we can cache `node_modules`
-# https://nodejs.org/en/docs/guides/nodejs-docker-webapp/
-COPY platform/sources/components/postgres-meta/package.json platform/sources/components/postgres-meta/package-lock.json ./
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm clean-install
-COPY platform/sources/components/postgres-meta/. .
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm run build && npm prune --omit=dev
-
-FROM node:22-bookworm-slim
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-WORKDIR /usr/src/app
-COPY --from=meta-build /usr/src/app/node_modules node_modules
-COPY --from=meta-build /usr/src/app/dist dist
-COPY platform/sources/components/postgres-meta/package.json ./
-ENV PG_META_PORT=8080
-# `npm run start` does not forward signals to child process
-CMD ["node", "dist/server/server.js"]
-EXPOSE 8080
-# --start-period defaults to 0s, but can't be set to 0s (to be explicit) by now
-HEALTHCHECK --interval=5s --timeout=5s --retries=3 CMD node -e "fetch('http://localhost:8080/health').then((r) => {if (r.status !== 200) throw new Error(r.status)})"
+COPY docker/packages/meta/package.json docker/packages/meta/package-lock.json ./
+RUN --mount=type=cache,target=/root/.cache export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm ci --cache=/root/.cache/npm --maxsockets=4 --fetch-retries=5 --omit=dev && test -f node_modules/@supabase/postgres-meta/dist/server/server.js
 
 # Base stage for shared environment setup
-FROM node:24-bookworm-slim AS storage-base
+FROM node:24-bookworm-slim@sha256:91acba91b842bec0bf7ea6f5e09c644c7ccad72c4996ed9616d861d1c7cd60d4 AS storage-base
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends g++ make python3 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY platform/sources/components/storage/package.json platform/sources/components/storage/package-lock.json ./
@@ -580,7 +542,7 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc export http_proxy="$HTTP_PR
 
 # Dependencies stage - install and cache all dependencies
 FROM storage-base AS storage-dependencies
-RUN --mount=type=cache,target=/root/.cache --mount=type=secret,id=npmrc,target=/root/.npmrc export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm ci --ignore-scripts
+RUN --mount=type=cache,target=/root/.cache --mount=type=secret,id=npmrc,target=/root/.npmrc export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm ci --cache=/root/.cache/npm --maxsockets=4 --fetch-retries=5 --ignore-scripts
 # Native addons can use the Node headers already included in the image.
 RUN --network=none export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm_package_config_node_gyp_nodedir=/usr/local npm rebuild
 # Cache the installed node_modules for later stages
@@ -615,62 +577,46 @@ COPY --from=storage-build /app/watt.storage.json /app
 EXPOSE 5000
 CMD ["node", "dist/start/server.js"]
 
-FROM node:24-bookworm-slim AS litellm-ui
-WORKDIR /ui
-COPY platform/sources/litellm/ui/litellm-dashboard/package*.json ./
-RUN --mount=type=cache,target=/root/.cache export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm ci
-COPY platform/sources/litellm/ui/litellm-dashboard/ ./
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; npm run build -- --webpack
-
-FROM debian:trixie-slim AS litellm-build
+FROM debian:trixie-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad AS litellm-build
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends python3 python3-venv python3-dev build-essential libssl-dev libsndfile1 ca-certificates curl && rm -rf /var/lib/apt/lists/*
-COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /usr/local/bin/uv
-COPY --from=lf-web-base /usr/local/ /usr/local/
+COPY --from=runtimes /out/bin/uv /usr/local/bin/uv
+COPY --from=runtimes /out/node24/ /usr/local/
 WORKDIR /app
-COPY platform/sources/litellm/ ./
+COPY docker/packages/litellm/ ./
 ENV UV_PROJECT_ENVIRONMENT=/app/.venv UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=0 PATH=/app/.venv/bin:/usr/local/bin:/usr/bin:/bin
-RUN --mount=type=cache,target=/root/.cache export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; uv sync --frozen --no-install-project --no-install-workspace --no-default-groups --no-editable --extra proxy --extra proxy-runtime --group admin-mcp --extra extra_proxy --extra semantic-router --extra saml --extra bedrock-realtime --python /usr/bin/python3
-COPY --from=litellm-ui /ui/out/ /app/litellm/proxy/_experimental/out/
-RUN --mount=type=cache,target=/root/.cache export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; uv sync --frozen --no-default-groups --no-editable --extra proxy --extra proxy-runtime --group admin-mcp --extra extra_proxy --extra semantic-router --extra saml --extra bedrock-realtime --python /usr/bin/python3
+RUN --mount=type=cache,target=/root/.cache export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; uv sync --frozen --no-dev --python /usr/bin/python3 --no-build-package litellm
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; cp /app/.venv/lib/python*/site-packages/litellm/proxy/schema.prisma /app/schema.prisma
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; HOME=/opt/prisma XDG_CACHE_HOME=/opt/prisma/.cache PRISMA_BINARY_CACHE_DIR=/opt/prisma/binaries prisma generate --schema=./schema.prisma
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; curl -fsSL https://github.com/BerriAI/litellm-admin-agent/archive/ef501e94bc9fbacb9233b922abf71427f030408c.tar.gz -o /tmp/liteadmin.tgz && echo '2f7ae5cdd9d91731c0990e74a58239dc3e3fd2bf28dab23b55eafcdc47aaf87e  /tmp/liteadmin.tgz' | sha256sum -c - && mkdir /tmp/liteadmin && tar xzf /tmp/liteadmin.tgz --strip-components=1 -C /tmp/liteadmin && uv venv /opt/liteadmin --python /usr/bin/python3 && uv --no-config pip install --python /opt/liteadmin/bin/python --require-hashes -r /tmp/liteadmin/requirements.txt && uv --no-config pip install --python /opt/liteadmin/bin/python --no-deps /tmp/liteadmin
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; curl --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 20 --max-time 300 -fsSL https://github.com/BerriAI/litellm-admin-agent/archive/ef501e94bc9fbacb9233b922abf71427f030408c.tar.gz -o /tmp/liteadmin.tgz && echo '2f7ae5cdd9d91731c0990e74a58239dc3e3fd2bf28dab23b55eafcdc47aaf87e  /tmp/liteadmin.tgz' | sha256sum -c - && mkdir /tmp/liteadmin && tar xzf /tmp/liteadmin.tgz --strip-components=1 -C /tmp/liteadmin && uv venv /opt/liteadmin --python /usr/bin/python3 && uv --no-config pip install --python /opt/liteadmin/bin/python --require-hashes -r /tmp/liteadmin/requirements.txt && uv --no-config pip install --python /opt/liteadmin/bin/python --no-deps /tmp/liteadmin
 
-FROM debian:trixie-slim AS assembled
-RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends python3 ca-certificates bash openssl tzdata libsndfile1 libssl3t64 libatomic1 libstdc++6 fontconfig fonts-dejavu-core libfreetype6 openjdk-21-jre-headless libevent-2.1-7t64 libpq5 libgmp10 libnuma1 libtinfo6 && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+FROM debian:trixie-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad AS assembled
+RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; apt-get update && apt-get install -y --no-install-recommends python3 ca-certificates bash openssl tzdata libsndfile1 libssl3t64 libatomic1 libstdc++6 fontconfig fonts-dejavu-core libfreetype6 openjdk-21-jre-headless libncurses6 libpq5 libgmp10 libnuma1 libtinfo6 && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 COPY --from=postgres-build /out/nix /nix
 COPY --from=postgres-build /out/init /opt/defaults/postgres-init
 COPY --from=downloader /out/bin/ /opt/anp/bin/
-COPY --from=redis-build /out/redis/bin/ /opt/anp/bin/
-COPY --from=pgbouncer-build /out/pgbouncer/bin/pgbouncer /opt/anp/bin/pgbouncer
-COPY --from=dbx-backend /out/dbx-web /opt/anp/bin/dbx-web
-COPY --from=dbx-frontend --chown=20005:20005 /app/dist /opt/anp/services/dbx/static
 COPY --from=lf-web-runner --chown=20006:20006 /app /opt/anp/services/langfuse-web
 COPY --from=lf-web-web-tools /opt/prisma-cli /opt/langfuse-tools
 COPY --from=lf-web-migrate-builder /out/migrate /opt/anp/bin/migrate
 COPY --from=lf-worker-runner --chown=20007:20007 /app/worker /opt/anp/services/langfuse-worker/worker
 COPY --from=lf-worker-builder /usr/share/licenses/langfuse-native /usr/share/licenses/langfuse-native
 COPY --from=studio-production --chown=20009:20009 /app /opt/anp/services/supabase-studio
-COPY --from=meta-build --chown=20010:20010 /usr/src/app/dist /opt/anp/services/supabase-meta/dist
-COPY --from=meta-build --chown=20010:20010 /usr/src/app/node_modules /opt/anp/services/supabase-meta/node_modules
-COPY --from=meta-build /usr/src/app/package.json /opt/anp/services/supabase-meta/package.json
+COPY --from=meta-build --chown=20010:20010 /usr/src/app /opt/anp/services/supabase-meta
 COPY --from=storage-final --chown=20013:20013 /app /opt/anp/services/supabase-storage
+COPY --from=realtime-build --chown=20015:20015 /src/_build/prod/rel/realtime /opt/anp/services/supabase-realtime
 COPY platform/sources/components/auth/migrations /opt/anp/services/supabase-auth/migrations
-COPY --from=lf-web-base /usr/local/bin/node /opt/anp/runtimes/node24/bin/node
-COPY --from=studio-base /usr/local/bin/node /opt/anp/runtimes/node22/bin/node
+COPY --from=runtimes /out/node24/bin/node /opt/anp/runtimes/node24/bin/node
+COPY --from=runtimes /out/node22/bin/node /opt/anp/runtimes/node22/bin/node
 COPY --from=litellm-build /app/.venv /app/.venv
 COPY --from=litellm-build /opt/prisma /opt/prisma
 COPY --from=litellm-build /opt/liteadmin /opt/liteadmin
-COPY --from=litellm-build /app/docker /app/docker
-COPY --from=litellm-build /app/enterprise /app/enterprise
-COPY --from=litellm-build /app/litellm-proxy-extras /app/litellm-proxy-extras
-COPY --from=litellm-build /app/litellm/proxy/prisma_migration.py /app/litellm/proxy/prisma_migration.py
 COPY --from=litellm-build /app/schema.prisma /app/schema.prisma
 COPY docker/licenses /usr/share/licenses/anp
 COPY docker/toolbox/runtime /opt/anp/runtime
 COPY docker/toolbox/versions.lock.json /opt/anp/versions.lock.json
+COPY docker/build/tools.lock.json /opt/anp/build-tools.lock.json
 COPY docker/toolbox/optimize.py /opt/anp/build/optimize.py
 RUN export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" npm_config_https_proxy="$HTTPS_PROXY"; ln -s /opt/anp/runtimes/node24/bin/node /usr/bin/node && /usr/bin/python3 /opt/anp/runtime/install.py && /usr/bin/python3 /opt/anp/build/optimize.py --apply
-FROM debian:trixie-slim AS toolbox
+FROM debian:trixie-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad AS toolbox
 COPY --from=assembled / /
 WORKDIR /opt/anp
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 NODE_ENV=production TZ=UTC

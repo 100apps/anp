@@ -4,7 +4,8 @@
     "dbx": {
       "version": "0.6.49",
       "upstream_ref": "v0.6.49",
-      "source_sha": "dc57c632280b65ce15513f9564b5e42e163f507d"
+      "distribution": "official-browser-static",
+      "upstream_source_sha": "dc57c632280b65ce15513f9564b5e42e163f507d"
     },
     "langfuse-web": {
       "version": "4.64.0",
@@ -19,7 +20,8 @@
     "litellm": {
       "version": "1.106.0",
       "upstream_ref": "v1.106.0",
-      "source_sha": "955bdaafa8b72b2b6ff728048f272fbc06049f63"
+      "distribution": "official-pypi-wheel",
+      "upstream_source_sha": "955bdaafa8b72b2b6ff728048f272fbc06049f63"
     },
     "supabase-studio": {
       "version": "1.26.08",
@@ -34,12 +36,13 @@
     "supabase-rest": {
       "version": "14.18",
       "upstream_ref": "v14.18",
-      "source_sha": "6fafa601d13b15f9875e3a70e733ddd6f38f633e"
+      "upstream_source_sha": "6fafa601d13b15f9875e3a70e733ddd6f38f633e"
     },
     "supabase-meta": {
       "version": "0.100.0",
       "upstream_ref": "v0.100.0",
-      "source_sha": "9a2effd147f2f028fa36553ec2c7eeec80d7f8fc"
+      "distribution": "official-npm",
+      "upstream_source_sha": "9a2effd147f2f028fa36553ec2c7eeec80d7f8fc"
     },
     "supabase-storage": {
       "version": "1.81.0",
@@ -51,7 +54,8 @@
       "source_sha": "d156ba65c14694c12cc5e782bc15b9b8ed2d1376"
     },
     "redis": {
-      "version": "8.10.2"
+      "version": "8.10.2",
+      "distribution": "official-deb"
     },
     "clickhouse": {
       "version": "26.9.22.3-stable"
@@ -60,10 +64,22 @@
       "version": "1.0.3"
     },
     "node": {
-      "version": "24 LTS"
+      "version": "24.22.0"
     },
     "supabase-gateway": {
       "version": "1.39.1"
+    },
+    "supabase-realtime": {
+      "version": "2.144.4",
+      "upstream_ref": "v2.144.4",
+      "source_sha": "5bce1ee2a887e5d00a305a2be1c81dced6b94b7a",
+      "build_runtime": "Elixir 1.19.5 / OTP 28.5.0.4"
+    },
+    "node22": {
+      "version": "22.23.3"
+    },
+    "migrate": {
+      "version": "4.19.1"
     }
   },
   "compatibility_notes": [
@@ -117,12 +133,6 @@
         "sha256": "8565ad0af4b1d1d3c986e5165c027add3073579182f398dd7f4d728d25e9ec62"
       }
     },
-    "redis-source": {
-      "all": {
-        "url": "https://github.com/redis/redis/releases/download/8.10.2/redis-full.tar.gz",
-        "sha256": "ae6973de9b6ad8e6cf21b1e764abccab59200689af6aabce10d4cf6bbb2e253f"
-      }
-    },
     "clickhouse": {
       "amd64": {
         "url": "https://github.com/ClickHouse/ClickHouse/releases/download/v26.9.22.3-stable/clickhouse-common-static-26.9.22.3-amd64.tgz",
@@ -131,6 +141,76 @@
       "arm64": {
         "url": "https://github.com/ClickHouse/ClickHouse/releases/download/v26.9.22.3-stable/clickhouse-common-static-26.9.22.3-arm64.tgz",
         "sha256": "aecd5eff1dd07a4c2ad8f45084772eb5b05894b116f8777d97a8df9730b02aa7"
+      }
+    },
+    "dbx": {
+      "arm64": {
+        "url": "https://github.com/t8y2/dbx/releases/download/v0.6.49/DBX_0.6.49_arm64-browser-static.tar.gz",
+        "sha256": "19eabc1b219a2411ac7b4f94dada6032e4e2396eedd8ee8fbf5b6edac92a1fb9"
+      },
+      "amd64": {
+        "url": "https://github.com/t8y2/dbx/releases/download/v0.6.49/DBX_0.6.49_x64-browser-static.tar.gz",
+        "sha256": "fcbdf228b5213c7bd151ee927255a09a3fabeac989c9ebc4f0929ba0250fa10b"
+      }
+    },
+    "redis-server": {
+      "amd64": {
+        "url": "https://packages.redis.io/deb/pool/trixie/r/re/redis-server_8.10.2-1rl1~trixie1_amd64.deb",
+        "sha256": "4d7f801807fe6ed2e2c1735c9e14007fa79cccd0be69223ab0de1be7b7a014a7"
+      },
+      "arm64": {
+        "url": "https://packages.redis.io/deb/pool/trixie/r/re/redis-server_8.10.2-1rl1~trixie1_arm64.deb",
+        "sha256": "05d62d8ec2a50b07499e6bb7a44f07d505d23577df730acb335bd368f7bd4f78"
+      }
+    },
+    "redis-tools": {
+      "amd64": {
+        "url": "https://packages.redis.io/deb/pool/trixie/r/re/redis-tools_8.10.2-1rl1~trixie1_amd64.deb",
+        "sha256": "88d518e5e7b54fd52fac6c66c9d8fbdf9ec617d5afb4a41a7246fea84938adc4"
+      },
+      "arm64": {
+        "url": "https://packages.redis.io/deb/pool/trixie/r/re/redis-tools_8.10.2-1rl1~trixie1_arm64.deb",
+        "sha256": "0f1c74d80d4b609a83ba4b10537598d9221cab84595045320bea4ea82f8171d6"
+      }
+    },
+    "node24": {
+      "arm64": {
+        "url": "https://nodejs.org/dist/v24.22.0/node-v24.22.0-linux-arm64.tar.xz",
+        "sha256": "fef00bb4d36e1c50104a9775a10359beee98f162b4104dd12472c75065c6a143"
+      },
+      "amd64": {
+        "url": "https://nodejs.org/dist/v24.22.0/node-v24.22.0-linux-x64.tar.xz",
+        "sha256": "cc2f601cee82d9a5a233302fe307abc600727035fd7d2c3a3571755989e95008"
+      }
+    },
+    "node22": {
+      "arm64": {
+        "url": "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-arm64.tar.xz",
+        "sha256": "a44aeb94849a299b22df10b9e622ec2f605c2183501bc40590705131de7c740f"
+      },
+      "amd64": {
+        "url": "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz",
+        "sha256": "df450af89261115ef9f9e3830c3eeb2cc9213b63c720b1af623cb5dcbe2e02de"
+      }
+    },
+    "uv": {
+      "amd64": {
+        "url": "https://github.com/astral-sh/uv/releases/download/0.11.7/uv-x86_64-unknown-linux-gnu.tar.gz",
+        "sha256": "6681d691eb7f9c00ac6a3af54252f7ab29ae72f0c8f95bdc7f9d1401c23ea868"
+      },
+      "arm64": {
+        "url": "https://github.com/astral-sh/uv/releases/download/0.11.7/uv-aarch64-unknown-linux-gnu.tar.gz",
+        "sha256": "f2ee1cde9aabb4c6e43bd3f341dadaf42189a54e001e521346dc31547310e284"
+      }
+    },
+    "migrate": {
+      "amd64": {
+        "url": "https://github.com/golang-migrate/migrate/releases/download/v4.19.1/migrate.linux-amd64.tar.gz",
+        "sha256": "2ac648fbd1b127b69ab5a7b33cf96212178f71e22379fc50573630c6f4c7ce18"
+      },
+      "arm64": {
+        "url": "https://github.com/golang-migrate/migrate/releases/download/v4.19.1/migrate.linux-arm64.tar.gz",
+        "sha256": "2fea2455c0f3f07cc3f4b98471c951ad1a716059574b20b6416bd1e9058751c5"
       }
     }
   }

@@ -1,0 +1,80 @@
+{
+  "target": "linux-amd64",
+  "artifacts": {
+    "postgres": {
+      "version": "17.11.0.003-cli",
+      "url": "https://github.com/supabase/postgres/releases/download/v17.11.0.003-cli/supabase-postgres-v17.11.0.003-cli-linux-x64.tar.gz",
+      "sha256": "a010212b4dad8c8eb220fe857ba2138c0b555f904c10b806112027f15bad4eef",
+      "bytes": 39171692
+    },
+    "postgrest": {
+      "version": "14.18",
+      "url": "https://github.com/PostgREST/postgrest/releases/download/v14.18/postgrest-v14.18-linux-static-x86-64.tar.xz",
+      "sha256": "98de1c0be7787aea5f5e11a25f303ea0077634d6fc1000b687bfa825fd27d299"
+    },
+    "uv": {
+      "version": "0.11.14",
+      "url": "https://github.com/astral-sh/uv/releases/download/0.11.14/uv-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "f3b623eb0e6141a7053d571d59a0bdc341e0f238ea8f5f0b4815ddbec9a2a296"
+    },
+    "node": {
+      "version": "24.22.0",
+      "url": "https://nodejs.org/dist/v24.22.0/node-v24.22.0-linux-x64.tar.xz",
+      "sha256": "cc2f601cee82d9a5a233302fe307abc600727035fd7d2c3a3571755989e95008"
+    },
+    "python": {
+      "version": "3.13.13",
+      "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20260510/cpython-3.13.13%2B20260510-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+      "sha256": "bbe27549e475fe5f22d42a8e0d553dc79d80d8a00e05712599637857d287360e"
+    },
+    "redis-server": {
+      "url": "https://packages.redis.io/deb/pool/trixie/r/re/redis-server_8.10.2-1rl1~trixie1_amd64.deb",
+      "sha256": "4d7f801807fe6ed2e2c1735c9e14007fa79cccd0be69223ab0de1be7b7a014a7",
+      "version": "8.10.2",
+      "format": "deb"
+    },
+    "redis-tools": {
+      "url": "https://packages.redis.io/deb/pool/trixie/r/re/redis-tools_8.10.2-1rl1~trixie1_amd64.deb",
+      "sha256": "88d518e5e7b54fd52fac6c66c9d8fbdf9ec617d5afb4a41a7246fea84938adc4",
+      "version": "8.10.2",
+      "format": "deb"
+    },
+    "patchelf": {
+      "version": "0.19.2",
+      "url": "https://github.com/NixOS/patchelf/releases/download/0.19.2/patchelf-0.19.2-x86_64.tar.gz",
+      "sha256": "2abdc34fbe949c995a1baa4ec310896a085588a45a99cd0d726851bdfac2a4bb",
+      "install": "elf-tools"
+    }
+  },
+  "sources": {
+    "redis": {
+      "path": "platform/sources/components/redis",
+      "url": "https://github.com/redis/redis.git",
+      "commit": "498ecd0d6d007db11ddb3aea9428552598a78622",
+      "version": "8.10.2",
+      "features": [
+        "core",
+        "vectorset"
+      ],
+      "tls": false
+    }
+  },
+  "licenses": {
+    "postgrest-LICENSE": {
+      "url": "https://raw.githubusercontent.com/PostgREST/postgrest/v14.18/LICENSE",
+      "sha256": "9581b7c80c9fc84b79b98985821c7e5e4ce01706287e2c7a7b64aa8eeb85d227"
+    },
+    "uv-LICENSE-APACHE": {
+      "url": "https://raw.githubusercontent.com/astral-sh/uv/0.11.14/LICENSE-APACHE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    "uv-LICENSE-MIT": {
+      "url": "https://raw.githubusercontent.com/astral-sh/uv/0.11.14/LICENSE-MIT",
+      "sha256": "860e3d7a86b84e6a7012c7a635fc64df475cebc6cce34dfeb73a5982ec58176c"
+    },
+    "postgres-COPYRIGHT": {
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_17_11/COPYRIGHT",
+      "sha256": "3d6af92ff8a4c2cdf69afb1cf44edea727922f5cd0cf8b5f72b11cdecac8fdfd"
+    }
+  }
+}

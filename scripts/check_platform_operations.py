@@ -62,5 +62,6 @@ def check(base='http://127.0.0.1:51760'):
 
 if __name__=='__main__':
     result=check()
-    (ROOT/'docs/evidence/platform-operations.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    (ROOT/'var/evidence').mkdir(parents=True,exist_ok=True)
+    (ROOT/'var/evidence/platform-operations.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print('DBX登录、LiteLLM鉴权、Studio数据库查询和Supabase Storage读写通过')

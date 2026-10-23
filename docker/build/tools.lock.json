@@ -1,0 +1,36 @@
+{
+  "architectures": [
+    "linux/amd64",
+    "linux/arm64"
+  ],
+  "components": {
+    "cargo-about": {
+      "version": "0.9.2"
+    },
+    "cargo-auditable": {
+      "version": "0.7.7"
+    }
+  },
+  "artifacts": {
+    "cargo-about": {
+      "amd64": {
+        "url": "https://github.com/EmbarkStudios/cargo-about/releases/download/0.9.2/cargo-about-0.9.2-x86_64-unknown-linux-musl.tar.gz",
+        "sha256": "9099a59e820c38a68b9d65f300662a567d56562f9a10f6aa4c7e86c17c2566af"
+      },
+      "arm64": {
+        "url": "https://github.com/EmbarkStudios/cargo-about/releases/download/0.9.2/cargo-about-0.9.2-aarch64-unknown-linux-musl.tar.gz",
+        "sha256": "af5169282fb6f84e13471493f405437e43ac517744c9ae12fbe2cdf0a6f0e5a8"
+      }
+    },
+    "cargo-auditable": {
+      "amd64": {
+        "url": "https://github.com/rust-secure-code/cargo-auditable/releases/download/v0.7.7/cargo-auditable-x86_64-unknown-linux-musl.tar.xz",
+        "sha256": "7676443367c5e33d9fb22acef63cccb5e9202de12dae1b0579995eb3e2bc7a18"
+      },
+      "arm64": {
+        "url": "https://github.com/rust-secure-code/cargo-auditable/releases/download/v0.7.7/cargo-auditable-aarch64-unknown-linux-musl.tar.xz",
+        "sha256": "c324af56990601354bbf40080f582ba46f8ec8b807a1388e25bb7e429d285c18"
+      }
+    }
+  }
+}

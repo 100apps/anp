@@ -124,7 +124,7 @@ jobs:
         with:
           name: acceptance-${{ matrix.arch }}
           path: |
-            docs/evidence/anp-acceptance.json
+            var/evidence/anp-acceptance.json
             var/logs/ci-dev.log
       - name: 停止本次独立实例
         if: always()

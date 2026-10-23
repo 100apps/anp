@@ -1,0 +1,213 @@
+name: ANP 原生发行
+
+on:
+  push:
+    branches: [master]
+    paths-ignore: ["docs/**", "README.md"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 可选版本号；留空按运行编号生成
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: version
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          major, minor, _ = Path('native/VERSION').read_text().strip().split('.')
+          version = os.environ.get('REQUESTED_VERSION') or f"{major}.{minor}.{os.environ['GITHUB_RUN_NUMBER']}"
+          assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?', version), '版本格式无效'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('version=' + version + '\n')
+          PY
+
+  macos:
+    needs: version
+    runs-on: macos-15
+    timeout-minutes: 180
+    env:
+      ANP_VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: 释放临时 runner 的非活动 Xcode 与模拟器空间
+        run: |
+          python3 - <<'PYCODE'
+          from pathlib import Path
+          import subprocess
+          active = Path(subprocess.check_output(['xcode-select', '-p'], text=True).strip()).resolve()
+          for app in Path('/Applications').glob('Xcode*.app'):
+              if app.is_symlink() or active.is_relative_to(app.resolve()): continue
+              subprocess.run(['sudo', 'rm', '-rf', str(app)], check=True)
+          simulators = Path('/Library/Developer/CoreSimulator/Profiles/Runtimes')
+          if simulators.exists(): subprocess.run(['sudo', 'rm', '-rf', str(simulators)], check=True)
+          subprocess.run(['df', '-h', '.'], check=True)
+          PYCODE
+      - name: 确认原生 ARM64 并构建
+        run: |
+          test "$(uname -m)" = arm64
+          make build NATIVE_TARGET=macos-arm64
+          echo "$PWD/var/native/build/anp-macos-arm64/tools/uv" >> "$GITHUB_PATH"
+          echo "$PWD/var/native/build/anp-macos-arm64/tools/node/bin" >> "$GITHUB_PATH"
+          echo "$PWD/native/packages/business-tools/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: 回归与独立目录验收
+        run: |
+          make test
+          make native-check
+          mkdir -p var/release/macos-arm64
+          cp var/native/evidence/platform/acceptance.json var/release/macos-arm64/macos-arm64-directory.json
+      - name: 清理本轮可重建缓存，保留制品与证据
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          for path in Path('var/native').iterdir():
+              if path.name not in {'build', 'evidence'}:
+                  if path.is_dir() and not path.is_symlink(): shutil.rmtree(path)
+                  else: path.unlink()
+          PY
+      - name: 生成并验收真实压缩包
+        run: |
+          make dist NATIVE_TARGET=macos-arm64
+          python3 native/check.py --archive "var/exports/anp-$ANP_VERSION-macos-arm64.tar.gz"
+          cp var/native/evidence/platform/acceptance.json var/release/macos-arm64/macos-arm64-archive.json
+          cp var/exports/*.tar.gz var/exports/*.sha256 var/release/macos-arm64/
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-macos-arm64
+          path: var/release/macos-arm64/
+          compression-level: 0
+          if-no-files-found: error
+
+  linux:
+    needs: version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      ANP_VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: 释放临时 runner 的预装 SDK 空间
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h .
+      - name: 在独立 Debian 构建容器中编译
+        run: |
+          test "$(uname -m)" = x86_64
+          make native-sources NATIVE_TARGET=linux-amd64
+          docker build --build-arg BUILD_UID="$(id -u)" --build-arg BUILD_GID="$(id -g)" -f native/linux/Dockerfile.builder -t anp-native-builder:ci native/linux
+          docker run --rm --name anp-native-build-ci -e ANP_VERSION -v "$PWD:/workspace" anp-native-builder:ci make build NATIVE_TARGET=linux-amd64
+          echo "$PWD/var/native/build/anp-linux-amd64/tools/uv" >> "$GITHUB_PATH"
+          echo "$PWD/var/native/build/anp-linux-amd64/tools/node/bin" >> "$GITHUB_PATH"
+          echo "$PWD/native/packages/business-tools/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: 清理已组装的构建缓存，为干净副本与归档留出空间
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          for path in Path('var/native').iterdir():
+              if path.name not in {'build', 'evidence'}:
+                  if path.is_dir() and not path.is_symlink(): shutil.rmtree(path)
+                  else: path.unlink()
+          PY
+          df -h .
+      - name: 在 Debian 和 Alpine 干净容器中验收
+        run: |
+          make native-check NATIVE_TARGET=linux-amd64
+          mkdir -p var/release/linux-amd64
+          cp var/native/evidence/linux/*-directory.json var/release/linux-amd64/
+      - name: 生成压缩包并在两个干净容器中复验
+        run: |
+          make dist NATIVE_TARGET=linux-amd64
+          python3 native/linux_check.py --archive "var/exports/anp-$ANP_VERSION-linux-amd64.tar.gz"
+          cp var/native/evidence/linux/*-archive.json var/release/linux-amd64/
+          cp var/exports/*.tar.gz var/exports/*.sha256 var/release/linux-amd64/
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-linux-amd64
+          path: var/release/linux-amd64/
+          compression-level: 0
+          if-no-files-found: error
+
+  release:
+    if: github.ref == 'refs/heads/master'
+    needs: [version, macos, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ANP_VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: native-*
+          path: artifacts
+          merge-multiple: true
+      - name: 校验版本、压缩包与验收回执
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path('artifacts')
+          version = os.environ['ANP_VERSION']
+          for target in ('macos-arm64', 'linux-amd64'):
+              archive = root / f'anp-{version}-{target}.tar.gz'
+              assert archive.stat().st_size < 2 * 1024**3, '单个 Release 资产不能超过 2 GiB'
+              expected = archive.with_suffix('.gz.sha256').read_text().split()[0]
+              assert hashlib.file_digest(archive.open('rb'), 'sha256').hexdigest() == expected
+          receipts = list(root.glob('*.json'))
+          assert len(receipts) == 6, '缺少完整的目录或压缩包验收回执'
+          values = [json.loads(path.read_text()) for path in receipts]
+          assert all(value['passed'] and value['version'] == version for value in values)
+          for target, count in [('macos-arm64', 2), ('linux-amd64', 4)]:
+              group = [value for value in values if value['target'] == target]
+              assert len(group) == count
+              assert len({value['bundle_files_manifest_sha256'] for value in group}) == 1, '目录与归档的制品清单不一致'
+          Path('release-notes.md').write_text('Mac ARM64 与 Linux x64 原生发行包。\n\n解压后执行 ./anp start。包含 DBX、Supabase、Langfuse、LiteLLM 和可复制的 business/。Realtime 与 Intel Mac 暂不包含；业务 Demo 默认使用离线演示模型。\n\n目录、压缩包和干净环境验收回执随附件提供。\n')
+          PY
+      - name: 上传草稿、核对服务端摘要后发布
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, subprocess
+          from pathlib import Path
+          repo = os.environ['GITHUB_REPOSITORY']
+          tag = 'native-v' + os.environ['ANP_VERSION']
+          files = sorted(Path('artifacts').iterdir())
+          args = ['gh', 'release', 'create', tag, '--repo', repo, '--draft', '--target', os.environ['GITHUB_SHA'], '--title', 'ANP ' + os.environ['ANP_VERSION'], '--notes-file', 'release-notes.md']
+          if '-' in os.environ['ANP_VERSION']: args.append('--prerelease')
+          subprocess.run([*args, *map(str, files)], check=True)
+          release = json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/releases/tags/{tag}']))
+          assets = {item['name']: item for item in release['assets']}
+          assert len(assets) == len(files), 'Release 附件数量不一致'
+          for path in files:
+              asset = assets[path.name]
+              expected = 'sha256:' + hashlib.file_digest(path.open('rb'), 'sha256').hexdigest()
+              assert asset.get('digest') == expected and asset['size'] == path.stat().st_size, '服务端制品摘要不一致'
+          subprocess.run(['gh', 'release', 'edit', tag, '--repo', repo, '--draft=false'], check=True)
+          PY

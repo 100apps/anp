@@ -18,6 +18,7 @@ def test_runtime_has_one_toolbox_and_one_persistent_root():
     assert not data['services']['toolbox'].get('build')
     mounts=data['services']['toolbox']['volumes']
     assert len(mounts)==1 and mounts[0]['type']=='bind' and mounts[0]['target']=='/data'
+    assert any(value.startswith('/data/run:') for value in data['services']['toolbox']['tmpfs'])
     source=mounts[0]['source'].replace('\\','/').lower()
     assert '/anp2/' not in source and source!='/var/lib/anp/data'
 
@@ -33,10 +34,15 @@ def test_runtime_does_not_require_docker_socket_or_privileged_access():
 
 def test_build_is_single_file_and_has_no_local_component_image_inputs():
     text=(ROOT/'docker/toolbox/Dockerfile').read_text(encoding='utf-8')
-    assert 'FROM debian:trixie-slim AS assembled' in text
+    bases=json.loads((ROOT/'docker/build/base-images.lock.json').read_text())['images']
+    assert 'FROM debian:trixie-slim@'+bases['debian:trixie-slim']['digest']+' AS assembled' in text
     assert ':source' not in text and 'anp3/' not in text
-    assert 'AS postgres-build' in text and 'AS dbx-backend' in text
+    assert 'AS postgres-build' in text and 'fetch.py dbx' in text
     assert '"$TARGETARCH"' in text
+    assert 'AS realtime-build' in text and 'bin/pgbouncer' not in text
+    assert '--from=ghcr.io/' not in text
+    assert 'docker/packages/meta/package-lock.json' in text
+    assert 'uv sync --frozen' in text and '--no-build-package litellm' in text
 
 
 def test_locked_sources_match_real_submodule_commits():
@@ -44,9 +50,9 @@ def test_locked_sources_match_real_submodule_commits():
     assert lock['architectures']==['linux/amd64','linux/arm64']
     assert lock['components']['litellm']['upstream_ref']=='v1.106.0'
     assert lock['components']['supabase-studio']['upstream_ref']=='v1.26.08'
-    folders={'dbx':'dbx','langfuse-web':'langfuse','langfuse-worker':'langfuse','litellm':'litellm',
-             'supabase-studio':'supabase','supabase-auth':'components/auth','supabase-rest':'components/postgrest',
-             'supabase-meta':'components/postgres-meta','supabase-storage':'components/storage','postgres':'components/postgres'}
+    folders={'langfuse-web':'langfuse','langfuse-worker':'langfuse',
+             'supabase-studio':'supabase','supabase-auth':'components/auth',
+             'supabase-storage':'components/storage','postgres':'components/postgres','supabase-realtime':'components/realtime'}
     for name,folder in folders.items():
         sha=subprocess.check_output(['git','ls-files','--stage','platform/sources/'+folder],cwd=ROOT,text=True).split()[1]
         assert sha==lock['components'][name]['source_sha'], name

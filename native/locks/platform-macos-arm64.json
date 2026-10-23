@@ -1,0 +1,90 @@
+{
+  "target": "macos-arm64",
+  "profile": "platform",
+  "artifacts": {
+    "auth": {
+      "version": "v2.197.0",
+      "url": "https://github.com/supabase/auth/releases/download/v2.197.0/auth-v2.197.0-darwin-arm64.tar.gz",
+      "sha256": "3fb7998e7061e2c14f3f9555b1d94d447358c965395728e0d81eac82e0e5868b",
+      "destination": "platform/auth"
+    },
+    "storage-api": {
+      "version": "v1.79.18",
+      "url": "https://github.com/supabase/slim-services/releases/download/storage-v1.79.18/storage-v1.79.18-darwin-arm64.tar.zst",
+      "sha256": "b798b03adee9e7287d1cbe2d111acf83aa33023b5844b1eb5957a6a54a08a7ee",
+      "destination": "platform/storage-api",
+      "upstream_source_commit": "708cbbf6368e2b7e32316f272fc9c0e3ed496cf8",
+      "manifest_sha256": "a6777f0d8fd6cd5618c7b9b0140ad28f749c66db2ee601df3b1a2a96c3dc92fd"
+    },
+    "meta": {
+      "version": "v0.99.0",
+      "url": "https://github.com/supabase/slim-services/releases/download/pgmeta-v0.99.0/pgmeta-v0.99.0-darwin-arm64.tar.zst",
+      "sha256": "337f8cc6a23d93f3f9cfeed12de2a86d686ce6f4346ff9b334b5dfdcba7e890f",
+      "destination": "platform/meta",
+      "upstream_source_commit": "f380cc5be21edef4e77d9838c732d1f20af0b3c0",
+      "manifest_sha256": "04cfbcfcbc1af2882a0dce69a60774991755797ebf95caeda45f43f29fb5a7b7"
+    },
+    "studio": {
+      "version": "2026.09.21-sha-512201d",
+      "url": "https://github.com/supabase/slim-services/releases/download/studio-2026.09.21-sha-512201d/studio-2026.09.21-sha-512201d-darwin-arm64.tar.zst",
+      "sha256": "cc43e946d80beda26dc9f9c86e2cd4151823d9e869616acb54371a8ac0e496fa",
+      "destination": "platform/studio",
+      "upstream_source_commit": "512201dcd07ffddec20f437077f7c862989fcdf2",
+      "manifest_sha256": "77b5bf907fdb0862e7831a0e5f46970c86e470bfcc28d422b4aa38a00c201c5a"
+    },
+    "rustfs": {
+      "version": "1.0.3",
+      "url": "https://github.com/rustfs/rustfs/releases/download/1.0.3/rustfs-macos-aarch64-v1.0.3.zip",
+      "sha256": "9ec6f2ad89df88db9b8889f59e37bb27f6b67c61ee8a97968dd90aaa2ac4dd30",
+      "destination": "storage/rustfs",
+      "binary": "rustfs"
+    },
+    "gateway": {
+      "version": "2.11.2",
+      "url": "https://github.com/caddyserver/caddy/releases/download/v2.11.2/caddy_2.11.2_mac_arm64.tar.gz",
+      "sha256": "7ab765777e953574d5713a69cab3f5a2f643a5c1cc264d4239a60ff845b465d8",
+      "destination": "platform/gateway",
+      "upstream_sha512": "1738e3e6b661a9c3e9c0ebbfe2f00d3bd3d0137ae2b534dc8f477cd96e9849e719bce31b61c6407edbc4fe5da4e3de923ec435bf4e29bb53aee60a2fa882c500"
+    },
+    "migrate": {
+      "version": "4.19.1",
+      "url": "https://github.com/golang-migrate/migrate/releases/download/v4.19.1/migrate.darwin-arm64.tar.gz",
+      "sha256": "a8cc8657afd1c2c93c78e8b77fd2275d150c29ebc1fff0e8fe0be68751503468",
+      "destination": "platform/migrate"
+    },
+    "clickhouse": {
+      "version": "26.9.22.3",
+      "url": "https://github.com/ClickHouse/ClickHouse/releases/download/v26.9.22.3-stable/clickhouse-macos-aarch64.zip",
+      "sha256": "6d8902cfc5ac612390eb757436e6d297563ec00026a9ed1e48f2e5d4d4c4566a",
+      "destination": "storage/clickhouse",
+      "binary": "clickhouse"
+    }
+  },
+  "sources": {
+    "langfuse": {
+      "path": "platform/sources/langfuse",
+      "commit": "71c840e0e9cc945df9c250bdf182f99497584d3a",
+      "version": "v4.64.0",
+      "repository": "https://github.com/langfuse/langfuse.git"
+    },
+    "dbx": {
+      "path": "platform/sources/components/dbx",
+      "commit": "46b773d05e3162170a5358805588ce1fa60f3306",
+      "version": "v0.6.51",
+      "repository": "https://github.com/t8y2/dbx.git",
+      "reason": "\u5b98\u65b9\u672a\u63d0\u4f9b macOS Web \u670d\u52a1\u4ea7\u7269\uff0c\u4f7f\u7528\u56fa\u5b9a\u6e90\u7801\u6784\u5efa"
+    }
+  },
+  "prisma_engines": {
+    "libquery_engine-darwin-arm64.dylib.node": {
+      "url": "https://binaries.prisma.sh/all_commits/c2990dca591cba766e3b7ef5d9e8a84796e47ab7/darwin-arm64/libquery_engine.dylib.node.gz",
+      "uncompressed_sha256": "afb9cb5a12ea42caa6f6498e40e9cb75059cae17098aadcc1001c99bb262e1ee",
+      "checksum_url": "https://binaries.prisma.sh/all_commits/c2990dca591cba766e3b7ef5d9e8a84796e47ab7/darwin-arm64/libquery_engine.dylib.node.sha256"
+    },
+    "schema-engine-darwin-arm64": {
+      "url": "https://binaries.prisma.sh/all_commits/c2990dca591cba766e3b7ef5d9e8a84796e47ab7/darwin-arm64/schema-engine.gz",
+      "uncompressed_sha256": "caa2cf90d5b2cfe6cc06e47974f7e3275dd395b4d35cf140d5d4b2362c3b5bb1",
+      "checksum_url": "https://binaries.prisma.sh/all_commits/c2990dca591cba766e3b7ef5d9e8a84796e47ab7/darwin-arm64/schema-engine.sha256"
+    }
+  }
+}

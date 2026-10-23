@@ -12,7 +12,7 @@ from xml.sax.saxutils import escape
 
 DATA = Path(os.getenv('ANP_DATA_DIR','/data'))
 NAMES = ['postgres','redis','clickhouse','rustfs','dbx','langfuse-web','langfuse-worker','litellm',
-         'supabase-studio','supabase-meta','supabase-auth','supabase-rest','supabase-storage','supabase-gateway']
+         'supabase-studio','supabase-meta','supabase-auth','supabase-rest','supabase-storage','supabase-gateway','supabase-realtime']
 UIDS = {name: number for number,name in enumerate(NAMES,20001)}
 PG = '/nix/var/nix/profiles/default/bin/'
 NODE = '/opt/anp/runtimes/node24/bin/node'
@@ -44,6 +44,13 @@ def credentials():
         for key in ('POSTGRES_PASSWORD','REDIS_PASSWORD','S3_SECRET_KEY','JWT_SECRET','CLICKHOUSE_PASSWORD'):
             if os.getenv(key) and os.environ[key]!=values[key]:
                 raise ValueError(f'{key} 与已有持久化凭据不同，拒绝隐式覆盖；请执行显式凭据轮换')
+        changed=False
+        for key,size in (('REALTIME_DB_PASSWORD',32),('REALTIME_SECRET_KEY_BASE',48),('REALTIME_DB_ENC_KEY',8)):
+            if key not in values:
+                values[key]=secrets.token_hex(size); changed=True
+        if 'REALTIME_DB_ENC_KEY_GCM' not in values:
+            values['REALTIME_DB_ENC_KEY_GCM']=secrets.token_urlsafe(24); changed=True
+        if changed: atomic(path,json.dumps(values,indent=2)+'\n')
         return values
     keys=('POSTGRES_PASSWORD','REDIS_PASSWORD','S3_SECRET_KEY','JWT_SECRET','CLICKHOUSE_PASSWORD','LANGFUSE_DB_PASSWORD',
           'LITELLM_DB_PASSWORD','AUTH_DB_PASSWORD','REST_DB_PASSWORD','STORAGE_DB_PASSWORD',
@@ -52,6 +59,10 @@ def credentials():
     if not values['LITELLM_MASTER_KEY'].startswith('sk-'):
         values['LITELLM_MASTER_KEY']='sk-'+values['LITELLM_MASTER_KEY']
     values['S3_ACCESS_KEY']=os.getenv('S3_ACCESS_KEY','anpadmin')
+    values['REALTIME_DB_PASSWORD']=secrets.token_hex(32)
+    values['REALTIME_SECRET_KEY_BASE']=secrets.token_hex(48)
+    values['REALTIME_DB_ENC_KEY']=secrets.token_urlsafe(12)
+    values['REALTIME_DB_ENC_KEY_GCM']=secrets.token_urlsafe(24)
     values['ANON_KEY']=jwt('anon',values['JWT_SECRET'])
     values['SERVICE_KEY']=jwt('service_role',values['JWT_SECRET'])
     atomic(path,json.dumps(values,indent=2)+'\n')
@@ -99,6 +110,10 @@ shared_buffers='{limits['postgres_shared_mb']}MB'
 effective_cache_size='{limits['postgres_cache_mb']}MB'
 work_mem='{limits['postgres_work_mem_mb']}MB'
 maintenance_work_mem='256MB'
+wal_level=logical
+max_replication_slots=10
+max_wal_senders=10
+max_slot_wal_keep_size='1GB'
 wal_compression=on
 max_wal_size='2GB'
 min_wal_size='256MB'
@@ -163,12 +178,20 @@ save 300 10
               typed_config:
                 '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
                 stat_prefix: supabase
+                upgrade_configs: [{upgrade_type: websocket}]
+                stream_idle_timeout: 0s
                 route_config:
                   name: supabase
                   virtual_hosts:
                     - name: api
                       domains: ['*']
                       routes:
+                        - match: {prefix: /realtime/v1/api/broadcast}
+                          route: {cluster: realtime, prefix_rewrite: /api/broadcast, host_rewrite_literal: realtime-dev.localhost, timeout: 0s}
+                        - match: {prefix: /realtime/v1/websocket}
+                          route: {cluster: realtime, prefix_rewrite: /socket/websocket, host_rewrite_literal: realtime-dev.localhost, timeout: 0s}
+                        - match: {prefix: /realtime/v1/longpoll}
+                          route: {cluster: realtime, prefix_rewrite: /socket/longpoll, host_rewrite_literal: realtime-dev.localhost, timeout: 0s}
                         - match: {prefix: /auth/v1/}
                           route: {cluster: auth, prefix_rewrite: /}
                         - match: {prefix: /rest/v1/}
@@ -180,7 +203,7 @@ save 300 10
                     typed_config: {'@type': type.googleapis.com/envoy.extensions.http.router.v3.Router}
   clusters:
 '''.replace('envoy.extensions.http.router','envoy.extensions.filters.http.router')
-    for name,port in [('auth',9999),('rest',3300),('storage',5000)]:
+    for name,port in [('auth',9999),('rest',3300),('storage',5000),('realtime',4100)]:
         endpoints=json.dumps([{'lb_endpoints':[{'endpoint':{'address':{'socket_address':{'address':'127.0.0.1','port_value':port}}}}]}])
         envoy+=f'''    - name: {name}
       type: STATIC
@@ -230,7 +253,7 @@ def definitions(secret,limits):
             'PG_META_CRYPTO_KEY':hashlib.sha256((secret['JWT_SECRET']+':studio-pg-meta').encode()).hexdigest(),
             'SUPABASE_URL':'http://127.0.0.1:8000','SUPABASE_PUBLIC_URL':public+'/supabase',
             'SUPABASE_ANON_KEY':secret['ANON_KEY'],'SUPABASE_SERVICE_KEY':secret['SERVICE_KEY'],
-            'AUTH_JWT_SECRET':secret['JWT_SECRET'],'NEXT_PUBLIC_BASE_PATH':'/supabase','NEXT_PUBLIC_ENABLE_LOGS':'false',
+            'AUTH_JWT_SECRET':secret['JWT_SECRET'],'NEXT_PUBLIC_BASE_PATH':'/supabase','ENABLED_FEATURES_LOGS_ALL':'false',
             'DEFAULT_PROJECT_NAME':'ANP 本机平台','DEFAULT_ORGANIZATION_NAME':'ANP','PORT':'3200',
             'NODE_OPTIONS':f"--max-old-space-size={limits['node_studio_mb']}"}
     result={}
@@ -245,7 +268,7 @@ def definitions(secret,limits):
         'RUSTFS_SECRET_KEY':secret['S3_SECRET_KEY'],'RUSTFS_ADDRESS':'0.0.0.0:9002','RUSTFS_CONSOLE_ADDRESS':'0.0.0.0:9003',
         'RUSTFS_CONSOLE_ENABLE':'true','RUSTFS_LOGS_DIR':str(DATA/'logs/rustfs'),'RUST_LOG':'warn','LD_LIBRARY_PATH':''})
     add('dbx',['/opt/anp/bin/dbx-web'],4224,{'DBX_PASSWORD':secret['DBX_PASSWORD'],'DBX_PUBLIC_BASE_PATH':'/dbx',
-        'DBX_STATIC_DIR':'/opt/anp/services/dbx/static','DBX_DATA_DIR':str(DATA/'dbx'),'DBX_BACKUP_ROOT':str(DATA/'dbx/backups'),
+        'DBX_DATA_DIR':str(DATA/'dbx'),'DBX_BACKUP_ROOT':str(DATA/'dbx/backups'),
         'DBX_JAVA_BIN':'/usr/bin/java'},path='/dbx/')
     add('langfuse-web',['/bin/sh','web/entrypoint.sh',NODE,'web/server.js','--keepAliveTimeout','110000'],3100,
         {**lf,'PORT':'3100','PATH':'/opt/langfuse-tools/bin:'+common['PATH'],
@@ -261,7 +284,7 @@ def definitions(secret,limits):
          'PRISMA_BINARY_CACHE_DIR':'/opt/prisma/binaries','PRISMA_CLI_PATH':'/opt/prisma/binaries/node_modules/.bin/prisma',
          'PRISMA_CLI_QUERY_ENGINE_TYPE':'binary','PRISMA_OFFLINE_MODE':'true',
          'HOME':str(DATA/'litellm'),'LITELLM_LOG':'WARNING'},('postgres',),'/health/readiness','/app')
-    add('supabase-meta',[NODE22,'dist/server/server.js'],8080,{'PG_META_DB_HOST':'127.0.0.1','PG_META_DB_PORT':'5432',
+    add('supabase-meta',[NODE22,'node_modules/@supabase/postgres-meta/dist/server/server.js'],8080,{'PG_META_DB_HOST':'127.0.0.1','PG_META_DB_PORT':'5432',
         'PG_META_DB_NAME':'postgres','PG_META_DB_USER':'postgres','PG_META_DB_PASSWORD':secret['POSTGRES_PASSWORD'],
         'CRYPTO_KEY':studio['PG_META_CRYPTO_KEY'],
         'PG_META_PORT':'8080','PORT':'8080'},('postgres',),'/health','/opt/anp/services/supabase-meta')
@@ -286,8 +309,24 @@ def definitions(secret,limits):
          'AWS_SECRET_ACCESS_KEY':secret['S3_SECRET_KEY'],'REGION':'us-east-1','TENANT_ID':'anp','FILE_SIZE_LIMIT':'52428800',
          'ENABLE_IMAGE_TRANSFORMATION':'false','STORAGE_PUBLIC_URL':public+'/supabase',
          'REQUEST_ALLOW_X_FORWARDED_PATH':'true'},('supabase-auth','supabase-rest','rustfs'),'/status','/opt/anp/services/supabase-storage')
+    add('supabase-realtime',['/usr/bin/python3','/opt/anp/runtime/realtime.py'],4100,
+        {'PORT':'4100','DB_HOST':'127.0.0.1','DB_PORT':'5432','DB_NAME':'postgres',
+         'DB_USER':'supabase_admin','DB_PASSWORD':secret['REALTIME_DB_PASSWORD'],
+         'DB_AFTER_CONNECT_QUERY':'SET search_path TO _realtime','DB_SSL':'false',
+         'DB_IP_VERSION':'ipv4','REALTIME_IP_VERSION':'ipv4','DB_POOL_SIZE':'3','DB_REPLICA_POOL_SIZE':'1',
+         'DB_ENC_KEY':secret['REALTIME_DB_ENC_KEY'],
+         'DB_ENC_KEY_GCM':secret['REALTIME_DB_ENC_KEY_GCM'],'DB_ENC_WRITE_GCM':'true','SECRET_KEY_BASE':secret['REALTIME_SECRET_KEY_BASE'],
+         'API_JWT_SECRET':secret['JWT_SECRET'],'METRICS_JWT_SECRET':secret['JWT_SECRET'],
+         'APP_NAME':'realtime','SELF_HOST_TENANT_NAME':'realtime-dev','RUN_JANITOR':'true',
+         'DISABLE_HEALTHCHECK_LOGGING':'true','LOG_LEVEL':'warning','ERL_AFLAGS':'-proto_dist inet_tcp',
+         'ERL_FLAGS':'+S 2:2',
+         # libcluster_postgres 以 Cookie 作为 LISTEN 频道名，必须小于 64 字节。
+         'RELEASE_COOKIE':hashlib.sha256(secret['REALTIME_SECRET_KEY_BASE'].encode()).hexdigest()[:48],
+         'RELEASE_TMP':str(DATA/'run/supabase-realtime'),
+         'ERL_CRASH_DUMP':str(DATA/'logs/supabase-realtime/erl_crash.dump')},
+        ('supabase-auth',),'/api/tenants/realtime-dev/health','/opt/anp/services/supabase-realtime',600)
     add('supabase-gateway',['/opt/anp/bin/envoy','-c',str(conf/'envoy.yaml'),'--concurrency','2','--log-level','warning',
-        '--base-id','3'],8000,deps=('supabase-auth','supabase-rest','supabase-storage'),path='/auth/v1/health')
+        '--base-id','3'],8000,deps=('supabase-auth','supabase-rest','supabase-storage','supabase-realtime'),path='/auth/v1/health')
     add('supabase-studio',[NODE22,'apps/studio/server.js'],3200,studio,
         ('supabase-meta','supabase-gateway'),'/supabase/api/platform/profile','/opt/anp/services/supabase-studio')
     override=DATA/'config/services.json'

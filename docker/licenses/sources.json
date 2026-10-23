@@ -83,5 +83,47 @@
     "component": "postgres",
     "path": "LICENSE",
     "sha256": "fd313c784c2e3c964fe043fdb7bcffa8f84627d53d2cf3a61c61586ff6c3f4c1"
+  },
+  {
+    "component": "realtime",
+    "path": "LICENSE",
+    "ref": "v2.144.4",
+    "sha256": "56351b5c92da783a59b13835c13dcdae5f6b2da04baaf69f4b02a9429f2c334e",
+    "source": "https://github.com/supabase/realtime/blob/v2.144.4/LICENSE"
+  },
+  {
+    "component": "migrate",
+    "path": "LICENSE",
+    "ref": "v4.19.1",
+    "sha256": "4c250e1d2cb21c738d5ec785f6fb1e03cd1e9adecfab46feb9494847872455be",
+    "source": "https://raw.githubusercontent.com/golang-migrate/migrate/v4.19.1/LICENSE"
+  },
+  {
+    "component": "node24",
+    "path": "LICENSE",
+    "ref": "v24.22.0",
+    "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace",
+    "source": "https://raw.githubusercontent.com/nodejs/node/v24.22.0/LICENSE"
+  },
+  {
+    "component": "node22",
+    "path": "LICENSE",
+    "ref": "v22.23.3",
+    "sha256": "c738ae413cf561f174e34f6961f8ca458aae2369a73640dda6234c629b98bcc4",
+    "source": "https://raw.githubusercontent.com/nodejs/node/v22.23.3/LICENSE"
+  },
+  {
+    "component": "erlang",
+    "path": "LICENSE.txt",
+    "ref": "OTP-28.5.0.4",
+    "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0",
+    "source": "https://raw.githubusercontent.com/erlang/otp/OTP-28.5.0.4/LICENSE.txt"
+  },
+  {
+    "component": "elixir",
+    "path": "LICENSE",
+    "ref": "v1.19.5",
+    "sha256": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9",
+    "source": "https://raw.githubusercontent.com/elixir-lang/elixir/v1.19.5/LICENSE"
   }
 ]

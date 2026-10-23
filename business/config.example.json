@@ -1,0 +1,11 @@
+{
+  "server": {"host": "127.0.0.1", "port": 20260},
+  "supabase": {"url": "http://127.0.0.1:58000", "anon_key": ""},
+  "platforms": {
+    "dbx": "http://127.0.0.1:54424/dbx/",
+    "langfuse": "http://127.0.0.1:53100/langfuse/",
+    "litellm": "http://127.0.0.1:54000/",
+    "supabase": "http://127.0.0.1:53200/"
+  },
+  "model": {"mode": "demo", "name": "gpt-4.1-mini", "base_url": "http://127.0.0.1:54000/v1"}
+}

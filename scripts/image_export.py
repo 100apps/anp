@@ -21,7 +21,7 @@ def main():
     details=json.loads(subprocess.check_output(['docker','image','inspect',args.image],text=True))[0]
     target_platform=args.platform or details['Os']+'/'+details['Architecture']
     identity=details['Id'].split(':')[-1]
-    output=(ROOT/'var/images'/f'anp-toolbox-{identity[:12]}-{target_platform.replace("/","-")}.tar.zst').resolve()
+    output=(ROOT/'var/exports'/f'anp-toolbox-{identity[:12]}-{target_platform.replace("/","-")}.tar.zst').resolve()
     assert output.is_relative_to((ROOT/'var').resolve())
     output.parent.mkdir(parents=True,exist_ok=True)
     temporary=output.with_suffix(output.suffix+'.part')

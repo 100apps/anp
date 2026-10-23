@@ -1,0 +1,33 @@
+{
+  "verified_at": "2026-10-21",
+  "images": {
+    "debian:trixie-slim": {
+      "digest": "sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad",
+      "platform_digests": {
+        "amd64": "sha256:4876fdea29cac1a33a3195f1eb1952feb1fca7dd6dd00be3e2f1879cf20d34d2",
+        "arm64": "sha256:a66b19aa552f595b4ab276c6b4f9b24fa4546632c5ecd88cccdced4a6866323a"
+      }
+    },
+    "node:22-bookworm-slim": {
+      "digest": "sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9",
+      "platform_digests": {
+        "amd64": "sha256:bbf39cb344bb33c1f2eedb3b45b4a890eecfbac91a4f7bac020a95d4e4ea147e",
+        "arm64": "sha256:6be82d4da7e0320cfc2bc5c000d534bf8c0a7eae567dce465b47c77fdd483987"
+      }
+    },
+    "node:24-bookworm-slim": {
+      "digest": "sha256:91acba91b842bec0bf7ea6f5e09c644c7ccad72c4996ed9616d861d1c7cd60d4",
+      "platform_digests": {
+        "amd64": "sha256:a8efdaa8f2458a83ad61c9b8e957c94c2312a9e60604d5b9b093cf89ad9f5984",
+        "arm64": "sha256:d08986ea245c466d3dfa608f4a840313148e01a1014d4c324212781fae7fe1d1"
+      }
+    },
+    "hexpm/elixir:1.19.5-erlang-28.5.0.4-debian-trixie-20260713-slim": {
+      "digest": "sha256:d18b9b65d8a7c01d7f3de2adbddd836693d2f73bd94e0092b318a2db6a77b07f",
+      "platform_digests": {
+        "amd64": "sha256:f431729a164ee50f6e0178f8ce707bdf21763537258c7640f508502c4007293e",
+        "arm64": "sha256:79537c4635de42b854fe239f90873c338d7f8493dd9714b65ef4db02ade6014a"
+      }
+    }
+  }
+}

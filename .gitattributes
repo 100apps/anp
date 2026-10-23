@@ -2,3 +2,6 @@
 *.png binary
 *.jpg binary
 *.jpeg binary
+
+# 官方许可证按锁定摘要保留原文，不改写上游空白。
+docker/licenses/* -whitespace

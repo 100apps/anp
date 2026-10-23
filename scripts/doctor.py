@@ -6,10 +6,10 @@ import subprocess
 import sys
 
 root=Path(__file__).resolve().parents[1]
-context={'project':'anp','root':str(root),'runtime':'Debian slim单镜像，宿主LangGraph Agent Server扩展',
+context={'project':'anp','root':str(root),'runtime':'macOS ARM64原生目录PoC；另保留Debian slim全功能工具镜像与宿主LangGraph Agent Server扩展',
          'commands':{'start':'make init && make up && make dev','test':'make test','acceptance':'make acceptance',
-                     'sources':'make sources','build':'make build','debug':'VSCode F5：ANP: 一键前后端热重载'},
-         'entrypoints':['business/langgraph.json','business/src/anp_business/server/http.py','docker/toolbox/Dockerfile'],
+                     'sources':'make sources','build':'make build','dist':'make dist','native_acceptance':'make native-check','docker_build':'make docker-build','debug':'VSCode F5：ANP: 一键前后端热重载'},
+         'entrypoints':['native/build.py','native/runtime/control.py','business/langgraph.json','business/src/anp_business/server/http.py','docker/toolbox/Dockerfile'],
          'protected':'不得操作相邻项目；仅管理当前Compose实例和显式独立数据根',
          'test_boundary':'默认离线workflow和Deep Agents；不调用付费供应商'}
 if '--context' in sys.argv:

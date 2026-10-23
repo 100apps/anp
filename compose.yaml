@@ -12,6 +12,8 @@ services:
       ANP_CPU_THREADS: ${ANP_CPU_THREADS:-8}
       ANP_PUBLIC_URL: ${ANP_PUBLIC_URL:-http://127.0.0.1:51760}
     volumes: ['${ANP_DATA_ROOT:-./var/data}:/data']
+    # 运行状态和 Unix socket 使用 Linux 文件系统，兼容 macOS 共享目录。
+    tmpfs: ['/data/run:rw,nosuid,noexec,size=64m,mode=0755']
     ports:
       - '127.0.0.1:${PG_PORT:-57432}:5432'
       - '127.0.0.1:${REDIS_PORT:-57379}:6379'

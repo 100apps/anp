@@ -1,12 +1,6 @@
-[submodule "platform/sources/dbx"]
-	path = platform/sources/dbx
-	url = https://github.com/t8y2/dbx.git
 [submodule "platform/sources/langfuse"]
 	path = platform/sources/langfuse
 	url = https://github.com/langfuse/langfuse.git
-[submodule "platform/sources/litellm"]
-	path = platform/sources/litellm
-	url = https://github.com/BerriAI/litellm.git
 [submodule "platform/sources/supabase"]
 	path = platform/sources/supabase
 	url = https://github.com/supabase/supabase.git
@@ -16,12 +10,15 @@
 [submodule "platform/sources/components/storage"]
 	path = platform/sources/components/storage
 	url = https://github.com/supabase/storage.git
-[submodule "platform/sources/components/postgres-meta"]
-	path = platform/sources/components/postgres-meta
-	url = https://github.com/supabase/postgres-meta.git
-[submodule "platform/sources/components/postgrest"]
-	path = platform/sources/components/postgrest
-	url = https://github.com/PostgREST/postgrest.git
 [submodule "platform/sources/components/postgres"]
 	path = platform/sources/components/postgres
 	url = https://github.com/supabase/postgres.git
+[submodule "platform/sources/components/realtime"]
+	path = platform/sources/components/realtime
+	url = https://github.com/supabase/realtime.git
+[submodule "platform/sources/components/redis"]
+	path = platform/sources/components/redis
+	url = https://github.com/redis/redis.git
+[submodule "platform/sources/components/dbx"]
+	path = platform/sources/components/dbx
+	url = https://github.com/t8y2/dbx.git

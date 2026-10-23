@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+ANP_HOME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec "$ANP_HOME/tools/python/bin/python3" -I -B "$ANP_HOME/runtime/control.py" "$@"

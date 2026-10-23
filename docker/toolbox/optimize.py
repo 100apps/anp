@@ -22,7 +22,7 @@ def files(root):
 def main():
     parser=argparse.ArgumentParser(); parser.add_argument('--apply',action='store_true'); args=parser.parse_args()
     report={'apply':args.apply,'removed_bytes':0,'removed_files':0,'deduplicated_bytes':0,'deduplicated_files':0,
-            'preserved':'所有14个服务、PostgreSQL完整扩展、Java、Node22/24及原生运行库；保留LICENSE/NOTICE'}
+            'preserved':'所有15个服务、PostgreSQL完整扩展、Java、Node22/24及原生运行库；保留LICENSE/NOTICE'}
     for root in ROOTS:
         for path in files(root):
             # sourcemap与Python字节码均可由原始执行文件替代，不删除业务源文件。

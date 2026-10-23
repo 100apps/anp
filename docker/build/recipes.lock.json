@@ -1,10 +1,4 @@
 {
-  "dbx/Dockerfile.in": {
-    "upstream": "dbx/deploy/Dockerfile",
-    "source_sha": "dc57c632280b65ce15513f9564b5e42e163f507d",
-    "upstream_dockerfile_sha256": "4f4bc4dc5b80054dcfec238d55dbaed891ad996f5ab2b471114aadc1a070b256",
-    "template_sha256": "d74eacf099b35bb17b34cdd19bf5674b506bcba4566bd086340b617d36169eb8"
-  },
   "langfuse/web.Dockerfile.in": {
     "upstream": "langfuse/web/Dockerfile",
     "source_sha": "71c840e0e9cc945df9c250bdf182f99497584d3a",
@@ -16,12 +10,6 @@
     "source_sha": "71c840e0e9cc945df9c250bdf182f99497584d3a",
     "upstream_dockerfile_sha256": "2a0f7b6021963bc5a481f1096e739688637c336e30d039b117e499b3e8cb2049",
     "template_sha256": "df1ef570ffb1e6d464f88c241447f8fff99d4ea36b71d7789ece059f7109e47a"
-  },
-  "supabase/meta.Dockerfile.in": {
-    "upstream": "components/postgres-meta/Dockerfile",
-    "source_sha": "9a2effd147f2f028fa36553ec2c7eeec80d7f8fc",
-    "upstream_dockerfile_sha256": "f70307c2836b8e791516557268c9e51a990af0a4b41cdfb1f07cd254a6df9451",
-    "template_sha256": "0a164b513020fee598cb42a1334514cf2659c5db51c728ff0b6759339b6e4565"
   },
   "supabase/storage.Dockerfile.in": {
     "upstream": "components/storage/Dockerfile",

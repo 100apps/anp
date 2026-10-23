@@ -1,0 +1,8 @@
+{
+  "name": "anp-postgres-meta-runtime",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@supabase/postgres-meta": "0.100.0"
+  }
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "alpine-archive.json",
+    "verified": true,
+    "exit": 0
+  },
+  {
+    "name": "alpine-directory.json",
+    "verified": true,
+    "exit": 0
+  },
+  {
+    "name": "anp-0.3.6-linux-amd64.tar.gz.sha256",
+    "verified": true,
+    "exit": 0
+  },
+  {
+    "name": "anp-0.3.6-macos-arm64.tar.gz.sha256",
+    "verified": true,
+    "exit": 0
+  },
+  {
+    "name": "debian-archive.json",
+    "verified": true,
+    "exit": 0
+  },
+  {
+    "name": "debian-directory.json",
+    "verified": true,
+    "exit": 0
+  },
+  {
+    "name": "macos-arm64-archive.json",
+    "verified": true,
+    "exit": 0
+  },
+  {
+    "name": "macos-arm64-directory.json",
+    "verified": true,
+    "exit": 0
+  }
+]

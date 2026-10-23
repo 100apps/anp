@@ -1,0 +1,13 @@
+{
+  "scope": "final public Release 0.3.6 full archive extraction acceptance",
+  "host_macos": "26.5.1",
+  "archive_sha256": "75559dd10a2853033b0d88fc78e35deaf256d1ee16fa0e04bc96c5ab711ef836",
+  "archive_bytes": 1808362966,
+  "exit_code": 1,
+  "passed": false,
+  "duration_seconds": 145.2,
+  "failed_component": "redis",
+  "service_exit_code": -9,
+  "rollback_completed": true,
+  "previous_dbx_probe_exit_code": -9
+}

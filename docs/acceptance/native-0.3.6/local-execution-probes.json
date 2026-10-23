@@ -1,0 +1,16 @@
+[
+  {
+    "component": "dbx-web",
+    "sha256": "5595f4b9ed47572c1597de200ac2cf65dd4016d3093e3b312935ac09ee18fa45",
+    "static_signature_exit_code": 0,
+    "execution_exit_code": -9,
+    "mode": "normal execution outside acceptance sandbox"
+  },
+  {
+    "component": "redis-server",
+    "sha256": "7cff27c7f6fda36dca9ec1f3dd60228f8ee5aa6a899e34e5d64dd98a34d9c7aa",
+    "static_signature_exit_code": 0,
+    "execution_exit_code": -9,
+    "mode": "normal execution outside acceptance sandbox"
+  }
+]

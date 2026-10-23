@@ -44,7 +44,9 @@ make dist
 
 构建与运行必须匹配本机系统和架构。Linux 使用独立 Debian 构建容器，详见 [Linux 构建](docs/development/linux-native-build.md)。`make build NATIVE_PROFILE=poc` 保留精简构建模式。更详细的配置、地址和管理命令见[原生包说明](native/README.md)；单独复制业务见 [Business](business/README.md)。
 
-本机 Mac 完整目录与真实压缩包均通过 22 项检查，Business 各 24 项通过；Linux 在无外网的干净 Debian 与 Alpine 中分别通过目录与压缩包 23 项检查，Business 各 24 项通过。见[验收报告](docs/acceptance/native-0.3.0-progress.md)与[本地回执](docs/acceptance/native-0.3.0-local/)。这些结果不代表任意系统、其他 Mac 签名策略或真实模型供应商均已验证。Mac 尚未做 Apple notarization。
+最新版本为 [0.3.6](https://github.com/100apps/anp/releases/tag/native-v0.3.6)，[发行流水线](https://github.com/100apps/anp/actions/runs/39961444941)全部通过。GitHub 原生 Mac ARM64 runner 的目录与真实压缩包各通过 22 项检查，Business 各 24 项通过；Linux 在无外网的干净 Debian 与 Alpine 中，目录与压缩包各通过 23 项检查，Business 各 24 项通过。完整回归 94 项通过。见[验收报告](docs/acceptance/native-release-2026-10-23.md)与[原始发行回执](docs/acceptance/native-0.3.6/)。
+
+**本机兼容性限制：** 当前 macOS 26.5.1 上，新解压服务出现 `SIGKILL`（正式 0.3.6 为 Redis，此前 DBX 也复现），本机整包解压验收未通过；CI 的 Mac 15 通过不代表该问题已解决。Mac 尚未做 Apple notarization，其他实体 Mac、组织执行策略及真实模型供应商尚未验证。
 
 推送代码到 `master` 会触发[原生发行流水线](.github/workflows/native-release.yml)：分别构建两个架构、验收目录与真实解压包，再核对 GitHub 资产摘要后发布带版本的 Release。仅修改根 README 或 `docs/` 不重复构建；[流水线说明](docs/development/原生发行流水线.md)。
 
@@ -57,7 +59,7 @@ make dist
 需要 Docker（Linux容器）、uv、Node.js 24、pnpm 11.25 和 Make。命令行快捷操作还需要 Python 3.11 或以上；Windows使用python，Linux/macOS使用python3。uv会按锁文件准备业务Python 3.12环境。
 
 ```sh
-git clone https://github.com/100apps/anp.git
+git clone --branch master https://github.com/100apps/anp.git
 cd anp
 make init
 make pull

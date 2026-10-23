@@ -1,0 +1,71 @@
+{
+  "id": 421924268,
+  "tag_name": "native-v0.3.6",
+  "target_commitish": "3b244dbe508865b4dd0df3b21dc37b534fc7d45d",
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2026-10-23T14:14:31Z",
+  "html_url": "https://github.com/100apps/anp/releases/tag/native-v0.3.6",
+  "assets": [
+    {
+      "name": "alpine-archive.json",
+      "size": 1816,
+      "digest": "sha256:3c6b9d6ae230c4169964d7286b521cd1665230216da782c750e5d567b4700b54",
+      "browser_download_url": "https://github.com/100apps/anp/releases/download/native-v0.3.6/alpine-archive.json"
+    },
+    {
+      "name": "alpine-directory.json",
+      "size": 1728,
+      "digest": "sha256:f8440f6f05062ce030aebfb8402883cba6abcac88570cd3832466c1944743a1d",
+      "browser_download_url": "https://github.com/100apps/anp/releases/download/native-v0.3.6/alpine-directory.json"
+    },
+    {
+      "name": "anp-0.3.6-linux-amd64.tar.gz",
+      "size": 1705604690,
+      "digest": "sha256:009e87384eebd1ee70183fef6703ce9c02045d7dcd05bc488060e49d889c9d83",
+      "browser_download_url": "https://github.com/100apps/anp/releases/download/native-v0.3.6/anp-0.3.6-linux-amd64.tar.gz"
+    },
+    {
+      "name": "anp-0.3.6-linux-amd64.tar.gz.sha256",
+      "size": 95,
+      "digest": "sha256:d1b7d21eb3a77551bde415a7a75ba7f1c964adef72b330f18d80b4ce0083b69d",
+      "browser_download_url": "https://github.com/100apps/anp/releases/download/native-v0.3.6/anp-0.3.6-linux-amd64.tar.gz.sha256"
+    },
+    {
+      "name": "anp-0.3.6-macos-arm64.tar.gz",
+      "size": 1808362966,
+      "digest": "sha256:75559dd10a2853033b0d88fc78e35deaf256d1ee16fa0e04bc96c5ab711ef836",
+      "browser_download_url": "https://github.com/100apps/anp/releases/download/native-v0.3.6/anp-0.3.6-macos-arm64.tar.gz"
+    },
+    {
+      "name": "anp-0.3.6-macos-arm64.tar.gz.sha256",
+      "size": 95,
+      "digest": "sha256:4059c5eb6a6c56ab1cb7f20484f7c395e6081c1044a6df1c7045f682e25407f5",
+      "browser_download_url": "https://github.com/100apps/anp/releases/download/native-v0.3.6/anp-0.3.6-macos-arm64.tar.gz.sha256"
+    },
+    {
+      "name": "debian-archive.json",
+      "size": 1975,
+      "digest": "sha256:7791d704b5bd3c7a6c34032200e80a80a769eb11e2b4940ae95bf15cce133019",
+      "browser_download_url": "https://github.com/100apps/anp/releases/download/native-v0.3.6/debian-archive.json"
+    },
+    {
+      "name": "debian-directory.json",
+      "size": 1887,
+      "digest": "sha256:6df3a60fcb81b2a5244a88b040301aa6681b8c4dd6cd445817b866ea9d25e107",
+      "browser_download_url": "https://github.com/100apps/anp/releases/download/native-v0.3.6/debian-directory.json"
+    },
+    {
+      "name": "macos-arm64-archive.json",
+      "size": 1503,
+      "digest": "sha256:7acac381cfd43cb7adc103749b847ee0076dbb8bfc5ff485cb62838bb7938424",
+      "browser_download_url": "https://github.com/100apps/anp/releases/download/native-v0.3.6/macos-arm64-archive.json"
+    },
+    {
+      "name": "macos-arm64-directory.json",
+      "size": 1415,
+      "digest": "sha256:4496bbc60bedb32db7c8ae90f806af63d3d474b77a05ef636e078201be8bf87d",
+      "browser_download_url": "https://github.com/100apps/anp/releases/download/native-v0.3.6/macos-arm64-directory.json"
+    }
+  ]
+}

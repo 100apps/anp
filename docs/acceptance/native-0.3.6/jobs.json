@@ -1,0 +1,22 @@
+[
+  {
+    "id": 120440162765,
+    "name": "version",
+    "conclusion": "success"
+  },
+  {
+    "id": 120440206393,
+    "name": "linux",
+    "conclusion": "success"
+  },
+  {
+    "id": 120440206496,
+    "name": "macos",
+    "conclusion": "success"
+  },
+  {
+    "id": 120461809769,
+    "name": "release",
+    "conclusion": "success"
+  }
+]

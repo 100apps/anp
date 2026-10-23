@@ -1,0 +1,15 @@
+{
+  "passed": false,
+  "target": "macos-arm64",
+  "remote_model_calls": 0,
+  "synthetic_trace": true,
+  "acceptance_script_sha256": "5ba6ea0f767ca9ca1f27aab2f83ffb6658bd12aaff251cfe2619d4eece9cd954",
+  "checks": {
+    "bundled_uv_python_node_native_tools": true,
+    "immutable_manifest": true,
+    "foreign_auxiliary_listener_rejected": true
+  },
+  "archive_sha256": "75559dd10a2853033b0d88fc78e35deaf256d1ee16fa0e04bc96c5ab711ef836",
+  "version": "0.3.6",
+  "bundle_files_manifest_sha256": "f693bc017f92a3f7b0e23db3cdd1b518b4365264f51956c1f7f47a3f0f889390"
+}

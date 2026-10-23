@@ -1,0 +1,26 @@
+{
+  "run_id": 39961444941,
+  "source": "completed GitHub Actions job logs",
+  "proof": [
+    {
+      "platform": "mac",
+      "business24PassLines": [
+        "{\"passed\": true, \"checks\": 24, \"receipt\": \"/Users/runner/work/anp/anp/var/native/acceptance/business-last.json\"}",
+        "{\"passed\": true, \"checks\": 24, \"receipt\": \"/Users/runner/work/anp/anp/var/native/acceptance/business-last.json\"}"
+      ],
+      "regressionLines": [
+        "94 passed in 23.85s"
+      ]
+    },
+    {
+      "platform": "linux",
+      "business24PassLines": [
+        "{\"passed\": true, \"checks\": 24, \"receipt\": \"/acceptance/var/native/acceptance/business-last.json\"}",
+        "{\"passed\": true, \"checks\": 24, \"receipt\": \"/acceptance/var/native/acceptance/business-last.json\"}",
+        "{\"passed\": true, \"checks\": 24, \"receipt\": \"/acceptance/var/native/acceptance/business-last.json\"}",
+        "{\"passed\": true, \"checks\": 24, \"receipt\": \"/acceptance/var/native/acceptance/business-last.json\"}"
+      ],
+      "regressionLines": []
+    }
+  ]
+}

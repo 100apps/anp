@@ -472,3 +472,12 @@ def test_official_binary_selection_ignores_same_named_directory_and_rejects_ambi
     duplicate.write_bytes(b"\x7fELF another executable")
     with pytest.raises(RuntimeError, match="唯一"):
         builder.artifact_binary(tmp_path, "clickhouse")
+
+
+
+def test_native_build_tool_locks_use_official_registry_and_integrity():
+    for lock in (ROOT / "native/packages").glob("*/package-lock.json"):
+        for name, item in json.loads(lock.read_text())["packages"].items():
+            if item.get("resolved"):
+                assert item["resolved"].startswith("https://registry.npmjs.org/"), str(lock) + ": " + name
+                assert item.get("integrity", "").startswith("sha512-"), str(lock) + ": " + name

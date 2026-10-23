@@ -10,7 +10,7 @@
 
 | 检查 | 当前结果 | 证据 |
 | --- | --- | --- |
-| 项目回归与前端构建 | 本次 86 项通过，TypeScript/Vite 构建通过 | `var/native/tests-continued.log` |
+| 项目回归与前端构建 | 本次 88 项通过，TypeScript/Vite 构建通过 | `var/native/tests-ci-fix.log` |
 | 原生发行专项回归 | 22 项通过 | `var/native/native-tests-latest.log` |
 | Business 单元及代理契约 | 28 项通过 | `var/native/business-tests.log` |
 | 包内 Python 3.13 + 真实 Supabase | 22 项通过 | `var/native/evidence/business-python313-live.json` |
@@ -104,7 +104,7 @@ Langfuse 输入使用本地合成追踪，验证的是真实接收、队列、�
 
 提交 `03b078cf5bf3f64ce00d9aab85ac5afe2499a1d6` 已推送 `master`，触发 [Actions 39885663463](https://github.com/100apps/anp/actions/runs/39885663463)，本次版本 `0.3.1`。Mac 和 Linux 作业都已进入全新构建，尚未记为通过；Release 仍待双平台目录、归档验收及资产摘要核对。
 
-首轮 Linux 全新构建在安装 ClickHouse 时失败：官方归档的 `usr/share/clickhouse` 目录与 `usr/bin/clickhouse` 文件同名，旧代码取遍历结果的第一项，产生 `IsADirectoryError`。真实归档补验还发现同名 shell 补全文件；最终按 ELF/Mach-O 文件头选择唯一原生文件，排除目录、符号链接和补全脚本，多个真实二进制则明确拒绝。文件系统回归覆盖这三类同名项及歧义，ssh-ecs 的官方归档实测选中 `usr/bin/clickhouse`；本机使用该选择流程的两个官方 Mac 原生组件（RustFS、ClickHouse）也通过检查。Mac 首轮构建仍在运行，未通过前不发布。
+首轮 Linux 全新构建在安装 ClickHouse 时失败：官方归档的 `usr/share/clickhouse` 目录与 `usr/bin/clickhouse` 文件同名，旧代码取遍历结果的第一项，产生 `IsADirectoryError`。真实归档补验还发现同名 shell 补全文件；最终按 ELF/Mach-O 文件头选择唯一原生文件，排除目录、符号链接和补全脚本，多个真实二进制则明确拒绝。文件系统回归覆盖这三类同名项及歧义，ssh-ecs 的官方归档实测选中 `usr/bin/clickhouse`；本机使用该选择流程的两个官方 Mac 原生组件（RustFS、ClickHouse）也通过检查。Mac 首轮在 DBX 工具安装失败：`native/packages/dbx-tools/package-lock.json` 包含内网 npm 归档地址，GitHub runner 连接超时。改为 npm 官方 URL，固定 pnpm 10.34.7 与原有 SHA512；已实际下载官方归档并确认完整性相同，再在空 npm 缓存、禁用用户 npm 配置的临时目录安装成功。已逐个检查全部已提交锁文件，其他包下载地址为官方 registry/PyPI；新增原生 npm 锁回归，防止内网地址重新进入发行链路。
 
 本机 Mac 和 ssh-ecs 干净 Linux 的完整归档验收门禁已通过。工作流成功、Release 公开及服务端资产摘要核对前，不将远程发行记为完成。
 

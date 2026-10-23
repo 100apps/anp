@@ -15,10 +15,18 @@ BASE = ROOT / "var/native"
 
 
 def artifact_binary(directory, name):
-    """官方归档可能含同名目录；只能安装唯一的真实普通文件。"""
-    candidates = [p for p in directory.rglob(name) if p.is_file() and not p.is_symlink()]
+    """排除同名目录与 shell 补全，仅安装唯一 ELF/Mach-O 原生文件。"""
+    magic = {b"\x7fELF", b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf",
+             b"\xca\xfe\xba\xbe", b"\xbe\xba\xfe\xca",
+             b"\xca\xfe\xba\xbf", b"\xbf\xba\xfe\xca"}
+    candidates = []
+    for path in directory.rglob(name):
+        if path.is_file() and not path.is_symlink():
+            with path.open("rb") as stream:
+                if stream.read(4) in magic:
+                    candidates.append(path)
     if len(candidates) != 1:
-        raise RuntimeError("官方归档必须有唯一普通文件 " + name + "，实际：" + str(len(candidates)))
+        raise RuntimeError("官方归档必须有唯一原生二进制 " + name + "，实际：" + str(len(candidates)))
     return candidates[0]
 
 

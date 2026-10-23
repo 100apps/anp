@@ -462,10 +462,13 @@ def test_official_binary_selection_ignores_same_named_directory_and_rejects_ambi
     (tmp_path / "usr/share/clickhouse").mkdir(parents=True)
     executable = tmp_path / "usr/bin/clickhouse"
     executable.parent.mkdir(parents=True)
-    executable.write_bytes(b"ELF fixture")
+    executable.write_bytes(b"\x7fELF fixture")
+    completion = tmp_path / "usr/share/bash-completion/completions/clickhouse"
+    completion.parent.mkdir(parents=True)
+    completion.write_text("# ClickHouse shell completion\n")
     assert builder.artifact_binary(tmp_path, "clickhouse") == executable
     duplicate = tmp_path / "extra/clickhouse"
     duplicate.parent.mkdir()
-    duplicate.write_bytes(b"another executable")
+    duplicate.write_bytes(b"\x7fELF another executable")
     with pytest.raises(RuntimeError, match="唯一"):
         builder.artifact_binary(tmp_path, "clickhouse")

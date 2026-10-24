@@ -23,6 +23,21 @@ ROOT = Path(__file__).resolve().parents[1]
 HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
+def owned_prisma_engine(bundle, pid, group, litellm_group):
+    """仅识别本实例 LiteLLM 进程组内的固定官方查询引擎。"""
+    if not litellm_group or group != litellm_group:
+        return False
+    if sys.platform.startswith("linux"):
+        expected = bundle / "var/cache/elf/platform/litellm/engines/query-engine.elf"
+        try:
+            return os.readlink("/proc/" + str(pid) + "/exe") == str(expected)
+        except OSError:
+            return False
+    expected = str(bundle / "platform/litellm/engines/query-engine")
+    result = subprocess.run(["/usr/sbin/lsof", "-nP", "-a", "-p", str(pid), "-d", "txt", "-Fn"], capture_output=True, text=True)
+    return "n" + expected in result.stdout.splitlines()
+
+
 def inspect_linux_library_mappings(bundle, executable, lines):
     mappings = []
     for line in lines:
@@ -56,6 +71,9 @@ def linux_listeners_and_libraries(bundle, groups):
     process = spec.module_from_spec(description)
     description.loader.exec_module(process)
     listeners = set()
+    internal = set()
+    litellm_file = bundle / "var/run/litellm.json"
+    litellm_group = json.loads(litellm_file.read_text())["pid"] if litellm_file.exists() else None
     foreign = []
     metadata = []
     for filename in ("/proc/net/tcp", "/proc/net/tcp6"):
@@ -67,9 +85,13 @@ def linux_listeners_and_libraries(bundle, groups):
                 continue
             address, port = fields[1].split(":")
             port = int(port, 16)
-            if any(os.getpgid(pid) in groups for pid in process.listener_pids(port)):
+            owners = [pid for pid in process.listener_pids(port) if os.getpgid(pid) in groups]
+            if owners:
                 assert filename.endswith("/tcp") and address == "0100007F", "存在非 loopback 监听"
-                listeners.add(port)
+                if all(owned_prisma_engine(bundle, pid, os.getpgid(pid), litellm_group) for pid in owners):
+                    internal.add(port)
+                else:
+                    listeners.add(port)
     for folder in Path("/proc").iterdir():
         if not folder.name.isdigit():
             continue
@@ -83,17 +105,24 @@ def linux_listeners_and_libraries(bundle, groups):
         foreign.extend(bad)
         metadata.extend(notes)
     assert not foreign, "包外动态库：" + json.dumps(foreign, ensure_ascii=False)
-    return listeners, metadata
+    assert len(internal) <= 1, "Prisma 查询引擎出现多个内部监听"
+    return listeners, metadata, internal
 
 
 def main():
     target = "linux-amd64" if sys.platform.startswith("linux") else "macos-arm64"
     parser = argparse.ArgumentParser()
     parser.add_argument("--archive", type=Path)
+    parser.add_argument("--host-runtime", action="store_true", help="Linux 实机功能验收；不声明无外网或无宿主工具")
     parser.add_argument("--bundle", type=Path, default=ROOT / ("var/native/build/anp-" + target))
     args = parser.parse_args()
+    if args.host_runtime:
+        assert sys.platform.startswith("linux") and os.getenv("ANP_CLEAN_RUNTIME") != "1", "实机验收与干净容器验收不能混用"
     receipt = {"passed": False, "target": target, "remote_model_calls": 0, "synthetic_trace": True,
                "acceptance_script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "checks": {}}
+    if args.host_runtime:
+        receipt["runtime_scope"] = "linux-host"
+        receipt["external_network_isolation_enforced"] = False
     evidence = ROOT / "var/native/evidence/platform"
     evidence.mkdir(parents=True, exist_ok=True)
     acceptance = ROOT / "var/native/acceptance"
@@ -158,15 +187,16 @@ def main():
                 profile = SANDBOX[2] + "(deny file-read* " + " ".join("(subpath " + json.dumps(str(p)) + ")" for p in denied) + ")"
                 sandbox = ["/usr/bin/sandbox-exec", "-p", profile]
                 probe = "import socket,errno; s=socket.socket();s.settimeout(1);assert s.connect_ex(('192.0.2.1',9))==errno.EPERM\ntry: open(" + repr(str(ROOT / "native/build.py")) + ")\nexcept PermissionError: pass\nelse: raise AssertionError('source tree was readable')"
-            else:
+            elif not args.host_runtime:
                 assert os.getenv("ANP_CLEAN_RUNTIME") == "1", "Linux 验收需要干净容器"
                 assert all(shutil.which(name) is None for name in ("python3", "node", "uv", "gcc", "patchelf"))
                 assert not (ROOT / "platform/sources").exists() and not (ROOT / "business").exists()
                 probe = "import socket,errno;s=socket.socket();s.settimeout(1);assert s.connect_ex(('192.0.2.1',9)) in (errno.ENETUNREACH,errno.EPERM)"
-            subprocess.run([*sandbox, str(bundle / "tools/python/bin/python3"), "-I", "-B", "-c", probe], check=True, capture_output=True)
+            if not args.host_runtime:
+                subprocess.run([*sandbox, str(bundle / "tools/python/bin/python3"), "-I", "-B", "-c", probe], check=True, capture_output=True)
             for command in ([bundle / "tools/uv/uv", "--version"], [bundle / "tools/python/bin/python3", "--version"],
-                            [bundle / "tools/node/bin/node", "-e", "if(process.arch!==" + repr("arm64" if target == "macos-arm64" else "x64") + ")process.exit(1);let r=require('child_process').spawnSync(process.execPath,['--version']);if(r.status!==0)process.exit(2)"],
-                            [bundle / "tools/python/bin/python3", "-I", "-c", "import subprocess,sys;subprocess.run([sys.executable,'-I','-c','print(42)'],check=True)"]):
+                            [bundle / "tools/node/bin/node", "-e", "if(process.arch!==" + repr("arm64" if target == "macos-arm64" else "x64") + ")process.exit(1);if(process.env.LD_LIBRARY_PATH||process.env.LD_PRELOAD)throw Error('host library environment leaked');for(const [p,a] of [[process.execPath,['--version']],['/bin/sh',['-c','true']]]){let r=require('child_process').spawnSync(p,a);if(r.status!==0)process.exit(2)}"],
+                            [bundle / "tools/python/bin/python3", "-I", "-c", "import os,subprocess,sys;assert not {'LD_LIBRARY_PATH','LD_PRELOAD'} & os.environ.keys();subprocess.run([sys.executable,'-I','-c','print(42)'],check=True);subprocess.run(['/bin/sh','-c','true'],check=True)"]):
                 subprocess.run([*sandbox, *map(str, command)], check=True, capture_output=True,
                                env={"PATH": "/usr/bin:/bin", "HOME": str(bundle / "var/cache")})
             receipt["checks"]["bundled_uv_python_node_native_tools"] = True
@@ -182,10 +212,11 @@ def main():
             cli("status")
             receipt["checks"]["all_services_ready"] = True
             print(f"{len(defaults['services'])} 个服务已就绪，开始真实 API 验收", flush=True)
-            receipt["checks"]["external_network_host_package_managers_and_source_tree_denied" if sandbox else "network_none_and_no_host_platform_business_sources"] = True
+            if not args.host_runtime:
+                receipt["checks"]["external_network_host_package_managers_and_source_tree_denied" if sandbox else "network_none_and_no_host_platform_business_sources"] = True
             groups = {json.loads(p.read_text())["pid"] for p in (bundle / "var/run").glob("*.json")}
             if target == "linux-amd64":
-                listeners, metadata = linux_listeners_and_libraries(bundle, groups)
+                listeners, metadata, internal = linux_listeners_and_libraries(bundle, groups)
                 receipt["checks"]["all_executable_library_mappings_in_bundle"] = True
                 receipt["clickhouse_optional_host_symbol_metadata"] = metadata
             else:
@@ -193,15 +224,24 @@ def main():
                 sockets = subprocess.run(["/usr/sbin/lsof", "-nP", "-iTCP", "-sTCP:LISTEN", "-Fpn"], capture_output=True, text=True)
                 pid = None
                 listeners = []
+                internal = set()
+                litellm_group = json.loads((bundle / "var/run/litellm.json").read_text())["pid"]
+                engine_pids = {pid for pid, group in processes.items() if owned_prisma_engine(bundle, pid, group, litellm_group)}
                 for line in sockets.stdout.splitlines():
                     if line.startswith("p"):
                         pid = int(line[1:])
                     elif line.startswith("n") and processes.get(pid) in groups:
                         address = line[1:]
                         assert address.startswith("127.0.0.1:"), "发现非 loopback 服务监听：" + address
-                        listeners.append(address)
-            assert len(set(listeners)) == len(ports), "服务存在未记录的附属监听端口"
-            receipt["checks"]["all_process_group_listeners_loopback_and_declared"] = True
+                        port = int(address.rsplit(":", 1)[1])
+                        if pid in engine_pids:
+                            internal.add(port)
+                        else:
+                            listeners.append(port)
+                assert len(internal) <= 1, "Prisma 查询引擎出现多个内部监听"
+            receipt["internal_prisma_http_ports"] = sorted(internal)
+            assert set(listeners) == set(ports.values()), "服务存在未记录的附属监听端口"
+            receipt["checks"]["all_process_group_listeners_loopback_and_accounted"] = True
             private = json.loads((bundle / "var/secrets/runtime.json").read_text())
             if "business" in ports:
                 from business_check import check as check_business
@@ -291,6 +331,9 @@ NOTIFY pgrst,'reload schema';''')
             assert api("/litellm/v1/models")[0] in (401, 403)
             assert api("/litellm/v1/models", headers={"Authorization": "Bearer " + private["litellm"]})[0] == 200
             receipt["checks"]["litellm_gateway_auth"] = True
+            status, body = api("/v2/login", "POST", {"username": "admin", "password": private["litellm"]}, service="litellm")
+            assert status == 200 and bool(json.loads(body).get("token")), "LiteLLM 管理台登录失败"
+            receipt["checks"]["litellm_dashboard_database_login"] = True
             assert api("/realtime/v1/websocket")[0] == 404
             receipt["checks"]["realtime_excluded"] = True
             print("Auth、Data API/RPC/RLS、Storage、Studio、LiteLLM 验收通过", flush=True)

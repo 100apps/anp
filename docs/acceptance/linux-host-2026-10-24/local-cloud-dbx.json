@@ -1,0 +1,6 @@
+{
+  "business_admin_login": true,
+  "dbx_password_login_through_proxy": true,
+  "embedded_frontend_assets": true,
+  "postgres_real_query_result_42": true
+}

@@ -28,7 +28,7 @@ def main():
         with tempfile.TemporaryDirectory(prefix="clean-" + name + "-", dir=BASE) as scratch:
             work = Path(scratch)
             bootstrap = work / "bootstrap"
-            for part in ("tools/python", "tools/libc"):
+            for part in ("tools/python", "tools/libc", "tools/elf"):
                 shutil.copytree(bundle / part, bootstrap / part, symlinks=True)
             (bootstrap / "runtime").mkdir()
             shutil.copy2(ROOT / "native/runtime/elf_exec.py", bootstrap / "runtime/elf_exec.py")

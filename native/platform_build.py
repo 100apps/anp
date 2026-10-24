@@ -14,6 +14,28 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "var/native"
 
 
+def storage_s3_compatibility(bundle):
+    """锁定官方 Storage 的删除请求补 MD5，兼容 OSS 的必填校验头。"""
+    path = bundle / "platform/storage-api/app/dist/start/server.js"
+    original = path.read_text()
+    patterns = ("DeleteObjectsCommand({Bucket:", "this.client.deleteObjects({Bucket:")
+    counts = [original.count(pattern) for pattern in patterns]
+    if counts != [2, 2]:
+        raise RuntimeError("官方 Storage 删除调用格式已变化，需重新检查 S3 兼容补丁")
+    updated = original
+    for pattern in patterns:
+        updated = updated.replace(pattern, pattern.replace("{Bucket:", '{ChecksumAlgorithm:"MD5",Bucket:'))
+    mode = path.stat().st_mode
+    path.unlink()
+    path.write_text(updated)
+    path.chmod(mode)
+    receipt = {"path": path.relative_to(bundle).as_posix(), "command_sites": counts,
+               "upstream_sha256": hashlib.sha256(original.encode()).hexdigest(),
+               "patched_sha256": hashlib.sha256(updated.encode()).hexdigest()}
+    (bundle / "manifest/storage-s3-compat.json").write_text(json.dumps(receipt, indent=2) + "\n")
+    return receipt
+
+
 def artifact_binary(directory, name):
     """排除同名目录与 shell 补全，仅安装唯一 ELF/Mach-O 原生文件。"""
     magic = {b"\x7fELF", b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf",
@@ -200,4 +222,5 @@ def install(bundle, fetch, copy_tree, target="macos-arm64"):
         shutil.copy2(source, dbx / source.name)
     import business_build
     business_build.install(bundle, copy_tree)
+    storage_s3_compatibility(bundle)
     shutil.copy2(lock_path, bundle / "manifest/platform-sources.lock.json")

@@ -1,0 +1,15 @@
+{
+  "prisma_version": "5.17.0",
+  "engine_commit": "393aa359c9ad4a4bb28630fb5613f9c281cde053",
+  "platform": "darwin-arm64",
+  "artifacts": {
+    "query-engine": {
+      "url": "https://binaries.prisma.sh/all_commits/393aa359c9ad4a4bb28630fb5613f9c281cde053/darwin-arm64/query-engine.gz",
+      "sha256": "3aab1282b632132117272edbcb7889d6c6c802208c4a09ec40934fa48bbc95b1"
+    },
+    "schema-engine": {
+      "url": "https://binaries.prisma.sh/all_commits/393aa359c9ad4a4bb28630fb5613f9c281cde053/darwin-arm64/schema-engine.gz",
+      "sha256": "c73500759b2f707c5e05d48f029b081b6a65c85b8188d064229a21abb4106dbc"
+    }
+  }
+}

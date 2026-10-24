@@ -46,6 +46,10 @@ make dist
 
 最新版本为 [0.3.6](https://github.com/100apps/anp/releases/tag/native-v0.3.6)，[发行流水线](https://github.com/100apps/anp/actions/runs/39961444941)全部通过。GitHub 原生 Mac ARM64 runner 的目录与真实压缩包各通过 22 项检查，Business 各 24 项通过；Linux 在无外网的干净 Debian 与 Alpine 中，目录与压缩包各通过 23 项检查，Business 各 24 项通过。完整回归 94 项通过。见[验收报告](docs/acceptance/native-release-2026-10-23.md)与[原始发行回执](docs/acceptance/native-0.3.6/)。
 
+本轮 0.3.7 源码候选包含：Linux 旧 glibc/宿主 NSS 兼容，LiteLLM 独立数据库与冻结 Prisma 工具，ClickHouse 内存计量修正，OSS 证书与批量删除兼容，以及显式外部资源配置。目标 Linux 主机完整模式 23 项、云模式 32 项和重启审计 8 项通过，见[目标主机修复验收](docs/acceptance/linux-host-2026-10-24.md)。正式发行与新压缩包的验收结果将在本轮流水线完成后更新，当前正式下载仍为上面的 0.3.6。
+
+外部资源模式：将包内 `defaults/external-resources.example.json` 复制到包外的 0600 私有文件，配置已有 PostgreSQL、Redis、ClickHouse 和 S3 服务；`config/anp.json` 保留 ports，设置 `services: ["gateway"]` 与 `external_resources_file` 绝对路径，即可关闭本地四存储。必须使用独立 namespace、数据库 schema 和对象前缀，不覆盖已有项目；管理员邮箱为 `<namespace>@anp.local`。详细要求见[原生包说明](native/README.md)。
+
 **本机兼容性限制：** 当前 macOS 26.5.1 上，新解压服务出现 `SIGKILL`（正式 0.3.6 为 Redis，此前 DBX 也复现），本机整包解压验收未通过；CI 的 Mac 15 通过不代表该问题已解决。Mac 尚未做 Apple notarization，其他实体 Mac、组织执行策略及真实模型供应商尚未验证。
 
 推送代码到 `master` 会触发[原生发行流水线](.github/workflows/native-release.yml)：分别构建两个架构、验收目录与真实解压包，再核对 GitHub 资产摘要后发布带版本的 Release。仅修改根 README 或 `docs/` 不重复构建；[流水线说明](docs/development/原生发行流水线.md)。

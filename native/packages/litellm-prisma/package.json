@@ -1,0 +1,4 @@
+{
+  "private": true,
+  "dependencies": {"prisma": "5.17.0"}
+}

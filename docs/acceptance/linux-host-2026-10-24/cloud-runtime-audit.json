@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "candidate_version": "0.3.6-cloud-hostfix4",
+  "ready_services": 11,
+  "bundled_executable_libraries": true,
+  "accounted_loopback_listeners": 12,
+  "internal_prisma_http_ports": [
+    34781
+  ],
+  "local_storage_ports_closed": {
+    "postgres": true,
+    "redis": true,
+    "clickhouse": true,
+    "clickhouse-native": true,
+    "rustfs": true
+  },
+  "bundle_manifest_sha256": "6b6966c4e258c0227d4821735be9513110a82f996ebd881651fc6573bced473f"
+}

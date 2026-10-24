@@ -219,10 +219,15 @@ def build(target, profile="platform"):
             platform_build.install(temporary, fetch, copy_tree, target)
         shutil.copytree(ROOT / "native/runtime", temporary / "runtime", dirs_exist_ok=True,
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        if profile == "platform":
+            import litellm_build
+            litellm_build.generate(temporary, target, fetch)
         shutil.copy2(ROOT / "native/anp", temporary / "anp")
         (temporary / "anp").chmod(0o755)
         defaults = ROOT / "native/defaults" / ("platform.json" if profile == "platform" else "anp.json")
         shutil.copy2(defaults, temporary / "defaults/anp.json")
+        if profile == "platform":
+            shutil.copy2(ROOT / "native/defaults/external-resources.example.json", temporary / "defaults/external-resources.example.json")
         shutil.copy2(ROOT / "native/README.md", temporary / "README.md")
         (temporary / "VERSION").write_text(version + "\n")
         if target == "macos-arm64":
@@ -248,8 +253,9 @@ def build(target, profile="platform"):
         inputs = [ROOT / "native/build.py", *list((ROOT / "native/runtime").glob("*.py")),
                   ROOT / "native/anp", ROOT / "native/VERSION", ROOT / "native/README.md", defaults, ROOT / "native/packages/litellm/uv.lock", ROOT / ("native/locks/" + target + ".json")]
         if target == "linux-amd64":
-            inputs.append(ROOT / "native/linux_elf.py")
+            inputs += [ROOT / "native/linux_elf.py", ROOT / "native/linux/nss.c"]
         if profile == "platform":
+            inputs += [ROOT / "native/litellm_build.py", ROOT / "native/runtime/bin/prisma", ROOT / "native/defaults/external-resources.example.json", ROOT / ("native/locks/litellm-prisma-" + target + ".json"), ROOT / "native/packages/litellm-prisma/package-lock.json"]
             inputs += [ROOT / "native/platform_build.py", ROOT / "native/langfuse_build.py", ROOT / "native/dbx_build.py", ROOT / "native/business_build.py", ROOT / ("native/locks/platform-" + target + ".json"), ROOT / ("native/locks/build-tools-" + target + ".json"), ROOT / "native/packages/build-tools/package-lock.json", ROOT / "native/packages/prisma/package-lock.json", ROOT / "native/packages/dbx-tools/package-lock.json", ROOT / "native/packages/business-tools/package-lock.json", ROOT / "business/uv.lock", ROOT / "business/ui/pnpm-lock.yaml"]
         (temporary / "manifest/build.json").write_text(json.dumps({"target": target, "profile": profile, "version": version, "redis_commit": sha if target == "macos-arm64" else None,
             "redis_distribution": "source" if target == "macos-arm64" else "official-deb",

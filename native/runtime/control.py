@@ -14,9 +14,11 @@ import time
 import urllib.error
 import urllib.request
 import importlib.util
+from urllib.parse import quote
 
 # -I 不将脚本目录加入 sys.path；只加入本包可信运行目录，保持 cwd 隔离。
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import external
 
 _spec = importlib.util.spec_from_file_location("anp_native_platforms", Path(__file__).with_name("platforms.py"))
 platforms = importlib.util.module_from_spec(_spec)
@@ -60,6 +62,7 @@ def configuration():
     assert set(ports) == expected and len(set(ports.values())) == len(expected)
     assert all(isinstance(x, int) and 1024 <= x <= 65535 for x in ports.values())
     assert config["services"] and set(config["services"]) <= set(ORDER)
+    external.load(config)
     return config
 
 
@@ -72,6 +75,11 @@ def private():
     if PLATFORM:
         original = dict(values)
         platforms.extend_secrets(values)
+        resources = external.load(configuration())
+        if resources:
+            roles = external.roles(resources)
+            values["anon-key"] = platforms.jwt(roles["anon"], values["jwt"])
+            values["service-key"] = platforms.jwt(roles["service"], values["jwt"])
         if values != original:
             write(path, json.dumps(values, indent=2) + "\n")
     return values
@@ -95,6 +103,9 @@ def execute(args, check=True, **kwargs):
         if path.exists():
             for value in json.loads(path.read_text()).values():
                 content = content.replace(value, "[REDACTED]")
+        resources = external.load(configuration())
+        if resources:
+            content = external.redact(content, resources)
         log = VAR / "logs/initialization.log"
         write(log, content)
         raise RuntimeError("初始化命令失败：" + Path(str(args[0])).name + "；日志：" + str(log))
@@ -241,6 +252,8 @@ COMMIT;
 
 
 def command(name, config, secret):
+    if config.get("external_resources_file") and name in external.STORAGE:
+        raise RuntimeError("外部资源模式不允许启动本地存储")
     port = config["ports"][name]
     environment = env()
     if name == "postgres":
@@ -262,6 +275,16 @@ def command(name, config, secret):
     liteconfig = VAR / "run/litellm.yaml"
     write(liteconfig, 'model_list: []\ngeneral_settings:\n  master_key: os.environ/LITELLM_MASTER_KEY\n')
     environment["LITELLM_MASTER_KEY"] = secret["litellm"]
+    if PLATFORM:
+        platforms.initialize(sys.modules[__name__], config, secret)
+        environment.update({"DATABASE_URL": "postgresql://litellm:" + quote(secret["litellm-db"], safe="") + "@127.0.0.1:" + str(config["ports"]["postgres"]) + "/litellm",
+                            "PRISMA_QUERY_ENGINE_BINARY": str(ROOT / "platform/litellm/engines/query-engine"),
+                            "PRISMA_SCHEMA_ENGINE_BINARY": str(ROOT / "platform/litellm/engines/schema-engine"),
+                            "PRISMA_BINARY_CACHE_DIR": str(ROOT / "platform/litellm/cli"),
+                            "PATH": str(ROOT / "runtime/bin") + ":" + str(ROOT / "tools/node/bin") + ":" + environment["PATH"]})
+        resources = external.load(config)
+        if resources:
+            environment["DATABASE_URL"] = external.pgurl(resources, resources["postgres"]["litellm_database"], external.roles(resources)["litellm"])
     return [ROOT / "tools/python/bin/python3", "-I", "-B", ROOT / "runtime/litellm_launcher.py", "--config", liteconfig, "--host", "127.0.0.1", "--port", port], environment
 
 
@@ -269,9 +292,14 @@ def selected(config, text=None):
     names = set(text.split(",") if text and text != "all" else config["services"])
     if not names or not names <= set(ORDER):
         raise RuntimeError("未知服务")
+    cloud = bool(config.get("external_resources_file"))
+    if cloud and names & external.STORAGE:
+        raise RuntimeError("外部资源模式不允许选择本地存储")
     if PLATFORM:
         while True:
             expanded = names | {dependency for name in names for dependency in platforms.DEPS.get(name, [])}
+            if cloud:
+                expanded -= external.STORAGE
             if expanded == names:
                 break
             names = expanded
@@ -428,7 +456,7 @@ def start(config, names, verbose=True):
             pids[name] = process.pid
             progress(f"{prefix} 进程已创建，PID {process.pid}，等待就绪…", verbose)
             next_notice = time.monotonic() + 5
-            for _ in range(1200 if name == "langfuse-web" else 240):
+            for _ in range(1200 if name in ("langfuse-web", "litellm") else 240):
                 if process.poll() is not None:
                     raise RuntimeError(f"启动退出：{name}，PID {process.pid}，退出码 {process.returncode}；日志：" + str(VAR / "logs" / (name + ".log")))
                 if healthy(name, config):

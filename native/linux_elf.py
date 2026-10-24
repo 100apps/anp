@@ -133,6 +133,8 @@ def normalize_langfuse_native_loader(bundle):
 def prepare(bundle):
     libraries = bundle / "tools/libc"
     libraries.mkdir(parents=True)
+    subprocess.run(["cc", "-shared", "-fPIC", "-O2", "-Wl,-z,defs", "-Wl,-soname,libanp_nss.so",
+                    "-o", str(libraries / "libanp_nss.so"), str(Path(__file__).parent / "linux/nss.c")], check=True)
     helper = bundle / "tools/elf/patchelf"
     if not helper.is_file():
         raise RuntimeError("缺少锁定的官方 patchelf 工具")
@@ -248,5 +250,5 @@ exec "$ANP_ROOT/tools/libc/ld-linux-x86-64.so.2" --library-path "$ANP_ROOT/tools
     shutil.copytree("/usr/share/common-licenses", license_dir / "common-licenses")
     (bundle / "manifest/elf-audit.json").write_text(json.dumps({"elf_files": len(paths), "pruned_optional_prebuilds": pruned, "normalized_slim_node_launchers": launchers, "runpath_updates": runpath_updates, "langfuse_native_loaders": native_loaders, "wrapped": executables, "patchelf_version": output(helper, "--version").strip(),
         "bundled_libraries": receipts, "debian_packages": packages, "host_library_path_required": False}, indent=2) + "\n")
-    # 发行包的搬移仅使用 Python 修改已有 PT_INTERP；修补工具只留在构建阶段。
-    shutil.rmtree(helper.parent)
+    # 运行时缓存需设置绝对 RPATH，防止全局 LD_LIBRARY_PATH 污染旧 glibc 宿主 shell。
+    # 保留来自锁定官方发行包的静态 patchelf，原始 ELF 始终不变。

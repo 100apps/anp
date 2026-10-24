@@ -1,0 +1,23 @@
+{
+  "namespace": "anp-cloud-check",
+  "postgres": {
+    "host": "postgres.example.internal", "port": 5432,
+    "username": "", "password": "", "sslmode": "prefer",
+    "supabase_database": "agentloop_supabase", "langfuse_database": "agentloop_langfuse", "litellm_database": "agentloop_litellm"
+  },
+  "redis": {"host": "redis.example.internal", "port": 6379, "password": "", "cluster": true},
+  "clickhouse": {
+    "endpoint": "http://clickhouse.example.internal:8123",
+    "migration_url": "clickhouse://clickhouse.example.internal:9000",
+    "username": "", "password": "", "database": "anp_cloud_check"
+  },
+  "s3": {
+    "endpoint": "https://s3.example.internal", "region": "", "bucket": "",
+    "access_key": "", "secret_key": "", "force_path_style": false
+  },
+  "roles": {
+    "anon": "agentloop_anon", "authenticated": "agentloop_authenticated", "service": "agentloop_service",
+    "auth": "agentloop_auth", "storage": "agentloop_storage", "langfuse": "agentloop_lf", "litellm": "agentloop_llm",
+    "studio_read_only": "agentloop_anon"
+  }
+}

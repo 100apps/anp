@@ -4,7 +4,7 @@ from urllib.request import Request, build_opener, ProxyHandler
 from urllib.error import HTTPError
 
 
-def ensure_admin(origin, secret, var):
+def ensure_admin(origin, secret, var, email="admin@anp.local"):
     marker = var / "data/business-admin.json"
     if marker.exists():
         return
@@ -22,13 +22,13 @@ def ensure_admin(origin, secret, var):
     page = 1
     while True:
         users = request(f"users?page={page}&per_page=100").get("users", [])
-        if any(user.get("email") == "admin@anp.local" for user in users):
-            raise RuntimeError("Supabase 已存在 admin@anp.local；拒绝覆盖或自动提升权限，请手动配置 Business 管理员")
+        if any(user.get("email") == email for user in users):
+            raise RuntimeError("Supabase 已存在本实例管理员邮箱；拒绝覆盖或自动提升权限，请手动配置 Business 管理员")
         if len(users) < 100:
             break
         page += 1
-    user = request("users", {"email": "admin@anp.local", "password": secret["business-user-password"],
+    user = request("users", {"email": email, "password": secret["business-user-password"],
                               "email_confirm": True, "app_metadata": {"anp_role": "admin", "anp_bootstrap": True}})
     marker.parent.mkdir(parents=True, exist_ok=True)
-    marker.write_text(json.dumps({"id": user["id"], "email": "admin@anp.local"}) + "\n")
+    marker.write_text(json.dumps({"id": user["id"], "email": email}) + "\n")
     marker.chmod(0o600)

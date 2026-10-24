@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import struct
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +49,7 @@ def execute(relative, arguments):
     cache.mkdir(parents=True, exist_ok=True)
     loader = ROOT / "tools/libc/ld-linux-x86-64.so.2"
     libraries = ROOT / "tools/libc"
+    slim_node = source.name == ".node-real.elf" and source.relative_to(ROOT).parts[0] == "platform"
     with (cache / ".lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         original = ROOT
@@ -87,15 +89,26 @@ def execute(relative, arguments):
         if not target.exists() or not receipt.exists() or json.loads(receipt.read_text()) != expected:
             temporary = target.with_name(target.name + ".tmp")
             shutil.copy2(source, temporary)
+            patcher = ROOT / "tools/elf/patchelf"
+            if not patcher.is_file():
+                raise RuntimeError("缺少包内静态 patchelf，请升级完整发行包")
+            # 先设置传递性 RPATH，再以原位程序头修改 INTERP；不向宿主子进程泄漏 glibc。
+            subprocess.run([str(patcher), "--force-rpath", "--set-rpath", str(libraries), str(temporary)],
+                           check=True, capture_output=True)
+            nss = libraries / "libanp_nss.so"
+            if nss.is_file() and not slim_node:
+                # DT_NEEDED 只影响本包 ELF，不像 LD_PRELOAD 一样污染宿主 shell。
+                subprocess.run([str(patcher), "--add-needed", str(nss), str(temporary)], check=True, capture_output=True)
             set_interpreter(temporary, loader)
             temporary.replace(target)
             receipt.write_text(json.dumps(expected))
     environment = dict(os.environ)
     for key in ("PYTHONHOME", "PYTHONPATH", "LD_LIBRARY_PATH", "LD_PRELOAD"):
         environment.pop(key, None)
-    # 加载器已固定为本包 glibc；统一库闭包也可供 Node/Python 自派生进程继承。
-    # 不同时修改 INTERP 与 RPATH，避免官方 Node 的 ELF 布局被修补工具破坏。
-    environment["LD_LIBRARY_PATH"] = str(libraries)
+    if slim_node and (libraries / "libanp_nss.so").is_file():
+        # 此官方 Node 的 ELF 布局不支持新增 NEEDED；构造器在 main 前清除临时预载。
+        environment["LD_PRELOAD"] = str(libraries / "libanp_nss.so")
+    # 自派生 ELF 通过自身 RPATH 找到库；/bin/sh 等宿主工具使用宿主库。
     os.execve(target, [str(target), *arguments], environment)
 
 

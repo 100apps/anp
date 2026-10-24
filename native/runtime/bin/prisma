@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+ANP_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+exec "$ANP_ROOT/tools/python/bin/python3" -I -B "$ANP_ROOT/runtime/prisma_entry.py" "$@"

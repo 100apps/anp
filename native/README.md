@@ -73,4 +73,23 @@ Linux 包携带 glibc 加载器和动态库闭包，运行时按当前解压路�
 
 发布门禁包括独立目录、真实压缩包和干净环境的功能验收。Mac 在本机离线沙箱中验证，Linux 在 Debian 与 Alpine 的干净容器中验证；以当次回执及 GitHub Actions 实际结果为准。本机成功不代表其他 Mac 的签名策略与公证验收已通过。最新进展见 `docs/acceptance/native-0.3.0-progress.md`。
 
-完整平台包的资源需求高于精简 PoC。本轮 Linux 实测 ClickHouse RSS 可达到约 3 GiB，初始 1 GiB 服务限制会使 Langfuse 写入/读取报错；现将服务上限设为 4 GiB，默认单查询限制仍为 512 MiB。上限不是预留内存，也不代表已在小内存机器上验收。
+完整平台包的资源需求高于精简 PoC。ClickHouse 服务上限为 4 GiB，默认单查询限制为 512 MiB；上限不是预留内存，也不代表已在小内存机器上验收。当前源码设置 `memory_worker_use_cgroup=0`：多服务共享 cgroup 时按 ClickHouse 自身分配器统计，避免将其他服务与缓存的总用量误算为 ClickHouse 的内存。在 Alibaba Cloud Linux 目标机曾出现进程 RSS 约 661 MiB、共享 cgroup 用量超过 4 GiB，导致 Langfuse 返回 422；修改后同一追踪写入与 worker 读回探针通过，完整验收以当次报告为准。
+
+
+## 外部资源模式（源码候选，Linux 目标机已验收）
+
+`0.3.6` 正式附件不包含这一入口；当前源码与目标主机修复候选分开记录，不把单元测试当作云端成功。
+
+将 `defaults/external-resources.example.json` 复制到包外的私有 JSON 文件，填写 PostgreSQL、Redis、ClickHouse、S3 地址和凭据，并设置权限 0600。在 `config/anp.json` 中保留完整 ports，改为 `services: ["gateway"]`，再设置 `external_resources_file` 为该 JSON 的绝对路径。启动会展开平台依赖，但拒绝启动四个本地存储。已有角色和 Supabase Auth/Storage schema 需预先准备，运行器不创建云数据库或角色。
+
+必须使用独立 namespace。Langfuse、LiteLLM 在配置的既有专用数据库内使用独立 PostgreSQL schema；Redis 使用带 hash tag 的独立前缀；Langfuse 的 S3 对象和 Storage tenant 隔离。ClickHouse database 需要明确指定本次独立数据库。请勿将实际资源文件放进 Git、CDN、镜像或压缩包。
+
+源码平台模式为 LiteLLM 准备独立数据库，并在构建时生成 Prisma Python 客户端、冻结 CLI 和官方查询/迁移引擎。首次启动执行官方迁移，管理台登录纳入验收。Linux 修复版保留官方静态 patchelf，以实例内 RPATH 代替全局 LD_LIBRARY_PATH，避免旧 glibc 宿主 shell 冲突；具体通过范围以当次目标主机报告为准。
+
+远程使用独立 loopback 服务时，除网关 58000 外，还需转发 Studio 53200 和 LiteLLM UI 54000。它们的入口会跳转到配置的独立端口，不要把只有网关的隧道当成完整后台访问。
+
+目标机云模式的 32 项功能、8 项重启/持久化/运行库审计，以及本机经隧道的 Business 24 项与 DBX 4 项检查已通过，证据见 `docs/acceptance/linux-host-2026-10-24.md`。云模式管理员邮箱为 `<namespace>@anp.local`，密码仍取本实例的私有 runtime.json；不覆盖已有同邮箱账号。Studio MCP 的独立只读登录未纳入此轮验收。
+
+云兼容处理包含：Auth/Storage 角色的显式搜索路径，LiteLLM 迁移元数据限定当前 schema，Studio 连接 URI 转义，Node 补充冻结 certifi 的公共根证书，以及 Storage/Langfuse 批量删除使用 MD5。修改的官方迁移和 Storage 调用记录原始/修改后摘要，仍从固定官方发行包安装。
+
+Linux 构建增加本项目的小型 NSS 适配库，只为包内进程使用 glibc 内置 files/DNS 解析，避免加载宿主 myhostname/SSSD 等插件。普通 ELF 使用实例缓存的 NEEDED；官方 Slim Node 因布局限制使用本次 exec 的临时预载，构造器在 main 前清除预载变量，宿主 shell 子进程不继承。宿主配置不变，仍读取其 hosts/resolv.conf 和本地用户记录。此轮未重新发布 Release，也没有重跑修改后的 Mac 整包或干净容器 CI。

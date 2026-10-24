@@ -228,7 +228,7 @@ def test_stop_cli_real_foreign_listener(native_runtime_dir, option, answer, code
     tmp_path = native_runtime_dir
     runtime = tmp_path / "runtime"
     runtime.mkdir()
-    for name in ("control.py", "platforms.py", "linux_process.py"):
+    for name in ("control.py", "platforms.py", "linux_process.py", "external.py"):
         shutil.copy2(ROOT / "native/runtime" / name, runtime / name)
     sockets = [socket.socket() for _ in range(4)]
     try:
@@ -279,7 +279,7 @@ def test_start_progress_reuse_and_json_with_native_redis(native_runtime_dir, mod
     (tmp_path / "tools/python/bin").mkdir(parents=True)
     (tmp_path / "storage").mkdir()
     (tmp_path / "defaults").mkdir()
-    for name in ("control.py", "platforms.py"):
+    for name in ("control.py", "platforms.py", "external.py"):
         shutil.copy2(ROOT / "native/runtime" / name, tmp_path / "runtime" / name)
     shutil.copy2(ROOT / "native/anp", tmp_path / "anp")
     (tmp_path / "anp").chmod(0o755)

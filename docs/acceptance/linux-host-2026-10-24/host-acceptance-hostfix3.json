@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "target": "linux-amd64",
+  "remote_model_calls": 0,
+  "synthetic_trace": true,
+  "acceptance_script_sha256": "15fae679813212081dc9854c138592523e94a72636d3c252361f31b2d5a3ed7b",
+  "checks": {
+    "bundled_uv_python_node_native_tools": true,
+    "immutable_manifest": true,
+    "foreign_auxiliary_listener_rejected": true,
+    "all_services_ready": true,
+    "all_executable_library_mappings_in_bundle": true,
+    "all_process_group_listeners_loopback_and_accounted": true,
+    "business_supabase_auth_roles_threads_and_demos": true,
+    "dbx_admin_proxy_assets_login_real_query": true,
+    "auth_signup_password_login_current_user": true,
+    "auth_admin_user_list": true,
+    "data_api_crud_rpc_user_rls": true,
+    "storage_upload_download_signed_url_user_rls": true,
+    "studio_real_database_query": true,
+    "studio_page": true,
+    "litellm_gateway_auth": true,
+    "litellm_dashboard_database_login": true,
+    "realtime_excluded": true,
+    "langfuse_admin_cookie_login_and_page_assets": true,
+    "langfuse_otlp_async_worker_readback_auth": true,
+    "redis_vectors_and_restart_persistence": true,
+    "relocation_database_file_trace_secrets_persistence": true,
+    "api_deletion": true,
+    "immutable_after_relocation_run": true
+  },
+  "runtime_scope": "linux-host",
+  "external_network_isolation_enforced": false,
+  "version": "0.3.6-linux-hostfix3",
+  "bundle_files_manifest_sha256": "2a95d988f3c33fd00200e8cd9a58e4a8003f2b5012a35bec8395da3008ffb0fe",
+  "clickhouse_optional_host_symbol_metadata": [],
+  "internal_prisma_http_ports": [
+    48763
+  ],
+  "trace_id": "86ff5370e8594d3cae276f13225da8a5"
+}

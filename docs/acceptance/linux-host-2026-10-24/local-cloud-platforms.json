@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": {
+    "studio_page_and_script": true,
+    "litellm_page_and_script": true,
+    "langfuse_real_cookie_login": true,
+    "langfuse_page_and_script": true,
+    "studio_real_backend": true,
+    "litellm_real_backend": true
+  }
+}

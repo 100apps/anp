@@ -1,0 +1,15 @@
+{
+  "prisma_version": "5.17.0",
+  "engine_commit": "393aa359c9ad4a4bb28630fb5613f9c281cde053",
+  "platform": "debian-openssl-3.0.x",
+  "artifacts": {
+    "query-engine": {
+      "url": "https://binaries.prisma.sh/all_commits/393aa359c9ad4a4bb28630fb5613f9c281cde053/debian-openssl-3.0.x/query-engine.gz",
+      "sha256": "9bc857debe0d5760c571ee6271076223d94be981c29a22401de681f3f70e067d"
+    },
+    "schema-engine": {
+      "url": "https://binaries.prisma.sh/all_commits/393aa359c9ad4a4bb28630fb5613f9c281cde053/debian-openssl-3.0.x/schema-engine.gz",
+      "sha256": "98ad433fd64da2ea1eb6d565553a9a4339ecf30f1c211b28b69690f591269a41"
+    }
+  }
+}

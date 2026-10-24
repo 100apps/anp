@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "namespace": "anp-cloud-036-20261024",
+  "storage_mode": "external",
+  "checks": {
+    "eleven_services_after_restart": true,
+    "cloud_data_persisted": true,
+    "oss_file_persisted": true,
+    "cloud_trace_persisted": true,
+    "executable_libraries_bundled": true,
+    "listeners_loopback_accounted_without_storage": true,
+    "file_delete_own_fixture": true,
+    "bucket_delete_own_fixture": true
+  },
+  "synthetic_trace": true,
+  "external_supplier_call_verified": false,
+  "internal_prisma_http_ports": [
+    44691
+  ]
+}

@@ -8,7 +8,7 @@ import sys
 from urllib.parse import quote
 
 ORDER = ["postgres", "redis", "clickhouse", "rustfs", "auth", "postgrest", "storage-api", "meta", "studio", "langfuse-web", "langfuse-worker", "litellm", "dbx", "business", "gateway"]
-DEPS = {"auth": ["postgres"], "postgrest": ["postgres"], "meta": ["postgres"],
+DEPS = {"auth": ["postgres"], "postgrest": ["postgres"], "meta": ["postgres"], "litellm": ["postgres"],
         "storage-api": ["auth", "postgrest", "rustfs"], "studio": ["meta", "storage-api"],
         "langfuse-web": ["postgres", "redis", "clickhouse", "rustfs"],
         "langfuse-worker": ["langfuse-web"], "business": ["auth", "postgrest", "storage-api"],
@@ -27,7 +27,7 @@ def jwt(role, key):
 
 
 def extend_secrets(value):
-    for key in ("auth-db", "storage-db", "langfuse-db", "clickhouse", "s3", "langfuse-salt", "langfuse-auth", "meta-crypto"):
+    for key in ("auth-db", "storage-db", "langfuse-db", "litellm-db", "clickhouse", "s3", "langfuse-salt", "langfuse-auth", "meta-crypto"):
         value.setdefault(key, secrets.token_hex(32))
     value.setdefault("langfuse-encryption", secrets.token_hex(32))
     value.setdefault("s3-access", "anp-local")
@@ -42,7 +42,9 @@ def extend_secrets(value):
 
 
 def initialize(c, config, secret):
-    marker = c.VAR / "data/platform-schema-v3"
+    if config.get("external_resources_file"):
+        return
+    marker = c.VAR / "data/platform-schema-v4"
     if marker.exists():
         return
     # 本包自己的 PostgreSQL；不接触宿主已有 Supabase。
@@ -83,16 +85,32 @@ COMMIT;
 """)
     if not c.sql(config, secret, "SELECT 1 FROM pg_database WHERE datname='langfuse';").strip():
         c.sql(config, secret, "CREATE DATABASE langfuse OWNER langfuse;")
+    if not c.sql(config, secret, "SELECT 1 FROM pg_roles WHERE rolname='litellm';").strip():
+        c.sql(config, secret, "CREATE ROLE litellm LOGIN PASSWORD '" + secret["litellm-db"] + "';")
+    if not c.sql(config, secret, "SELECT 1 FROM pg_database WHERE datname='litellm';").strip():
+        c.sql(config, secret, "CREATE DATABASE litellm OWNER litellm;")
     c.write(marker, "1\n")
 
 
 def command(c, name, config, secret):
+    args, environment = local_command(c, name, config, secret)
+    if config.get("external_resources_file"):
+        import external
+        resources = external.load(config)
+        origin = "http://127.0.0.1:" + str(config["ports"]["gateway"])
+        environment.update(external.environment(name, resources, origin))
+    return args, environment
+
+
+def local_command(c, name, config, secret):
     root, var = c.ROOT, c.VAR
     port = config["ports"][name]
     ports = config["ports"]
     environment = c.env()
     environment.update({"NODE_ENV": "production", "HOSTNAME": "127.0.0.1", "PORT": str(port),
                         "NODE_OPTIONS": "--max-old-space-size=768", "NEXT_TELEMETRY_DISABLED": "1"})
+    # 官方 slim Node 的根证书集可能早于云服务证书轮换；补充冻结依赖中的公共 CA。
+    environment["NODE_EXTRA_CA_CERTS"] = str(root / "platform/litellm/site-packages/certifi/cacert.pem")
     node = root / "tools/node/bin/node"
     url = lambda service: "http://127.0.0.1:" + str(ports[service])
     def db(user, key, database="postgres"):
@@ -112,6 +130,8 @@ def command(c, name, config, secret):
 <user_files_path>{escape(str(data))}/user_files/</user_files_path><format_schema_path>{escape(str(data))}/format_schemas/</format_schema_path>
 <access_control_path>{escape(str(data))}/access/</access_control_path>
 <max_server_memory_usage>4294967296</max_server_memory_usage><max_connections>128</max_connections>
+<!-- 多服务共享 cgroup；按 ClickHouse 自身分配器统计，避免把其他服务算入本进程限额。 -->
+<memory_worker_use_cgroup>0</memory_worker_use_cgroup>
 <background_pool_size>16</background_pool_size><background_schedule_pool_size>4</background_schedule_pool_size>
 <mark_cache_size>33554432</mark_cache_size><uncompressed_cache_size>16777216</uncompressed_cache_size>
 <profiles><default><max_threads>2</max_threads><max_memory_usage>536870912</max_memory_usage></default></profiles>
@@ -139,7 +159,8 @@ def command(c, name, config, secret):
             "PGRST_JWT_SECRET": secret["jwt"], "PGRST_SERVER_HOST": "127.0.0.1", "PGRST_SERVER_PORT": str(port), "PGRST_DB_POOL": "4"})
         return [root / "platform/postgrest/postgrest"], environment
     if name == "storage-api":
-        c.execute([root / "tools/python/bin/python3", "-I", "-B", root / "runtime/s3_init.py"], input=json.dumps({"endpoint": url("rustfs"), "access": secret["s3-access"], "secret": secret["s3"]}))
+        if not config.get("external_resources_file"):
+            c.execute([root / "tools/python/bin/python3", "-I", "-B", root / "runtime/s3_init.py"], input=json.dumps({"endpoint": url("rustfs"), "access": secret["s3-access"], "secret": secret["s3"]}))
         environment.update({"SERVER_PORT": str(port), "HOST": "127.0.0.1", "ANON_KEY": secret["anon-key"], "SERVICE_KEY": secret["service-key"],
             "AUTH_JWT_SECRET": secret["jwt"], "POSTGREST_URL": url("postgrest"), "DATABASE_URL": db("supabase_storage_admin", "storage-db"),
             "STORAGE_BACKEND": "s3", "GLOBAL_S3_BUCKET": "supabase", "GLOBAL_S3_ENDPOINT": url("rustfs"), "GLOBAL_S3_PROTOCOL": "http",
@@ -194,7 +215,8 @@ def command(c, name, config, secret):
             prefix = "LANGFUSE_S3_" + kind + "_UPLOAD_"
             environment.update({prefix + "BUCKET": "langfuse", prefix + "REGION": "us-east-1", prefix + "ENDPOINT": url("rustfs"),
                 prefix + "FORCE_PATH_STYLE": "true", prefix + "ACCESS_KEY_ID": secret["s3-access"], prefix + "SECRET_ACCESS_KEY": secret["s3"]})
-        c.execute([root / "tools/python/bin/python3", "-I", "-B", root / "runtime/s3_init.py"], input=json.dumps({"endpoint": url("rustfs"), "access": secret["s3-access"], "secret": secret["s3"]}))
+        if not config.get("external_resources_file"):
+            c.execute([root / "tools/python/bin/python3", "-I", "-B", root / "runtime/s3_init.py"], input=json.dumps({"endpoint": url("rustfs"), "access": secret["s3-access"], "secret": secret["s3"]}))
         if name == "langfuse-web":
             return ["/bin/sh", root / "platform/langfuse/web/web/entrypoint.sh", node, root / "platform/langfuse/web/web/server.js", "--keepAliveTimeout", "110000"], environment
         return [node, root / "platform/langfuse/worker/dist/index.js"], environment
@@ -243,7 +265,11 @@ http://127.0.0.1:{port} {{
     if name == "business":
         # 网关尚未启动时，初始化直接调用本包 Auth；不读取其他项目配置。
         from business_init import ensure_admin
-        ensure_admin(url("auth"), secret, var)
+        email = "admin@anp.local"
+        if config.get("external_resources_file"):
+            import external
+            email = external.load(config)["namespace"] + "@anp.local"
+        ensure_admin(url("auth"), secret, var, email)
         business_config = var / "run/config/business.json"
         c.write(business_config, json.dumps({"server": {"host": "127.0.0.1", "port": port},
             "supabase": {"url": url("gateway"), "anon_key": secret["anon-key"]},

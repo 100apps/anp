@@ -422,8 +422,12 @@ NOTIFY pgrst,'reload schema';''')
             for p in (bundle / "var/logs").glob("*.log"):
                 text = p.read_text(errors="replace")
                 for value in private.values():
-                    text = text.replace(value, "[REDACTED]")
+                    if isinstance(value, str) and value:
+                        for variant in (value, urllib.parse.quote(value, safe=""), urllib.parse.quote_plus(value)):
+                            text = text.replace(variant, "[REDACTED]")
                 (evidence / p.name).write_text(text)
+                if not receipt["passed"] and p.name == "litellm.log":
+                    print("LiteLLM 失败诊断（已脱敏）：\n" + text[-12000:], file=sys.stderr, flush=True)
             (evidence / "acceptance.json").write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n")
     print(json.dumps(receipt, ensure_ascii=False, indent=2))
 

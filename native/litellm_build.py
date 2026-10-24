@@ -33,6 +33,7 @@ def generate(bundle, target, fetch):
         (engines / name).chmod(0o755)
     scope_migration_metadata(bundle)
     generate_client(bundle, lock)
+    adapt_prisma_engine_slot(bundle)
     (bundle / "manifest/litellm-prisma.json").write_text(json.dumps({"prisma_version": lock["prisma_version"],
         "engine_commit": lock["engine_commit"], "platform": lock["platform"], "artifacts": lock["artifacts"],
         "package_lock_sha256": hashlib.sha256((package / "package-lock.json").read_bytes()).hexdigest()}, indent=2) + "\n")
@@ -59,6 +60,25 @@ def scope_migration_metadata(bundle):
                 "patched_sha256": hashlib.sha256(updated.encode()).hexdigest()})
     (bundle / "manifest/litellm-migration-scope.json").write_text(json.dumps(receipts, indent=2) + "\n")
     return receipts
+
+
+def adapt_prisma_engine_slot(bundle):
+    """LiteLLM 的引擎跟踪写入口适配冻结的 Prisma Python 0.15。"""
+    site = bundle / "platform/litellm/site-packages"
+    path = site / "litellm/proxy/db/prisma_client.py"
+    original = path.read_text()
+    before = "        prisma_client._Prisma__engine = engine"
+    after = "        prisma_client._internal_engine = engine"
+    if original.count(before) != 1 or "'_internal_engine'," not in (site / "prisma/_base_client.py").read_text():
+        raise RuntimeError("未知 LiteLLM/Prisma 引擎布局，拒绝适配")
+    updated = original.replace(before, after, 1)
+    path.write_text(updated)
+    (bundle / "manifest/litellm-prisma-compat.json").write_text(json.dumps({
+        "path": str(path.relative_to(bundle)), "prisma_version": "0.15.0",
+        "reason": "引擎跟踪使用 Prisma 0.15 的实际存储槽，保留事务跟踪和重连行为",
+        "upstream_sha256": hashlib.sha256(original.encode()).hexdigest(),
+        "patched_sha256": hashlib.sha256(updated.encode()).hexdigest(),
+    }, ensure_ascii=False, indent=2) + "\n")
 
 
 def generate_client(bundle, lock):

@@ -157,6 +157,7 @@ jobs:
         with:
           name: build-diagnostics-macos
           path: |
+            var/native/evidence/platform/
             var/native/langfuse-*.log
             var/native/dbx-*.log
             var/native/redis-build.log
@@ -224,6 +225,7 @@ jobs:
         with:
           name: build-diagnostics-linux
           path: |
+            var/native/evidence/linux/
             var/native/langfuse-*.log
             var/native/dbx-*.log
             var/native/redis-build.log

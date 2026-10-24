@@ -9,6 +9,7 @@ import socket
 import subprocess
 import sys
 import struct
+import shutil
 from types import SimpleNamespace
 
 import pytest
@@ -102,6 +103,25 @@ def test_extract_rejects_parent_escape(tmp_path):
     with pytest.raises(tarfile.FilterError):
         builder.extract(archive, tmp_path / "out")
     assert not (tmp_path / "escape").exists()
+
+
+@pytest.mark.skipif(sys.platform != "darwin" or not shutil.which("clang"), reason="需要 macOS 签名工具和编译器")
+def test_macho_audit_replaces_valid_linker_stub_before_relocation(native_runtime_dir):
+    builder = module("native_macho_builder", "native/build.py")
+    source = native_runtime_dir / "hello.c"
+    source.write_text('#include <stdio.h>\nint main(void) { puts("anp-signature-ok"); return 0; }\n')
+    bundle = native_runtime_dir / "bundle"
+    bundle.mkdir()
+    binary = bundle / "hello"
+    subprocess.run(["clang", str(source), "-o", str(binary)], check=True, capture_output=True)
+    subprocess.run(["codesign", "--verify", "--strict", str(binary)], check=True, capture_output=True)
+    assert "linker-signed" in subprocess.run(["codesign", "-dvv", str(binary)], capture_output=True, text=True).stderr
+    receipt = builder.macho_audit(bundle)
+    assert receipt["linker_stub_signatures"] == ["hello"]
+    assert "linker-signed" not in subprocess.run(["codesign", "-dvv", str(binary)], capture_output=True, text=True).stderr
+    moved = native_runtime_dir / "重新 解压"
+    shutil.copytree(bundle, moved)
+    assert subprocess.check_output([str(moved / "hello")], text=True).strip() == "anp-signature-ok"
 
 
 def test_pid_reuse_never_signals_another_process(tmp_path, monkeypatch):
@@ -447,7 +467,7 @@ def test_macho_audit_ignores_install_id_and_fat_headers_but_checks_loaded_librar
     if foreign_command:
         commands += f"Load command 2\n          cmd {foreign_command}\n      cmdsize 128\n         name {build_path} (offset 24)\n"
     monkeypatch.setattr(builder.subprocess, "check_output", lambda args, **kwargs: commands if "-l" in args else listing)
-    monkeypatch.setattr(builder.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=0))
+    monkeypatch.setattr(builder.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=0, stderr=""))
     if foreign_command:
         with pytest.raises(SystemExit, match="包外动态库"):
             builder.macho_audit(tmp_path)

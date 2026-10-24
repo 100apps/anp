@@ -77,8 +77,8 @@ def install_python(project, uv, python, environment):
 
 
 def macho_audit(bundle):
-    """禁止运行时依赖构建机 Homebrew/Nix；修复已验证内容的无效临时签名。"""
-    result = {"mach_o_files": 0, "resigned": [], "external_dependencies": []}
+    """审计包外依赖，并将 linker 简化签名升级为完整 ad-hoc 签名。"""
+    result = {"mach_o_files": 0, "resigned": [], "linker_stub_signatures": [], "external_dependencies": []}
     for p in bundle.rglob("*"):
         if not p.is_file() or p.is_symlink():
             continue
@@ -105,10 +105,18 @@ def macho_audit(bundle):
                             and not name.startswith(("/usr/lib/", "/System/Library/"))})
         if forbidden:
             result["external_dependencies"].append({"path": str(p.relative_to(bundle)), "libraries": forbidden})
-        verified = subprocess.run(["codesign", "--verify", str(p)], capture_output=True)
-        if verified.returncode:
+        signature = subprocess.run(["codesign", "-dvv", str(p)], capture_output=True, text=True)
+        linker_stub = "linker-signed" in signature.stderr
+        verified = subprocess.run(["codesign", "--verify", "--strict", str(p)], capture_output=True)
+        if linker_stub:
+            result["linker_stub_signatures"].append(str(p.relative_to(bundle)))
+        # linker stub 的哈希校验可通过，但 macOS 26 AMFI 仍可能拒绝。
+        # 在归档前生成完整签名；不修改系统安全设置或下载隔离标记。
+        if verified.returncode or linker_stub:
             run(["codesign", "--force", "--sign", "-", p], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            run(["codesign", "--verify", p], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            run(["codesign", "--verify", "--strict", p], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            final = subprocess.run(["codesign", "-dvv", str(p)], capture_output=True, text=True, check=True)
+            assert "linker-signed" not in final.stderr, "仍存在 linker 简化签名：" + str(p)
             result["resigned"].append(str(p.relative_to(bundle)))
     if result["external_dependencies"]:
         raise SystemExit("发现包外动态库依赖：" + json.dumps(result["external_dependencies"]))
@@ -260,7 +268,7 @@ def build(target, profile="platform"):
         (temporary / "manifest/build.json").write_text(json.dumps({"target": target, "profile": profile, "version": version, "redis_commit": sha if target == "macos-arm64" else None,
             "redis_distribution": "source" if target == "macos-arm64" else "official-deb",
             "inputs_sha256": {str(p.relative_to(ROOT)): digest(p) for p in inputs},
-            "adaptations": (["postgres bin chmod +x", "remove postgres PGXS development tests", "postgrest libpq -> bundled PostgreSQL libpq", "ad-hoc sign invalid Mach-O signatures"] if target == "macos-arm64" else
+            "adaptations": (["postgres bin chmod +x", "remove postgres PGXS development tests", "postgrest libpq -> bundled PostgreSQL libpq", "full ad-hoc sign invalid or linker-stub Mach-O signatures"] if target == "macos-arm64" else
                             ["official Redis Debian artifacts", "PostgreSQL wrappers use POSIX sh", "bundled ELF library closure", "relocated loader in instance cache without changing PT_LOAD"]),
             "included": ["uv", "python", "node", "postgres", "redis", "postgrest", "litellm"] + (["auth", "storage-api", "meta", "studio", "gateway", "langfuse-web", "langfuse-worker", "clickhouse", "rustfs", "dbx", "business"] if profile == "platform" else []),
             "excluded": ["realtime"] + ([] if profile == "platform" else ["langfuse", "studio", "auth", "storage-api", "business"])}, indent=2) + "\n")

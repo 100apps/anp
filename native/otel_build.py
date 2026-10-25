@@ -13,6 +13,7 @@ def install(bundle, target, fetch, copy_tree):
     from platform_build import unpack, artifact_binary
     lock_path = ROOT / "native/locks" / ("otel-" + target + ".json")
     lock = json.loads(lock_path.read_text())
+    excluded_helpers = []
     for name, item in lock["artifacts"].items():
         print("观测官方产物：" + name, flush=True)
         destination = bundle / "platform/otel" / name
@@ -34,6 +35,14 @@ def install(bundle, target, fetch, copy_tree):
                 children = list(folder.iterdir())
                 payload = children[0] if len(children) == 1 and children[0].is_dir() else folder
                 copy_tree(payload, destination)
+            if name == "prometheus":
+                if not (destination / "prometheus").is_file():
+                    raise RuntimeError("官方 Prometheus 发行包缺少服务二进制")
+                helper = destination / "promtool"
+                if helper.exists():
+                    excluded_helpers.append({"path": str(helper.relative_to(bundle)),
+                                             "reason": "附带诊断 CLI；不参与 ANP 服务启动与运行"})
+                    helper.unlink()
     copy_tree(ROOT / "native/defaults/otel", bundle / "defaults/otel")
     licenses = bundle / "manifest/licenses/otel"
     licenses.mkdir(parents=True, exist_ok=True)
@@ -44,6 +53,8 @@ def install(bundle, target, fetch, copy_tree):
             raise RuntimeError("观测组件许可证摘要错误：" + name)
         shutil.copy2(path, licenses / name)
     shutil.copy2(lock_path, bundle / "manifest/otel-sources.lock.json")
+    (bundle / "manifest/otel-runtime.json").write_text(json.dumps({"excluded_helpers": excluded_helpers},
+        ensure_ascii=False, indent=2) + "\n")
 
 
 def install_redis(bundle, archive):

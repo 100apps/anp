@@ -42,6 +42,36 @@ def test_native_artifact_and_source_lock():
     assert lock["artifacts"]["redis"]["url"].startswith("https://packages.redis.io/")
 
 
+@pytest.mark.parametrize("target", ["macos-arm64", "linux-amd64"])
+def test_otel_installs_prometheus_runtime_and_license_without_unused_promtool(tmp_path, monkeypatch, target):
+    installer = module("native_otel_runtime_payload", "native/otel_build.py")
+    monkeypatch.setattr(installer, "ROOT", tmp_path)
+    source = tmp_path / "official/prometheus-locked"
+    source.mkdir(parents=True)
+    for name, data in (("prometheus", b"official server bytes"), ("promtool", b"optional diagnostics"), ("LICENSE", b"official license")):
+        (source / name).write_bytes(data)
+    (source / "prometheus").chmod(0o755)
+    archive = tmp_path / "official.tar.gz"
+    with tarfile.open(archive, "w:gz") as tar:
+        tar.add(source, arcname=source.name)
+    lock = tmp_path / "native/locks" / ("otel-" + target + ".json")
+    lock.parent.mkdir(parents=True)
+    lock.write_text(json.dumps({"artifacts": {"prometheus": {"version": "locked"}}, "licenses": {}}))
+    (tmp_path / "native/defaults/otel").mkdir(parents=True)
+    bundle = tmp_path / "bundle"
+    (bundle / "manifest").mkdir(parents=True)
+    def unpack(path, destination):
+        with tarfile.open(path) as tar:
+            tar.extractall(destination, filter="data")
+    monkeypatch.setitem(sys.modules, "platform_build", SimpleNamespace(unpack=unpack, artifact_binary=None))
+    installer.install(bundle, target, lambda item: archive, shutil.copytree)
+    installed = bundle / "platform/otel/prometheus"
+    assert (installed / "prometheus").read_bytes() == b"official server bytes"
+    assert (installed / "prometheus").stat().st_mode & 0o111
+    assert (installed / "LICENSE").read_bytes() == b"official license"
+    assert not (installed / "promtool").exists()
+
+
 def test_elf_interpreter_relocation_preserves_load_segments_and_existing_bytes(tmp_path):
     runtime = module("native_elf_exec", "native/runtime/elf_exec.py")
     header = bytearray(64)

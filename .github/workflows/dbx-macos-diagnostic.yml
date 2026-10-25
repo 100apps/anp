@@ -1,0 +1,60 @@
+name: DBX Mac 跨主机诊断
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dbx:
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: '3.13'
+      - name: 固定工具链编译 DBX，不组装或发布 ANP
+        run: |
+          git submodule update --init --depth 1 platform/sources/components/dbx
+          python3 - <<'PY'
+          import hashlib, json, shutil, subprocess, sys, tempfile
+          from pathlib import Path
+          sys.path.insert(0, 'native')
+          import build, dbx_build
+          base = build.BASE
+          bundle = base / 'dbx-diagnostic'
+          node = json.loads(Path('native/locks/macos-arm64.json').read_text())['artifacts']['node']
+          build.extract(build.fetch(node), base / 'node-extract')
+          build.copy_tree(next((base / 'node-extract').iterdir()), bundle / 'tools/node')
+          tools = json.loads(Path('native/locks/build-tools-macos-arm64.json').read_text())['artifacts']
+          for item in tools.values():
+              with tempfile.TemporaryDirectory(dir=base) as scratch:
+                  build.extract(build.fetch(item), Path(scratch))
+                  package = next(Path(scratch).iterdir())
+                  build.run(['/bin/sh', package / 'install.sh', '--prefix=' + str(base / 'rust'), '--disable-ldconfig'])
+          llvm = base / 'rust/lib/rustlib/aarch64-apple-darwin/lib/libLLVM.dylib'
+          if not llvm.exists(): llvm.symlink_to('../../../libLLVM.dylib')
+          dbx_build.main(bundle)
+          destination = bundle / 'platform/dbx'
+          destination.mkdir(parents=True)
+          binary = destination / 'dbx-web'
+          shutil.copy2(base / 'dbx-target/release/dbx-web', binary)
+          audit = build.macho_audit(bundle)
+          result = subprocess.run([binary, '--help'], capture_output=True, text=True)
+          assert result.returncode == 0
+          evidence = {'purpose': 'diagnostic-only-not-release', 'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+                      'sdk': subprocess.check_output(['xcrun', '--show-sdk-version'], text=True).strip(),
+                      'os': subprocess.check_output(['sw_vers', '-productVersion'], text=True).strip(),
+                      'binary_sha256': build.digest(binary), 'help_exit_code': result.returncode, 'audit': audit}
+          (destination / 'diagnostic.json').write_text(json.dumps(evidence, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: dbx-macos26-diagnostic
+          path: var/native/dbx-diagnostic/platform/dbx/
+          if-no-files-found: error
+          compression-level: 6

@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "checks": {
+    "anonymous_platform_denied": true,
+    "authenticated_console_through_mac_tunnel": true,
+    "four_storage_services_external": true,
+    "business_page_through_mac_tunnel": true,
+    "studio_page_through_mac_tunnel": true,
+    "studio_frontend_scripts_present": true,
+    "studio_frontend_asset_0": true,
+    "studio_frontend_asset_1": true,
+    "dbx_page_through_mac_tunnel": true,
+    "dbx_frontend_scripts_present": true,
+    "dbx_frontend_asset_0": true,
+    "langfuse_page_through_mac_tunnel": true,
+    "langfuse_frontend_scripts_present": true,
+    "langfuse_frontend_asset_0": true,
+    "langfuse_frontend_asset_1": true,
+    "litellm_page_through_mac_tunnel": true,
+    "studio_real_cloud_query_from_mac": true,
+    "dbx_real_cloud_query_from_mac": true
+  },
+  "long_term_cloud_credentials_read_on_mac": false
+}

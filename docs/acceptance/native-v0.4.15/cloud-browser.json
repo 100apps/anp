@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "version": "0.4.15",
+  "scope": "Linux cloud via SSH tunnel from physical Mac Chrome",
+  "checks": {
+    "temporary_admin_console_login": true,
+    "external_storage_status": true,
+    "ten_platform_services_ready": true,
+    "dbx_rendered_controls": true,
+    "studio_rendered_storage_link": true,
+    "logout": true,
+    "temporary_user_deleted": true
+  }
+}

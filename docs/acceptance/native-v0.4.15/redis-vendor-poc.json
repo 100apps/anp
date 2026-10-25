@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "vendor_signatures_preserved": true,
+  "no_macho_patch": true,
+  "homebrew_and_external_network_denied": true,
+  "real_ping_and_relocation": true,
+  "scoped_overrides": [
+    {
+      "path": "storage/redis/bin/redis-server",
+      "library": "/opt/homebrew/opt/openssl@3/lib/libcrypto.3.dylib",
+      "provided_by": "storage/redis/lib/libcrypto.3.dylib",
+      "vendor_team": "UUK47G4BAZ"
+    },
+    {
+      "path": "storage/redis/bin/redis-server",
+      "library": "/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib",
+      "provided_by": "storage/redis/lib/libssl.3.dylib",
+      "vendor_team": "UUK47G4BAZ"
+    },
+    {
+      "path": "storage/redis/bin/redis-cli",
+      "library": "/opt/homebrew/opt/openssl@3/lib/libcrypto.3.dylib",
+      "provided_by": "storage/redis/lib/libcrypto.3.dylib",
+      "vendor_team": "UUK47G4BAZ"
+    },
+    {
+      "path": "storage/redis/bin/redis-cli",
+      "library": "/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib",
+      "provided_by": "storage/redis/lib/libssl.3.dylib",
+      "vendor_team": "UUK47G4BAZ"
+    }
+  ]
+}

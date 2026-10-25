@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-10-25T19:18:26.907833+00:00",
+  "os": "27.0.1",
+  "arch": "arm64",
+  "operation": "--help with isolated empty data root; no credentials or services",
+  "system_security_changed": false,
+  "results": {
+    "ci15_diagnostic_unchanged_dbx": {
+      "sha256": "e6f7c7b037bf0e512f02eb14a127a0a72d9e9475edb562a9570922309ba11f49",
+      "returncode": -9,
+      "stdout_bytes": 0,
+      "stderr_bytes": 0,
+      "strict_signature_valid": true
+    },
+    "local16_build": {
+      "sha256": "099bae969067e7185f001e9c41b11c896f35e5c973dcbb343fed3b7b79426d79",
+      "returncode": 0,
+      "stdout_bytes": 742,
+      "stderr_bytes": 0,
+      "strict_signature_valid": true
+    }
+  },
+  "conclusion": "cross-host CI DBX failure remains unresolved; local build success is not a substitute"
+}

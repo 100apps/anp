@@ -1,0 +1,10 @@
+{
+  "passed": false,
+  "version": "0.4.15",
+  "scope": "official Mac archive on physical Mac",
+  "archive_sha256": "d9879c752153f870482350ffa1be4e425e3a65768b640ff75745553bf09d466a",
+  "failed_service": "redis",
+  "returncode": -9,
+  "diagnosis": "Mach-O relocation removed Redis Labs Developer ID; original vendor-signed payload works with private library lookup",
+  "system_security_settings_changed": false
+}

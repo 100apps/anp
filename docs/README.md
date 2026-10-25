@@ -31,6 +31,10 @@
 
 ## 验收
 
+- [0.4.16 本机 Mac 压缩包验收（非 CI 附件）](acceptance/native-v0.4.16-local/README.md)
+
+- [0.4.15 云模式验收与 Mac 附件签名问题（历史）](acceptance/native-v0.4.15/README.md)
+
 - [统一入口 Mac 验收](acceptance/统一入口-Mac验收-2026-10-25.md)
 - [平台控制台 Mac 验收](acceptance/平台控制台-Mac验收-2026-10-25.md)
 - [Linux 目标主机验收](acceptance/linux-host-2026-10-24.md)

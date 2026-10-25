@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "checks": {
+    "admin_password_login": true,
+    "twenty_managed_services_ready": true,
+    "inventory_no_passwords": true,
+    "state_not_cached": true,
+    "dbx_without_second_login": true,
+    "grafana_proxy_login": true,
+    "grafana_identity_header_cannot_be_forged": true,
+    "langfuse_manual_credential_matches": true,
+    "litellm_manual_credential_matches": true,
+    "foreign_origin_credential_denied": true,
+    "protected_storage_stop_denied": true,
+    "shared_dependency_stop_denied": true,
+    "dbx_stopped_from_console": true,
+    "foreign_listener_not_managed": true,
+    "foreign_listener_start_denied": true,
+    "dbx_restarted_from_console": true,
+    "mapping_online_save": true,
+    "mapping_stale_revision_denied": true,
+    "running_port_edit_denied": true,
+    "configuration_online_save": true,
+    "dbx_real_postgres_query": true,
+    "grafana_postgres_migrations": true
+  }
+}

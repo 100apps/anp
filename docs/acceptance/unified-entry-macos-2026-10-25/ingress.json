@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "origin": "http://127.0.0.1:58010",
+  "checks": {
+    "admin_login": true,
+    "anonymous_denied:/project/default": true,
+    "anonymous_denied:/_next/probe.js": true,
+    "anonymous_denied:/api/platform/profile": true,
+    "anonymous_denied:/dbx/": true,
+    "anonymous_denied:/grafana/": true,
+    "anonymous_denied:/rustfs/console/": true,
+    "anonymous_denied:/litellm/ui/": true,
+    "anonymous_denied:/langfuse/": true,
+    "single_agent_server_no_gateway": true,
+    "all_managed_services_ready": true,
+    "studio_real_query": true,
+    "studio_page_same_origin": true,
+    "litellm_bad_key_denied": true,
+    "litellm_good_key": true,
+    "litellm_ui_login_via_proxy": true,
+    "grafana_admin_proxy": true,
+    "cross_origin_studio_write_denied": true,
+    "member_cannot_access_studio_or_credentials": true,
+    "own_member_cleaned": true
+  }
+}

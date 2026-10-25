@@ -1,4 +1,5 @@
 """Supabase 验证登录身份；LangGraph 负责线程访问范围。"""
+from anp_business.shared.telemetry import http_client
 from http.cookies import SimpleCookie
 
 import httpx
@@ -31,7 +32,7 @@ async def supabase(method, path, *, token="", data=None):
     if token:
         headers["Authorization"] = "Bearer " + token
     try:
-        async with httpx.AsyncClient(timeout=10, trust_env=False) as client:
+        async with http_client(timeout=10, trust_env=False) as client:
             return await client.request(method, config["url"].rstrip("/") + "/auth/v1/" + path, headers=headers, json=data)
     except httpx.HTTPError:
         raise Auth.exceptions.HTTPException(status_code=503, detail="Supabase 认证服务不可达") from None
@@ -48,7 +49,7 @@ async def current_user(headers):
     if not value.get("id"):
         raise Auth.exceptions.HTTPException(status_code=401, detail="认证响应无效")
     # 用户可编辑 user_metadata；只信任由管理员维护的 app_metadata。
-    return {"id": value["id"], "email": value.get("email", ""),
+    return {"id": value["id"], "email": value.get("user_metadata", {}).get("display_email") or value.get("user_metadata", {}).get("display_name") or value.get("email", ""),
             "role": "admin" if value.get("app_metadata", {}).get("anp_role") == "admin" else "user"}
 
 

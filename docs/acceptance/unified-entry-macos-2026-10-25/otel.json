@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "checks": {
+    "collector_to_tempo_trace": true,
+    "collector_to_prometheus_metric": true,
+    "collector_to_loki_log": true
+  }
+}

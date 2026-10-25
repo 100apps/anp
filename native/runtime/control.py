@@ -56,6 +56,15 @@ def write(path, content):
 def configuration():
     path = ROOT / "config/anp.json"
     config = json.loads(path.read_text() if path.exists() else (ROOT / "defaults/anp.json").read_text())
+    if PLATFORM:
+        # 兼容旧双进程配置：Agent Server 接管旧网关端口；不迁移数据。
+        if "gateway" in config["ports"]:
+            config["ports"]["business"] = config["ports"].pop("gateway")
+        if "gateway" in config["services"]:
+            config["services"] = list(dict.fromkeys([name for name in config["services"] if name != "gateway"] + ["studio", "langfuse-worker", "litellm", "dbx", "business"]))
+        # 老的自定义配置只补新组件端口。
+        config["ports"] = {"rustfs-console": 59003, **platforms.observability.PORTS, **config["ports"]}
+        config["observability"] = platforms.observability.settings(config)
     assert config["bind"] == "127.0.0.1", "PoC 仅允许 loopback"
     ports = config["ports"]
     expected = set(ORDER) | (set(platforms.EXTRA_PORTS) if PLATFORM else set())
@@ -96,7 +105,8 @@ def env():
 
 
 def execute(args, check=True, **kwargs):
-    result = subprocess.run(confined(args), env=env(), capture_output=True, text=True, **kwargs)
+    environment = kwargs.pop("env", None)
+    result = subprocess.run(confined(args), env=environment if environment is not None else env(), capture_output=True, text=True, **kwargs)
     if check and result.returncode:
         content = (result.stdout + "\n" + result.stderr)[-12000:]
         path = VAR / "secrets/runtime.json"
@@ -200,7 +210,8 @@ def healthy(name, config):
         return execute([ROOT / "storage/redis/redis-cli", "-p", config["ports"][name], "PING"], check=False).stdout.strip() == "PONG"
     try:
         path = platforms.HEALTH.get(name, "/health/liveliness") if PLATFORM else "/" if name == "postgrest" else "/health/liveliness"
-        with HTTP.open("http://127.0.0.1:" + str(config["ports"][name]) + path, timeout=2) as response:
+        port = config["ports"]["otelcol-health"] if PLATFORM and name == "otelcol" else config["ports"][name]
+        with HTTP.open("http://127.0.0.1:" + str(port) + path, timeout=2) as response:
             return response.status == 200
     except (OSError, urllib.error.URLError):
         return False
@@ -281,6 +292,7 @@ def command(name, config, secret):
                             "PRISMA_QUERY_ENGINE_BINARY": str(ROOT / "platform/litellm/engines/query-engine"),
                             "PRISMA_SCHEMA_ENGINE_BINARY": str(ROOT / "platform/litellm/engines/schema-engine"),
                             "PRISMA_BINARY_CACHE_DIR": str(ROOT / "platform/litellm/cli"),
+                            "SERVER_ROOT_PATH": "/litellm", "LITELLM_UI_PATH": str(VAR / "cache/litellm-ui"),
                             "PATH": str(ROOT / "runtime/bin") + ":" + str(ROOT / "tools/node/bin") + ":" + environment["PATH"]})
         resources = external.load(config)
         if resources:
@@ -290,6 +302,15 @@ def command(name, config, secret):
 
 def selected(config, text=None):
     names = set(text.split(",") if text and text != "all" else config["services"])
+    if PLATFORM:
+        if "gateway" in names:  # 旧命令的兼容别名，不再创建网关进程。
+            names.remove("gateway")
+            names.update(("studio", "langfuse-worker", "litellm", "dbx", "business"))
+        if "observability" in names:
+            names.remove("observability")
+            names.update(platforms.observability.SERVICES)
+        if (not text or text == "all") and platforms.observability.settings(config)["enabled"]:
+            names.update(platforms.observability.SERVICES)
     if not names or not names <= set(ORDER):
         raise RuntimeError("未知服务")
     cloud = bool(config.get("external_resources_file"))
@@ -404,6 +425,13 @@ def start(config, names, verbose=True):
     progress("数据目录：" + str(VAR / "data"), verbose)
     progress("日志目录：" + str(VAR / "logs"), verbose)
     progress("启动顺序：" + " → ".join(names), verbose)
+    if PLATFORM and "business" in names and owned("gateway"):
+        # 升级旧目录时仅回收此目录登记并验证身份的 Caddy/旧 Agent Server。
+        previous = owned("business")
+        if previous and not group_owns_port(previous, config["ports"]["business"]):
+            stop_one("business")
+        stop_one("gateway")
+        progress("旧网关已合并，Agent Server 接管统一入口端口", verbose)
     progress("检查主端口和附属端口是否可用…", verbose)
     # 在初始化数据和生成秘密之前拒绝所有外来监听者。
     for name in names:
@@ -416,6 +444,13 @@ def start(config, names, verbose=True):
             port = config["ports"][extra]
             if owner in names and port_open(port) and (not state or not group_owns_port(state, port)):
                 raise RuntimeError("附属端口被其他进程占用：" + str(port) + "；PID " + ", ".join(map(str, sorted(listener_pids(port)))))
+        # memberlist 还使用同号 UDP 端口；不接管其他程序的 UDP 监听。
+        if "tempo" in names and not owned("tempo"):
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+                try:
+                    probe.bind(("127.0.0.1", config["ports"]["tempo-memberlist"]))
+                except OSError as error:
+                    raise RuntimeError("Tempo memberlist UDP 端口已被占用") from error
     progress("端口检查通过，准备运行目录和配置…", verbose)
     for folder in ("run", "data", "logs", "cache", "secrets"):
         (VAR / folder).mkdir(parents=True, exist_ok=True)
@@ -495,9 +530,10 @@ def print_start_summary(result, config):
     print("\n服务                 PID      端口     状态")
     for name, item in result.items():
         print(f"{name:<20} {item['pid']:<8} {item['port']:<8} 就绪")
-    if PLATFORM and "gateway" in result:
-        origin = "http://127.0.0.1:" + str(config["ports"]["gateway"])
-        print("\nSupabase Studio：" + origin + "/")
+    if PLATFORM and "business" in result:
+        origin = "http://127.0.0.1:" + str(config["ports"]["business"])
+        print("\n统一入口（Agent Server）：" + origin + "/workbench/")
+        print("Supabase Studio：" + origin + "/supabase")
         print("Langfuse：" + origin + "/langfuse/")
         print("LiteLLM：" + origin + "/litellm/")
         if "business" in result:
@@ -509,6 +545,9 @@ def print_start_summary(result, config):
             if name in result:
                 suffix = "/langfuse/" if name == "langfuse-web" else "/"
                 print(name + "：http://127.0.0.1:" + str(result[name]["port"]) + suffix)
+    if PLATFORM and "grafana" in result:
+        print("Grafana：http://127.0.0.1:" + str(config["ports"]["business"]) + "/grafana/")
+        print("OTLP HTTP：http://127.0.0.1:" + str(config["ports"]["otelcol"]))
     print("\n查看状态：./anp status")
     print("停止服务：./anp stop")
     print("服务日志：" + str(VAR / "logs") + "/<服务名>.log")
@@ -552,6 +591,9 @@ def main():
             raise RuntimeError("另一个 ANP 启动或停止命令正在执行，请等待其结束；锁文件：" + str(VAR / "run/control.lock")) from None
         if args.command == "stop":
             names = selected(config, args.services) if args.services else ORDER
+            if PLATFORM and args.services and set(args.services.split(",")) <= {"observability", *platforms.observability.SERVICES}:
+                # 停观测模块不连带关闭 Supabase 等服务共享的 PostgreSQL。
+                names = [name for name in names if name in platforms.observability.SERVICES]
             for name in reversed(names):
                 try:
                     stop_one(name)

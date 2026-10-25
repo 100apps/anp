@@ -1,0 +1,11 @@
+{
+  "issuer": "",
+  "client_id": "",
+  "label": "OAuth 登录",
+  "redirect_uri": "",
+  "scopes": "openid profile email",
+  "client_secret_file": "",
+  "service_key_file": "",
+  "admin_subjects": [],
+  "token_endpoint_auth_method": ""
+}

@@ -37,9 +37,9 @@ def test_native_artifact_and_source_lock():
     lock = json.loads((ROOT / "native/locks/macos-arm64.json").read_text())
     assert lock["target"] == "macos-arm64"
     for item in lock["artifacts"].values():
-        assert item["url"].startswith(("https://github.com/", "https://releases.astral.sh/", "https://nodejs.org/"))
+        assert item["url"].startswith(("https://github.com/", "https://releases.astral.sh/", "https://nodejs.org/", "https://packages.redis.io/"))
         assert len(item["sha256"]) == 64
-    assert len(lock["sources"]["redis"]["commit"]) == 40
+    assert lock["artifacts"]["redis"]["url"].startswith("https://packages.redis.io/")
 
 
 def test_elf_interpreter_relocation_preserves_load_segments_and_existing_bytes(tmp_path):
@@ -74,6 +74,32 @@ def test_elf_interpreter_refuses_foreign_architecture(tmp_path):
     with pytest.raises(RuntimeError, match="x86_64"):
         runtime.set_interpreter(path, tmp_path / "loader")
     assert path.read_bytes() == header
+
+
+def test_slim_node_preload_uses_rpath_without_splitting_relocation_spaces(tmp_path, monkeypatch):
+    runtime = module("native_elf_space_preload", "native/runtime/elf_exec.py")
+    root = tmp_path / "完整 解压 中文目录"
+    source = root / "platform/storage-api/node/.node-real.elf"
+    source.parent.mkdir(parents=True)
+    source.write_bytes(b"immutable official node")
+    libraries = root / "tools/libc"
+    libraries.mkdir(parents=True)
+    (libraries / "libanp_nss.so").write_bytes(b"own nss")
+    patcher = root / "tools/elf/patchelf"
+    patcher.parent.mkdir()
+    patcher.write_bytes(b"official static patcher")
+    calls, executed = [], {}
+    monkeypatch.setattr(runtime, "ROOT", root)
+    monkeypatch.setenv("LD_PRELOAD", "/foreign/injection.so")
+    monkeypatch.setenv("LD_LIBRARY_PATH", "/host/libraries")
+    monkeypatch.setattr(runtime.subprocess, "run", lambda args, **kwargs: calls.append(args))
+    monkeypatch.setattr(runtime, "set_interpreter", lambda *args: None)
+    monkeypatch.setattr(runtime.os, "execve", lambda file, argv, env: executed.update(file=str(file), env=env))
+    runtime.execute(source.relative_to(root), ["server.js"])
+    assert executed["env"]["LD_PRELOAD"] == "libanp_nss.so"
+    assert "LD_LIBRARY_PATH" not in executed["env"]
+    assert any("--set-rpath" in args and str(libraries) in args for args in calls)
+    assert not any("--add-needed" in args for args in calls)
 
 
 def test_business_configuration_survives_pid_record_write(tmp_path, monkeypatch):
@@ -116,7 +142,7 @@ def test_macho_audit_replaces_valid_linker_stub_before_relocation(native_runtime
     subprocess.run(["clang", str(source), "-o", str(binary)], check=True, capture_output=True)
     subprocess.run(["codesign", "--verify", "--strict", str(binary)], check=True, capture_output=True)
     assert "linker-signed" in subprocess.run(["codesign", "-dvv", str(binary)], capture_output=True, text=True).stderr
-    receipt = builder.macho_audit(bundle)
+    receipt = builder.macho_audit(bundle, source_built={"hello"})
     assert receipt["linker_stub_signatures"] == ["hello"]
     assert "linker-signed" not in subprocess.run(["codesign", "-dvv", str(binary)], capture_output=True, text=True).stderr
     moved = native_runtime_dir / "重新 解压"
@@ -248,7 +274,7 @@ def test_stop_cli_real_foreign_listener(native_runtime_dir, option, answer, code
     tmp_path = native_runtime_dir
     runtime = tmp_path / "runtime"
     runtime.mkdir()
-    for name in ("control.py", "platforms.py", "linux_process.py", "external.py"):
+    for name in ("control.py", "platforms.py", "linux_process.py", "external.py", "observability.py"):
         shutil.copy2(ROOT / "native/runtime" / name, runtime / name)
     sockets = [socket.socket() for _ in range(4)]
     try:
@@ -299,7 +325,7 @@ def test_start_progress_reuse_and_json_with_native_redis(native_runtime_dir, mod
     (tmp_path / "tools/python/bin").mkdir(parents=True)
     (tmp_path / "storage").mkdir()
     (tmp_path / "defaults").mkdir()
-    for name in ("control.py", "platforms.py", "external.py"):
+    for name in ("control.py", "platforms.py", "external.py", "observability.py"):
         shutil.copy2(ROOT / "native/runtime" / name, tmp_path / "runtime" / name)
     shutil.copy2(ROOT / "native/anp", tmp_path / "anp")
     (tmp_path / "anp").chmod(0o755)
@@ -423,7 +449,7 @@ def test_linux_transitive_rpath_preserves_dynamic_value_and_file_layout(tmp_path
 ])
 def test_linux_optional_symbol_mapping_cannot_allow_host_library_code(tmp_path, mode, name, own_loader, process, allowed):
     import importlib.util
-    spec = importlib.util.spec_from_file_location("anp_library_maps", ROOT / "native/platform_check.py")
+    spec = importlib.util.spec_from_file_location("anp_library_maps", ROOT / "native/checks/platform_check.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     root = tmp_path / "bundle"

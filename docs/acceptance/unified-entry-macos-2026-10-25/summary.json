@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "target": "macos-arm64",
+  "mode": "local-overlay",
+  "checks_by_suite": {
+    "ingress": 20,
+    "console": 22,
+    "platforms": 10,
+    "rustfs": 8,
+    "business": 24,
+    "otel": 3
+  },
+  "pytest_passed": 133,
+  "frontend_build_passed": true,
+  "release_published": false,
+  "immutable_files_verified": 225072
+}

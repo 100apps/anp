@@ -34,7 +34,7 @@ make start
 
 ## 平台入口
 
-`/dbx/`、`/langfuse/` 提供 HTTP、流式响应和 WebSocket 代理；`/litellm/` 下的具体 API 路径同样可以代理。平台自身的登录机制仍生效；业务会话不会转发给平台。`/supabase` 与 `/litellm` 的管理入口跳转到配置的独立地址，因为官方管理台的根路径资源不能仅通过代理安全改成子路径。远程部署需要配置浏览器能够访问的管理台地址，并配置各平台自身的访问控制。
+`/dbx/`、`/langfuse/` 提供 HTTP、流式响应和 WebSocket 代理；`/litellm/` 下的具体 API 路径同样可以代理。平台自身的登录机制仍生效；业务会话不会转发给平台。独立 Business 默认未启用 ingress，此时 `/supabase` 与 `/litellm` 管理入口跳转到配置地址。原生包启用单入口后，Studio 通过同源 `/project/default` 及根路径资源代理，LiteLLM 使用 `/litellm/` 前缀；管理页面与资源均要求管理员身份。
 
 数据 API 和文件操作使用 Supabase Data API/RPC、Storage；业务代码不直接连接 PostgreSQL 或对象存储。Realtime 未包含在本轮原生发行范围内。
 
@@ -46,4 +46,19 @@ make start
 make test
 ```
 
-原生包构建还会使用随包 Python 安装冻结依赖并构建前端。`native/business_check.py` 验证真实 Supabase 登录、管理员边界、跨用户线程隔离和两个 Demo，生成不含密码与令牌的回执。当前示例使用框架的本地 in-memory Agent Server，适用于本机开发和演示；生产部署需单独选择框架支持的运行与持久化方案。
+原生包构建还会使用随包 Python 安装冻结依赖并构建前端。`native/checks/business_check.py` 验证真实 Supabase 登录、管理员边界、跨用户线程隔离和两个 Demo，生成不含密码与令牌的回执。当前示例使用框架的本地 in-memory Agent Server，适用于本机开发和演示；生产部署需单独选择框架支持的运行与持久化方案。
+
+## 可选 OTel/LGTM
+
+配置 `observability.enabled`、`observability.endpoint`、`observability.service_name` 可启用 OTLP HTTP 导出；默认关闭。Windows 原生开发可将 endpoint 指向 WSL 内的 Collector（默认 http://127.0.0.1:4318）。请求、Workflow 节点、Deep Agent 工具与项目 HTTP 调用会产生 span，并导出请求指标和固定格式日志，不采集认证头或正文。管理员导航新增 /grafana/，通过 `platforms.grafana` 或 ANP_PLATFORM_GRAFANA_URL 配置上游；保留 Grafana 独立登录。详见 [OTel/LGTM 使用说明](../docs/development/OTel-LGTM使用说明.md)。本轮源码接入尚未执行构建和运行验收。
+
+## 平台控制台与可选 OAuth
+
+管理员可在 `/workbench/console/` 查看平台、配置代理及登录策略。连接原生包时可管理当前目录服务；独立复制 Business 不会尝试操作其他宿主进程。OAuth 默认关闭，通过 `ANP_BUSINESS_OAUTH_FILE` 指定配置文件或在管理员控制台填写，原生默认 `config/oauth.json`，独立默认 `var/oauth.json`。Google 和标准 OIDC 均使用 Discovery；需要将真实回调地址登记到提供方。独立 Business 还须配置服务端 `service_key_file`，不能把 Supabase service-role key 放到浏览器。
+
+详细字段、权限映射、平台代理限制及手动登录策略见[平台控制台与 OAuth](../docs/development/平台控制台与OAuth.md)。
+
+
+### 可选的原生单入口代理
+
+`config.example.json` 的 `ingress.enabled` 默认 false，复制 Business 独立开发时可继续使用外部 Supabase 入口。原生包由启动器生成 true，并将 Auth、Data、Storage、Studio 的内部上游地址逐一传入；不要将它们指回 Agent Server 自身，以免递归代理。启用后 `/auth/v1/`、`/rest/v1/`、`/storage/v1/` 在 Agent Server 内流式转发；Studio 的 `/project/`、`/_next/`、`/api/platform/` 由同一管理员鉴权保护。LiteLLM 上游配置须包含其实际根前缀（原生包为 `http://127.0.0.1:54000/litellm/`）。无需额外业务 HTTP 服务或 Caddy。

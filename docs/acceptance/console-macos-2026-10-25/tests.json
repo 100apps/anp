@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "command": "make test",
+  "tests_passed": 115,
+  "frontend_build": true,
+  "doctor": "tools present; Docker daemon stopped; native acceptance does not require Docker"
+}

@@ -39,13 +39,6 @@
       "destination": "storage/rustfs",
       "binary": "rustfs"
     },
-    "gateway": {
-      "version": "2.11.2",
-      "url": "https://github.com/caddyserver/caddy/releases/download/v2.11.2/caddy_2.11.2_mac_arm64.tar.gz",
-      "sha256": "7ab765777e953574d5713a69cab3f5a2f643a5c1cc264d4239a60ff845b465d8",
-      "destination": "platform/gateway",
-      "upstream_sha512": "1738e3e6b661a9c3e9c0ebbfe2f00d3bd3d0137ae2b534dc8f477cd96e9849e719bce31b61c6407edbc4fe5da4e3de923ec435bf4e29bb53aee60a2fa882c500"
-    },
     "migrate": {
       "version": "4.19.1",
       "url": "https://github.com/golang-migrate/migrate/releases/download/v4.19.1/migrate.darwin-arm64.tar.gz",
@@ -72,7 +65,7 @@
       "commit": "46b773d05e3162170a5358805588ce1fa60f3306",
       "version": "v0.6.51",
       "repository": "https://github.com/t8y2/dbx.git",
-      "reason": "\u5b98\u65b9\u672a\u63d0\u4f9b macOS Web \u670d\u52a1\u4ea7\u7269\uff0c\u4f7f\u7528\u56fa\u5b9a\u6e90\u7801\u6784\u5efa"
+      "reason": "官方未提供 macOS Web 服务产物，使用固定源码构建"
     }
   },
   "prisma_engines": {

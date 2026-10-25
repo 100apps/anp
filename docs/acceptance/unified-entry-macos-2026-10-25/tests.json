@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "command": "make test",
+  "pytest_passed": 133,
+  "frontend_build_passed": true,
+  "unverified": [
+    "Linux runtime",
+    "fresh archive",
+    "GitHub Release",
+    "real model provider",
+    "new OAuth provider login"
+  ]
+}

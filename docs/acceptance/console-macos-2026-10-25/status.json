@@ -1,0 +1,85 @@
+{
+  "passed": true,
+  "services": {
+    "postgres": {
+      "ready": true,
+      "port": 55432
+    },
+    "redis": {
+      "ready": true,
+      "port": 56379
+    },
+    "clickhouse": {
+      "ready": true,
+      "port": 58123
+    },
+    "rustfs": {
+      "ready": true,
+      "port": 59002
+    },
+    "auth": {
+      "ready": true,
+      "port": 59999
+    },
+    "postgrest": {
+      "ready": true,
+      "port": 53300
+    },
+    "storage-api": {
+      "ready": true,
+      "port": 55000
+    },
+    "meta": {
+      "ready": true,
+      "port": 58090
+    },
+    "studio": {
+      "ready": true,
+      "port": 53200
+    },
+    "langfuse-web": {
+      "ready": true,
+      "port": 53100
+    },
+    "langfuse-worker": {
+      "ready": true,
+      "port": 53130
+    },
+    "litellm": {
+      "ready": true,
+      "port": 54000
+    },
+    "dbx": {
+      "ready": true,
+      "port": 54424
+    },
+    "loki": {
+      "ready": true,
+      "port": 3100
+    },
+    "tempo": {
+      "ready": true,
+      "port": 3200
+    },
+    "prometheus": {
+      "ready": true,
+      "port": 9090
+    },
+    "otelcol": {
+      "ready": true,
+      "port": 4318
+    },
+    "grafana": {
+      "ready": true,
+      "port": 53000
+    },
+    "business": {
+      "ready": true,
+      "port": 20270
+    },
+    "gateway": {
+      "ready": true,
+      "port": 58010
+    }
+  }
+}

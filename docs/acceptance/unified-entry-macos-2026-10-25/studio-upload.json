@@ -1,0 +1,29 @@
+[
+  {
+    "method": "POST",
+    "path": "/storage/v1/upload/resumable"
+  },
+  {
+    "method": "Network.responseReceived",
+    "path": "/storage/v1/upload/resumable",
+    "status": 201
+  },
+  {
+    "method": "PATCH",
+    "path": "/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi83ZDUyOTMxMy1iN2FjLTRkMTktYjMzMS1kMDk3OTY4ZTM1MzE"
+  },
+  {
+    "method": "Network.responseReceived",
+    "path": "/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi83ZDUyOTMxMy1iN2FjLTRkMTktYjMzMS1kMDk3OTY4ZTM1MzE",
+    "status": 204
+  },
+  {
+    "method": "PATCH",
+    "path": "/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi83ZDUyOTMxMy1iN2FjLTRkMTktYjMzMS1kMDk3OTY4ZTM1MzE"
+  },
+  {
+    "method": "Network.responseReceived",
+    "path": "/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi83ZDUyOTMxMy1iN2FjLTRkMTktYjMzMS1kMDk3OTY4ZTM1MzE",
+    "status": 204
+  }
+]

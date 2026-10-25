@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
 export type User = {id: string; email: string; role: "admin" | "user"};
 
 export function Login({onLogin}: {onLogin: () => Promise<void>}) {
+  const [providers,setProviders] = useState<{label:string;path:string}[]>([]);
+  useEffect(()=>{fetch("/api/auth/oauth/providers").then(r=>r.json()).then(setProviders).catch(()=>setProviders([]));},[]);
   const [signup, setSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,6 +30,7 @@ export function Login({onLogin}: {onLogin: () => Promise<void>}) {
       <div className="login-feature"><strong>平台管理</strong><span>管理员可进入 DBX、Supabase、Langfuse 和 LiteLLM。</span></div>
     </section>
     <section className="login-form-panel"><h2>{signup ? "创建业务账户" : "登录业务账户"}</h2><p>用户身份由 Supabase 管理。</p>
+      {providers.map(p=><a className="oauth-login" key={p.path} href={p.path}>{p.label} →</a>)}
       <form onSubmit={submit}><label htmlFor="login-email">邮箱</label><Input id="login-email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} required disabled={busy}/>
         <label htmlFor="login-password">密码</label><Input id="login-password" type="password" autoComplete={signup ? "new-password" : "current-password"} minLength={8} value={password} onChange={e => setPassword(e.target.value)} required disabled={busy}/>
         {message && <p role="status" className="login-message">{message}</p>}

@@ -1,11 +1,36 @@
 {
-  "server": {"host": "127.0.0.1", "port": 20260},
-  "supabase": {"url": "http://127.0.0.1:58000", "anon_key": ""},
+  "server": {
+    "host": "127.0.0.1",
+    "port": 20260
+  },
+  "supabase": {
+    "url": "http://127.0.0.1:58000",
+    "anon_key": ""
+  },
   "platforms": {
     "dbx": "http://127.0.0.1:54424/dbx/",
     "langfuse": "http://127.0.0.1:53100/langfuse/",
     "litellm": "http://127.0.0.1:54000/",
-    "supabase": "http://127.0.0.1:53200/"
+    "supabase": "http://127.0.0.1:53200/",
+    "grafana": "http://127.0.0.1:53000/grafana/",
+    "rustfs": "http://127.0.0.1:59003/rustfs/",
+    "rustfs_api": "http://127.0.0.1:59002/"
   },
-  "model": {"mode": "demo", "name": "gpt-4.1-mini", "base_url": "http://127.0.0.1:54000/v1"}
+  "model": {
+    "mode": "demo",
+    "name": "gpt-4.1-mini",
+    "base_url": "http://127.0.0.1:54000/v1"
+  },
+  "observability": {
+    "enabled": false,
+    "endpoint": "http://127.0.0.1:4318",
+    "service_name": "anp-business"
+  },
+  "ingress": {
+    "enabled": false,
+    "auth": "http://127.0.0.1:59999/",
+    "rest": "http://127.0.0.1:53300/",
+    "storage": "http://127.0.0.1:55000/",
+    "studio": "http://127.0.0.1:53200/"
+  }
 }

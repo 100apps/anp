@@ -76,9 +76,10 @@ def install_python(project, uv, python, environment):
     run([uv, "pip", "sync", "--python", target / "bin/python", "--require-hashes", "--no-index", "--find-links", wheelhouse, requirements], env=environment)
 
 
-def macho_audit(bundle):
-    """审计包外依赖，并将 linker 简化签名升级为完整 ad-hoc 签名。"""
-    result = {"mach_o_files": 0, "resigned": [], "linker_stub_signatures": [], "external_dependencies": []}
+def macho_audit(bundle, source_built=None):
+    """审计包外依赖；保留有效官方签名，修复无效签名和源码 DBX 签名。"""
+    source_built = {"platform/dbx/dbx-web"} if source_built is None else set(source_built)
+    result = {"mach_o_files": 0, "resigned": [], "linker_stub_signatures": [], "preserved_upstream_signatures": [], "external_dependencies": []}
     for p in bundle.rglob("*"):
         if not p.is_file() or p.is_symlink():
             continue
@@ -112,19 +113,22 @@ def macho_audit(bundle):
             result["linker_stub_signatures"].append(str(p.relative_to(bundle)))
         # linker stub 的哈希校验可通过，但 macOS 26 AMFI 仍可能拒绝。
         # 在归档前生成完整签名；不修改系统安全设置或下载隔离标记。
-        if verified.returncode or linker_stub:
+        relative = str(p.relative_to(bundle))
+        if verified.returncode or (linker_stub and relative in source_built):
             run(["codesign", "--force", "--sign", "-", p], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             run(["codesign", "--verify", "--strict", p], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             final = subprocess.run(["codesign", "-dvv", str(p)], capture_output=True, text=True, check=True)
             assert "linker-signed" not in final.stderr, "仍存在 linker 简化签名：" + str(p)
             result["resigned"].append(str(p.relative_to(bundle)))
+        else:
+            result["preserved_upstream_signatures"].append(relative)
     if result["external_dependencies"]:
         raise SystemExit("发现包外动态库依赖：" + json.dumps(result["external_dependencies"]))
     return result
 
 
 def build(target, profile="platform"):
-    version = os.getenv("ANP_VERSION", (ROOT / "native/VERSION").read_text().strip() + "-poc" if profile == "platform" else "0.1.0-poc")
+    version = os.getenv("ANP_VERSION", (ROOT / "native/VERSION").read_text().strip())
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?", version):
         raise SystemExit("ANP_VERSION 必须是有效的三段版本号，可附带预发布后缀")
     host = ("macos" if platform.system() == "Darwin" else platform.system().lower()) + "-" + platform.machine()
@@ -134,13 +138,6 @@ def build(target, profile="platform"):
     if os.geteuid() == 0:
         raise SystemExit("请用普通用户构建和运行")
     lock = json.loads((ROOT / "native/locks" / (target + ".json")).read_text())
-    source = ROOT / lock["sources"]["redis"]["path"]
-    sha = lock["sources"]["redis"]["commit"]
-    if target == "macos-arm64":
-        actual = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
-        assert actual == sha, "Redis submodule 与锁不一致，请 make native-sources"
-        dirty = subprocess.check_output(["git", "-C", str(source), "diff", "--name-only", "HEAD"], text=True)
-        assert not dirty.strip(), "Redis 源码有修改，拒绝构建"
     destination = BASE / "build" / ("anp-" + target)
     if (destination / "var").exists() and any((destination / "var").iterdir()):
         raise SystemExit("构建目录已有运行数据，请先备份并移走 var；拒绝覆盖")
@@ -153,6 +150,10 @@ def build(target, profile="platform"):
             unpacked = Path(scratch)
             for name, item in lock["artifacts"].items():
                 print("官方产物：" + name, flush=True)
+                if item.get("install") == "macos-redis":
+                    from otel_build import install_redis
+                    install_redis(temporary, fetch(item))
+                    continue
                 folder = unpacked / name
                 if item.get("format") == "deb":
                     folder.mkdir()
@@ -199,21 +200,6 @@ def build(target, profile="platform"):
         uv = temporary / "tools/uv/uv"
         run([python, "--version"])
         run([temporary / "tools/node/bin/node", "--version"])
-        if target == "macos-arm64":
-            print("Redis：从固定 submodule 编译", flush=True)
-            log = BASE / "redis-build.log"
-            with log.open("w") as stream:
-            # 上游 make 跟踪构建参数；只清理早期错误并行构建产生的损坏头文件。
-                header = source / "src/release.h"
-                if header.exists() and any(not line.startswith("#") for line in header.read_text().splitlines()):
-                    run(["make", "-C", source / "src", "clean"], stdout=stream, stderr=subprocess.STDOUT)
-                    header.unlink(missing_ok=True)
-                run(["make", "-C", source / "src", "-j4", "MALLOC=libc", "BUILD_TLS=no", "BUILD_WITH_MODULES=no", "redis-server", "redis-cli"], stdout=stream, stderr=subprocess.STDOUT)
-            redis = temporary / "storage/redis"
-            redis.mkdir()
-            for filename in ("redis-server", "redis-cli"):
-                shutil.copy2(source / "src" / filename, redis / filename)
-            shutil.copy2(source / "LICENSE.txt", redis / "LICENSE.txt")
         print("LiteLLM：冻结依赖安装", flush=True)
         environment = {**os.environ, "UV_PROJECT_ENVIRONMENT": str(BASE / "venvs/litellm"), "UV_PYTHON_DOWNLOADS": "0"}
         install_python(ROOT / "native/packages/litellm", uv, python, environment)
@@ -225,6 +211,9 @@ def build(target, profile="platform"):
         if profile == "platform":
             import platform_build
             platform_build.install(temporary, fetch, copy_tree, target)
+            import otel_build
+            otel_build.install(temporary, target, fetch, copy_tree)
+        shutil.copy2(ROOT / "native/defaults/oauth.example.json", temporary / "defaults/oauth.example.json")
         shutil.copytree(ROOT / "native/runtime", temporary / "runtime", dirs_exist_ok=True,
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         if profile == "platform":
@@ -246,7 +235,7 @@ def build(target, profile="platform"):
             linux_elf.prepare(temporary)
         shutil.copy2(ROOT / "native/locks" / (target + ".json"), temporary / "manifest/sources.lock.json")
         license_dir = temporary / "manifest/licenses"
-        license_dir.mkdir()
+        license_dir.mkdir(exist_ok=True)
         for name, item in lock.get("licenses", {}).items():
             license_file = ROOT / "native/licenses" / name
             assert digest(license_file) == item["sha256"], "许可证校验失败：" + name
@@ -258,20 +247,28 @@ def build(target, profile="platform"):
             if (temporary / "var/data").exists():
                 raise RuntimeError("版本检查意外生成业务数据，拒绝组装")
             shutil.rmtree(temporary / "var")
-        inputs = [ROOT / "native/build.py", *list((ROOT / "native/runtime").glob("*.py")),
+        inputs = [ROOT / "native/defaults/oauth.example.json", ROOT / "native/build.py", ROOT / "native/otel_build.py", *list((ROOT / "native/runtime").glob("*.py")),
                   ROOT / "native/anp", ROOT / "native/VERSION", ROOT / "native/README.md", defaults, ROOT / "native/packages/litellm/uv.lock", ROOT / ("native/locks/" + target + ".json")]
         if target == "linux-amd64":
             inputs += [ROOT / "native/linux_elf.py", ROOT / "native/linux/nss.c"]
         if profile == "platform":
             inputs += [ROOT / "native/litellm_build.py", ROOT / "native/runtime/bin/prisma", ROOT / "native/defaults/external-resources.example.json", ROOT / ("native/locks/litellm-prisma-" + target + ".json"), ROOT / "native/packages/litellm-prisma/package-lock.json"]
             inputs += [ROOT / "native/platform_build.py", ROOT / "native/langfuse_build.py", ROOT / "native/dbx_build.py", ROOT / "native/business_build.py", ROOT / ("native/locks/platform-" + target + ".json"), ROOT / ("native/locks/build-tools-" + target + ".json"), ROOT / "native/packages/build-tools/package-lock.json", ROOT / "native/packages/prisma/package-lock.json", ROOT / "native/packages/dbx-tools/package-lock.json", ROOT / "native/packages/business-tools/package-lock.json", ROOT / "business/uv.lock", ROOT / "business/ui/pnpm-lock.yaml"]
-        (temporary / "manifest/build.json").write_text(json.dumps({"target": target, "profile": profile, "version": version, "redis_commit": sha if target == "macos-arm64" else None,
-            "redis_distribution": "source" if target == "macos-arm64" else "official-deb",
+        if profile == "platform":
+            inputs += [ROOT / ("native/locks/otel-" + target + ".json"), *[p for p in (ROOT / "native/defaults/otel").rglob("*") if p.is_file()]]
+            for folder in ("business/src", "business/ui/src", "business/ui/public"):
+                inputs += [p for p in (ROOT / folder).rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"]
+            inputs += [ROOT / "business/langgraph.json", ROOT / "business/config.example.json"]
+        commit = subprocess.check_output(["git", "-C", ROOT, "rev-parse", "HEAD"], text=True).strip()
+        dirty = subprocess.run(["git", "-C", ROOT, "diff", "--quiet", "HEAD", "--", "native", "business"], check=False).returncode != 0
+        (temporary / "manifest/build.json").write_text(json.dumps({"target": target, "profile": profile, "version": version,
+            "source_commit": commit, "source_dirty": dirty,
+            "redis_distribution": "official-binary" if target == "macos-arm64" else "official-deb",
             "inputs_sha256": {str(p.relative_to(ROOT)): digest(p) for p in inputs},
-            "adaptations": (["postgres bin chmod +x", "remove postgres PGXS development tests", "postgrest libpq -> bundled PostgreSQL libpq", "full ad-hoc sign invalid or linker-stub Mach-O signatures"] if target == "macos-arm64" else
+            "adaptations": (["postgres bin chmod +x", "remove postgres PGXS development tests", "postgrest and official Redis use bundled PostgreSQL OpenSSL/libpq", "preserve valid upstream signatures; sign modified Mach-O and source-built DBX"] if target == "macos-arm64" else
                             ["official Redis Debian artifacts", "PostgreSQL wrappers use POSIX sh", "bundled ELF library closure", "relocated loader in instance cache without changing PT_LOAD"]),
-            "included": ["uv", "python", "node", "postgres", "redis", "postgrest", "litellm"] + (["auth", "storage-api", "meta", "studio", "gateway", "langfuse-web", "langfuse-worker", "clickhouse", "rustfs", "dbx", "business"] if profile == "platform" else []),
-            "excluded": ["realtime"] + ([] if profile == "platform" else ["langfuse", "studio", "auth", "storage-api", "business"])}, indent=2) + "\n")
+            "included": ["uv", "python", "node", "postgres", "redis", "postgrest", "litellm"] + (["auth", "storage-api", "meta", "studio", "langfuse-web", "langfuse-worker", "clickhouse", "rustfs", "dbx", "business", "otelcol", "grafana", "prometheus", "loki", "tempo"] if profile == "platform" else []),
+            "excluded": ["realtime", "pyroscope", "ebpf"] + ([] if profile == "platform" else ["langfuse", "studio", "auth", "storage-api", "business"])}, indent=2) + "\n")
         hashes = {str(p.relative_to(temporary)): digest(p) for p in temporary.rglob("*") if p.is_file() and not p.is_symlink()}
         (temporary / "manifest/files.sha256.json").write_text(json.dumps(hashes, sort_keys=True, indent=2) + "\n")
         if destination.exists():

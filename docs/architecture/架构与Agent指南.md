@@ -38,3 +38,8 @@ ANP 是单机 AI 应用脚手架：一个 Debian slim 工具镜像承载四存�
 ## AI协作
 
 make context输出不含凭据的JSON，AGENTS.md提供操作边界；锁文件和验收JSON作为事实源。新增业务优先添加图、工具与对应业务测试，沿用HTTP扩展；不要复制第二套服务器、配置加载器或进程管理器。报告必须区分当前结果和历史证据，失败时先读取本项目var/logs及服务私有初始化日志，避免打印完整环境变量。
+
+
+## 原生单入口
+
+当前原生源码将网关并入 Agent Server 的 HTTP 扩展，入口为 `business/src/anp_business/server/ingress.py`，与 `platforms.py` 共用 HTTP 流式代理。`security.py` 先校验平台管理员身份和来源，再进入代理。Auth/Data/Storage API 委托上游身份与 RLS 校验，管理页面不能通过 API 白名单绕过登录。默认配置使用 `ports.business` 单入口，旧 gateway 端口自动兼容迁移；原生构建锁已移除 Caddy。Docker 全功能交付的 Envoy 与当前原生单入口变更分开。

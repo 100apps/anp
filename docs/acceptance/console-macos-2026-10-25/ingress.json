@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "checks": {
+    "lan_address_anonymous_proxy_denied": true,
+    "lan_address_admin_dbx_proxy": true,
+    "lan_address_grafana_proxy_login": true,
+    "default_loopback_restored": true
+  },
+  "scope": "从本机连接自身局域网地址；没有用第二台设备测试。"
+}

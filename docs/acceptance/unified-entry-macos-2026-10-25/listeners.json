@@ -1,0 +1,131 @@
+{
+  "passed": true,
+  "all_19_ready": true,
+  "unified_entry_owned_by_agent_server": true,
+  "old_20270_closed": true,
+  "caddy_removed": true,
+  "all_tcp_listeners_loopback": true,
+  "reserved_inactive_memberlist": 17947,
+  "listeners": [
+    {
+      "service": "postgres",
+      "address": "127.0.0.1:55432"
+    },
+    {
+      "service": "redis",
+      "address": "127.0.0.1:56379"
+    },
+    {
+      "service": "clickhouse",
+      "address": "127.0.0.1:58123"
+    },
+    {
+      "service": "clickhouse",
+      "address": "127.0.0.1:59000"
+    },
+    {
+      "service": "auth",
+      "address": "127.0.0.1:59999"
+    },
+    {
+      "service": "postgrest",
+      "address": "127.0.0.1:53300"
+    },
+    {
+      "service": "storage-api",
+      "address": "127.0.0.1:55000"
+    },
+    {
+      "service": "meta",
+      "address": "127.0.0.1:58090"
+    },
+    {
+      "service": "meta",
+      "address": "127.0.0.1:58091"
+    },
+    {
+      "service": "studio",
+      "address": "127.0.0.1:53200"
+    },
+    {
+      "service": "langfuse-web",
+      "address": "127.0.0.1:53100"
+    },
+    {
+      "service": "langfuse-worker",
+      "address": "127.0.0.1:53130"
+    },
+    {
+      "service": "loki",
+      "address": "127.0.0.1:3100"
+    },
+    {
+      "service": "loki",
+      "address": "127.0.0.1:19095"
+    },
+    {
+      "service": "tempo",
+      "address": "127.0.0.1:3200"
+    },
+    {
+      "service": "tempo",
+      "address": "127.0.0.1:19096"
+    },
+    {
+      "service": "tempo",
+      "address": "127.0.0.1:4417"
+    },
+    {
+      "service": "tempo",
+      "address": "127.0.0.1:4418"
+    },
+    {
+      "service": "prometheus",
+      "address": "127.0.0.1:9090"
+    },
+    {
+      "service": "otelcol",
+      "address": "127.0.0.1:18888"
+    },
+    {
+      "service": "otelcol",
+      "address": "127.0.0.1:13133"
+    },
+    {
+      "service": "otelcol",
+      "address": "127.0.0.1:4317"
+    },
+    {
+      "service": "otelcol",
+      "address": "127.0.0.1:4318"
+    },
+    {
+      "service": "grafana",
+      "address": "127.0.0.1:53000"
+    },
+    {
+      "service": "business",
+      "address": "127.0.0.1:58010"
+    },
+    {
+      "service": "litellm",
+      "address": "127.0.0.1:54000"
+    },
+    {
+      "service": "litellm",
+      "address": "127.0.0.1:57427"
+    },
+    {
+      "service": "dbx",
+      "address": "127.0.0.1:54424"
+    },
+    {
+      "service": "rustfs",
+      "address": "127.0.0.1:59002"
+    },
+    {
+      "service": "rustfs",
+      "address": "127.0.0.1:59003"
+    }
+  ]
+}

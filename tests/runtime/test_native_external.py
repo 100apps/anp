@@ -23,12 +23,37 @@ def test_external_gateway_never_pulls_local_storage():
     config = {"services": ["gateway"], "external_resources_file": "/private/resources.json"}
     selected = c.selected(config)
     assert not {"postgres", "redis", "clickhouse", "rustfs"} & set(selected)
-    assert {"auth", "postgrest", "storage-api", "dbx", "business", "gateway"} <= set(selected)
+    assert {"auth", "postgrest", "storage-api", "dbx", "business"} <= set(selected)
 
 
 def test_local_gateway_retains_all_storage_dependencies():
     c = runtime()
     assert {"postgres", "redis", "clickhouse", "rustfs"} <= set(c.selected({"services": ["gateway"]}))
+    assert "gateway" not in c.ORDER and "gateway" not in c.selected({"services": ["gateway"]})
+
+
+def test_old_native_configuration_preserves_gateway_port_without_second_process(tmp_path, monkeypatch):
+    c = runtime()
+    config = json.loads((ROOT / "native/defaults/platform.json").read_text())
+    config["ports"]["gateway"] = 58010
+    config["ports"]["business"] = 20270
+    config["services"] = ["gateway"]
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config/anp.json").write_text(json.dumps(config))
+    monkeypatch.setattr(c, "ROOT", tmp_path)
+    actual = c.configuration()
+    assert actual["ports"]["business"] == 58010 and "gateway" not in actual["ports"]
+    assert "gateway" not in actual["services"] and "business" in actual["services"]
+    assert c.configuration() == actual
+
+
+def test_external_runtime_uses_single_entry_origin(monkeypatch):
+    c = runtime()
+    monkeypatch.setattr(c.platforms, "local_command", lambda *args: ([], {}))
+    monkeypatch.setattr(c.external, "load", lambda config: {})
+    monkeypatch.setattr(c.external, "environment", lambda name, data, origin: {"origin": origin})
+    _, environment = c.platforms.command(c, "business", {"ports": {"business": 58010}, "external_resources_file": "/private/fixture.json"}, {})
+    assert environment["origin"] == "http://127.0.0.1:58010"
 
 
 def test_external_mode_rejects_explicit_local_storage():

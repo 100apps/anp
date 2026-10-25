@@ -1,0 +1,13 @@
+{
+  "mobile": {
+    "scrollWidth": 390,
+    "width": 390
+  },
+  "wide": {
+    "mainWidth": 1696,
+    "oldGatewayCards": 0,
+    "scrollWidth": 1920,
+    "unifiedCards": 1,
+    "width": 1920
+  }
+}

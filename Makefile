@@ -32,7 +32,7 @@ dist:
 docker-build:
 	$(PYTHON) scripts/manage.py build $(if $(PLATFORMS),--platforms "$(PLATFORMS)",) --target "$(TARGET)" $(if $(IMAGE),--image "$(IMAGE)",)
 native-sources:
-	git submodule update --init --depth 1 $(if $(filter linux-amd64,$(NATIVE_TARGET)),platform/sources/components/auth platform/sources/langfuse,platform/sources/components/redis platform/sources/components/auth platform/sources/components/dbx platform/sources/langfuse)
+	git submodule update --init --depth 1 $(if $(filter linux-amd64,$(NATIVE_TARGET)),platform/sources/components/auth platform/sources/langfuse,platform/sources/components/auth platform/sources/components/dbx platform/sources/langfuse)
 native-check:
 	$(PYTHON) $(if $(filter linux-amd64,$(NATIVE_TARGET)),native/linux_check.py,native/check.py)
 build-multi:

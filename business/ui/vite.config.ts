@@ -17,7 +17,7 @@ export default defineConfig({
   base: "/workbench/",
   server: {
     proxy: {
-      ...Object.fromEntries(["dbx", "langfuse", "litellm", "supabase"].map(name => ["/" + name, {
+      ...Object.fromEntries(["rustfs", "dbx", "langfuse", "litellm", "supabase", "grafana"].map(name => ["/" + name, {
         target: process.env.ANP_AGENT_URL || "http://127.0.0.1:20260", changeOrigin: false, ws: true
       }])),
       "/agent": {target: process.env.ANP_AGENT_URL || "http://127.0.0.1:20260",

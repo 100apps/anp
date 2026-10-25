@@ -19,7 +19,7 @@ import urllib.request
 import urllib.parse
 import uuid
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
@@ -157,6 +157,8 @@ def main():
         for sock in sockets:
             sock.close()
         defaults["ports"] = ports
+        defaults["observability"]["enabled"] = True
+        defaults["services"] = list(dict.fromkeys(defaults["services"] + ["otelcol", "grafana", "prometheus", "loki", "tempo"]))
         (bundle / "config/anp.json").write_text(json.dumps(defaults))
         print("独立验收副本已准备", flush=True)
         denied = [ROOT / "platform/sources", ROOT / "var/native/langfuse-build", ROOT / "native", ROOT / "business", Path.home() / "Library/pnpm"]
@@ -169,7 +171,7 @@ def main():
             assert not check or result.returncode == 0, command + "：" + result.stderr[-1500:]
             return result
 
-        def api(path, method="GET", data=None, headers=None, service="gateway"):
+        def api(path, method="GET", data=None, headers=None, service="business"):
             payload = data if isinstance(data, bytes) else json.dumps(data).encode() if data is not None else None
             request = urllib.request.Request("http://127.0.0.1:" + str(ports[service]) + path, data=payload,
                 method=method, headers={"Content-Type": "application/json", **(headers or {})})
@@ -181,7 +183,7 @@ def main():
 
         private = {}
         try:
-            from check import SANDBOX
+            from .poc_check import SANDBOX
             sandbox = []
             if sys.platform == "darwin":
                 profile = SANDBOX[2] + "(deny file-read* " + " ".join("(subpath " + json.dumps(str(p)) + ")" for p in denied) + ")"
@@ -240,17 +242,28 @@ def main():
                             listeners.append(port)
                 assert len(internal) <= 1, "Prisma 查询引擎出现多个内部监听"
             receipt["internal_prisma_http_ports"] = sorted(internal)
-            assert set(listeners) == set(ports.values()), "服务存在未记录的附属监听端口"
+            import sys as _sys
+            _sys.path.insert(0, str(bundle / "runtime"))
+            import platforms as _platforms
+            active_ports = {value for key, value in ports.items() if key != "tempo-memberlist" and (key in defaults["services"] or _platforms.EXTRA_PORTS.get(key) in defaults["services"])}
+            assert set(listeners) == active_ports, "服务存在未记录的附属监听端口"
             receipt["checks"]["all_process_group_listeners_loopback_and_accounted"] = True
             private = json.loads((bundle / "var/secrets/runtime.json").read_text())
             if "business" in ports:
-                from business_check import check as check_business
-                origin = "http://127.0.0.1:" + str(ports["gateway"])
+                from .business_check import check as check_business
+                origin = "http://127.0.0.1:" + str(ports["business"])
                 check_business(origin, origin, bundle / "var/secrets/runtime.json", acceptance / "business-last.json")
                 receipt["checks"]["business_supabase_auth_roles_threads_and_demos"] = True
-                from dbx_check import check as check_dbx
+                from .dbx_check import check as check_dbx
                 check_dbx(origin, ports["postgres"], private)
                 receipt["checks"]["dbx_admin_proxy_assets_login_real_query"] = True
+                from .ingress_check import check as check_ingress
+                from .storage_check import check as check_storage
+                check_ingress(bundle, acceptance / "ingress-last.json")
+                receipt["checks"]["single_entry_admin_studio_and_sdk_boundaries"] = True
+                storage_result = check_storage(bundle)
+                (acceptance / "storage-last.json").write_text(json.dumps(storage_result, indent=2) + "\n")
+                receipt["checks"]["storage_ordinary_and_resumable_8mib_upload_readback"] = True
             redis = [str(bundle / "storage/redis/redis-cli"), "-p", str(ports["redis"])]
             subprocess.run([*redis, "SET", "anp:native:acceptance", "persisted"], check=True, capture_output=True)
             vector = subprocess.check_output([*redis, "VADD", "anp:native:vector", "VALUES", "2", "1", "2", "point"], text=True).strip()
@@ -320,27 +333,34 @@ NOTIFY pgrst,'reload schema';''')
                 signed = "/storage/v1" + signed
             assert api(signed) == (200, content)
             receipt["checks"]["storage_upload_download_signed_url_user_rls"] = True
-            status, body = api("/api/platform/pg-meta/default/query", "POST", {"query": "SELECT 1 AS value"})
+            status, body = api("/auth/v1/token?grant_type=password", "POST", {"email": "admin@anp.local", "password": private["business-user-password"]}, anon)
+            assert status == 200
+            console_headers = {"Authorization": "Bearer " + json.loads(body)["access_token"]}
+            status, body = api("/api/platform/pg-meta/default/query", "POST", {"query": "SELECT 1 AS value"}, console_headers)
             assert status == 200 and json.loads(body) == [{"value": 1}], "Studio 实际查询失败"
             receipt["checks"]["studio_real_database_query"] = True
-            status, body = api("/")
+            status, body = api("/project/default", headers=console_headers)
             assert status == 200 and b"/_next/" in body, "Studio 页面失败"
             asset = re.search(rb'<script[^>]+src="([^"]+)"', body)
-            assert asset and api(asset[1].decode().replace("&amp;", "&"))[0] == 200, "Studio 脚本资源加载失败"
+            assert asset and api(asset[1].decode().replace("&amp;", "&"), headers=console_headers)[0] == 200, "Studio 脚本资源加载失败"
             receipt["checks"]["studio_page"] = True
             assert api("/litellm/v1/models")[0] in (401, 403)
             assert api("/litellm/v1/models", headers={"Authorization": "Bearer " + private["litellm"]})[0] == 200
             receipt["checks"]["litellm_gateway_auth"] = True
-            status, body = api("/v2/login", "POST", {"username": "admin", "password": private["litellm"]}, service="litellm")
+            status, body = api("/litellm/v2/login", "POST", {"username": "admin", "password": private["litellm"]}, service="litellm")
             assert status == 200 and bool(json.loads(body).get("token")), "LiteLLM 管理台登录失败"
             receipt["checks"]["litellm_dashboard_database_login"] = True
             assert api("/realtime/v1/websocket")[0] == 404
             receipt["checks"]["realtime_excluded"] = True
             print("Auth、Data API/RPC/RLS、Storage、Studio、LiteLLM 验收通过", flush=True)
             # 使用真实 Cookie/CSRF 进行 Langfuse 管理员登录，不记录密码或会话。
-            origin = "http://127.0.0.1:" + str(ports["gateway"])
+            origin = "http://127.0.0.1:" + str(ports["business"])
             cookies = http.cookiejar.CookieJar()
             browser = urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPCookieProcessor(cookies))
+            admin_login = urllib.request.Request(origin + "/api/auth/login", data=json.dumps({"email": "admin@anp.local",
+                "password": private["business-user-password"]}).encode(), headers={"Content-Type": "application/json"})
+            with browser.open(admin_login, timeout=30) as response:
+                assert response.status == 200, "平台管理员统一登录失败"
             with browser.open(origin + "/langfuse/api/auth/csrf", timeout=30) as response:
                 csrf = json.load(response)["csrfToken"]
             login = urllib.parse.urlencode({"email": "admin@anp.local", "password": private["langfuse-user-password"],

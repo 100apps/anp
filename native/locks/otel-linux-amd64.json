@@ -1,0 +1,61 @@
+{
+  "target": "linux-amd64",
+  "artifacts": {
+    "grafana": {
+      "version": "13.2.4",
+      "url": "https://dl.grafana.com/grafana/release/13.2.4/grafana_13.2.4_38252365904_linux_amd64.tar.gz",
+      "sha256": "c48765988fd88572607e4ea670251af8a8e64ab3e360d0f3cf67a6f3587b92ab"
+    },
+    "otelcol": {
+      "version": "0.163.1",
+      "url": "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.163.1/otelcol-contrib_0.163.1_linux_amd64.tar.gz",
+      "sha256": "e93e6fd2b59427420a9e8eba5b9e78260df6d21e95283a7298084d2aa07f9df7",
+      "binary": "otelcol-contrib"
+    },
+    "prometheus": {
+      "version": "3.15.1",
+      "url": "https://github.com/prometheus/prometheus/releases/download/v3.15.1/prometheus-3.15.1.linux-amd64.tar.gz",
+      "sha256": "6a726885328ad9efebbf36e876ce2fb6225468a71fd1e7ce3ba666d5f4d97a84"
+    },
+    "loki": {
+      "version": "3.7.9",
+      "url": "https://github.com/grafana/loki/releases/download/v3.7.9/loki-linux-amd64.zip",
+      "sha256": "17a5fae28ce733b3560c27c76620920b169bd2aea9473947b733b511f92e81dd",
+      "binary": "loki-linux-amd64",
+      "installed_name": "loki"
+    },
+    "tempo": {
+      "version": "3.1.1",
+      "url": "https://github.com/grafana/tempo/releases/download/v3.1.1/tempo_3.1.1_linux_amd64.tar.gz",
+      "sha256": "cc7efc370d2e5cfdf93792060da4ea9d6c2a3aae348ccc95cbaaaf3393e1d339",
+      "binary": "tempo"
+    }
+  },
+  "excluded": [
+    "pyroscope",
+    "obi",
+    "ebpf"
+  ],
+  "licenses": {
+    "otel-grafana-LICENSE": {
+      "url": "https://raw.githubusercontent.com/grafana/grafana/v13.2.4/LICENSE",
+      "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
+    },
+    "otel-loki-LICENSE": {
+      "url": "https://raw.githubusercontent.com/grafana/loki/v3.7.9/LICENSE",
+      "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
+    },
+    "otel-tempo-LICENSE": {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.1.1/LICENSE",
+      "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
+    },
+    "otel-otelcol-LICENSE": {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-releases/v0.163.1/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    "otel-prometheus-LICENSE": {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.15.1/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  }
+}

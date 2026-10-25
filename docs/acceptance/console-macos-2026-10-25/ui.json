@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": {
+    "browser_dbx_stop_start": true,
+    "credential_fields_visible_and_hidden_without_logging_values": true,
+    "desktop_1920_no_horizontal_overflow": true,
+    "desktop_main_right_matches_viewport": true,
+    "mobile_390_all_five_tabs_no_horizontal_overflow": true,
+    "viewport_restored": true
+  }
+}

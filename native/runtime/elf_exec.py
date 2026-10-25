@@ -107,7 +107,9 @@ def execute(relative, arguments):
         environment.pop(key, None)
     if slim_node and (libraries / "libanp_nss.so").is_file():
         # 此官方 Node 的 ELF 布局不支持新增 NEEDED；构造器在 main 前清除临时预载。
-        environment["LD_PRELOAD"] = str(libraries / "libanp_nss.so")
+        # glibc 以空格/冒号分割 LD_PRELOAD，绝对解压路径可能含空格。
+        # 只传 SONAME，依靠上面已写入的包内 RPATH 查找，路径不会被拆开。
+        environment["LD_PRELOAD"] = "libanp_nss.so"
     # 自派生 ELF 通过自身 RPATH 找到库；/bin/sh 等宿主工具使用宿主库。
     os.execve(target, [str(target), *arguments], environment)
 

@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "checks": {
+    "signed_s3_requires_anp_admin": true,
+    "invalid_s3_signature_denied": true,
+    "list_existing_buckets": true,
+    "create_temporary_bucket": true,
+    "object_write_and_read_with_unicode_path": true,
+    "presigned_url_through_admin_proxy": true,
+    "cleanup_own_temporary_resources": true,
+    "console_credentials_match_and_no_cache": true
+  },
+  "browser_login_and_buckets_verified": true,
+  "endpoint": "http://127.0.0.1:58010/rustfs/console/"
+}

@@ -21,7 +21,11 @@ def check(origin, postgres_port, private, postgres=None, admin_email="admin@anp.
     for script in scripts:
         path = script if script.startswith("/") else "/dbx/" + script.lstrip("./")
         assert len(request(path)) > 100
-    request("/dbx/api/auth/login", {"password": private["dbx-password"]})
+    auth_state = json.loads(request("/dbx/api/auth/check"))
+    if auth_state.get("required"):
+        request("/dbx/api/auth/login", {"password": private["dbx-password"]})
+    else:
+        assert auth_state.get("authenticated") is True, "DBX 免二次登录状态无效"
     connection = {"id": str(uuid.uuid4()), "name": "ANP distribution acceptance", "db_type": "postgres",
                   "host": "127.0.0.1", "port": postgres_port, "username": "anp", "password": private["postgres"], "database": "postgres"}
     if postgres:
@@ -32,5 +36,5 @@ def check(origin, postgres_port, private, postgres=None, admin_email="admin@anp.
         assert result["columns"] == ["answer"] and result["rows"] == [[42]], "DBX 查询结果错误"
     finally:
         request("/dbx/api/connection/disconnect", {"connectionId": connection["id"]})
-    return {"business_admin_login": True, "dbx_password_login_through_proxy": True,
+    return {"business_admin_login": True, "dbx_access_through_authenticated_proxy": True, "second_login_required": bool(auth_state.get("required")),
             "embedded_frontend_assets": True, "postgres_real_query_result_42": True}

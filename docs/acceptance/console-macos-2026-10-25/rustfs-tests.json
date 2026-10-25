@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "command": "make test",
+  "tests_passed": 119,
+  "frontend_build": true
+}

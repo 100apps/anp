@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "files": 225079,
+  "command": "./anp verify",
+  "scope": "local overlaid candidate read-only file integrity; not a fresh archive acceptance"
+}

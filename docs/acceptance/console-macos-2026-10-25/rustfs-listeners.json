@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "addresses": [
+    "127.0.0.1:59002",
+    "127.0.0.1:59003"
+  ],
+  "ready_services": 20
+}

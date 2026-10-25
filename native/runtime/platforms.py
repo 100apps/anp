@@ -5,18 +5,23 @@ import hmac
 import json
 import secrets
 import sys
+from pathlib import Path
 from urllib.parse import quote
 
-ORDER = ["postgres", "redis", "clickhouse", "rustfs", "auth", "postgrest", "storage-api", "meta", "studio", "langfuse-web", "langfuse-worker", "litellm", "dbx", "business", "gateway"]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import observability
+
+ORDER = ["postgres", "redis", "clickhouse", "rustfs", "auth", "postgrest", "storage-api", "meta", "studio", "langfuse-web", "langfuse-worker", "litellm", "dbx", *observability.SERVICES, "business"]
 DEPS = {"auth": ["postgres"], "postgrest": ["postgres"], "meta": ["postgres"], "litellm": ["postgres"],
         "storage-api": ["auth", "postgrest", "rustfs"], "studio": ["meta", "storage-api"],
         "langfuse-web": ["postgres", "redis", "clickhouse", "rustfs"],
-        "langfuse-worker": ["langfuse-web"], "business": ["auth", "postgrest", "storage-api"],
-        "gateway": ["auth", "postgrest", "storage-api", "studio", "langfuse-worker", "litellm", "dbx", "business"]}
-EXTRA_PORTS = {"clickhouse-native": "clickhouse", "meta-admin": "meta"}
+        "langfuse-worker": ["langfuse-web"], "business": ["auth", "postgrest", "storage-api"]}
+DEPS.update({"otelcol": ["loki", "tempo", "prometheus"], "grafana": ["postgres", "loki", "tempo", "prometheus"]})
+EXTRA_PORTS = {"rustfs-console": "rustfs","clickhouse-native": "clickhouse", "meta-admin": "meta", **observability.EXTRA_PORTS}
 HEALTH = {"auth": "/health", "postgrest": "/", "storage-api": "/status", "meta": "/health",
           "studio": "/api/platform/profile", "langfuse-web": "/langfuse/api/public/health", "langfuse-worker": "/api/health",
-          "gateway": "/auth/v1/health", "clickhouse": "/ping", "rustfs": "/health", "dbx": "/dbx/", "business": "/api/health"}
+          "clickhouse": "/ping", "rustfs": "/health", "dbx": "/dbx/", "business": "/api/health"}
+HEALTH.update(observability.HEALTH)
 
 
 def jwt(role, key):
@@ -27,6 +32,9 @@ def jwt(role, key):
 
 
 def extend_secrets(value):
+    value.setdefault("grafana-password", secrets.token_urlsafe(32))
+    value.setdefault("grafana-secret", secrets.token_hex(32))
+    value.setdefault("grafana-db", secrets.token_hex(32))
     for key in ("auth-db", "storage-db", "langfuse-db", "litellm-db", "clickhouse", "s3", "langfuse-salt", "langfuse-auth", "meta-crypto"):
         value.setdefault(key, secrets.token_hex(32))
     value.setdefault("langfuse-encryption", secrets.token_hex(32))
@@ -93,11 +101,13 @@ COMMIT;
 
 
 def command(c, name, config, secret):
+    if name in observability.SERVICES:
+        return observability.command(c, name, config, secret)
     args, environment = local_command(c, name, config, secret)
     if config.get("external_resources_file"):
         import external
         resources = external.load(config)
-        origin = "http://127.0.0.1:" + str(config["ports"]["gateway"])
+        origin = "http://127.0.0.1:" + str(config["ports"]["business"])
         environment.update(external.environment(name, resources, origin))
     return args, environment
 
@@ -143,12 +153,12 @@ def local_command(c, name, config, secret):
         data = var / "data/rustfs"
         data.mkdir(parents=True, exist_ok=True)
         environment.update({"RUSTFS_ACCESS_KEY": secret["s3-access"], "RUSTFS_SECRET_KEY": secret["s3"],
-            "RUSTFS_ADDRESS": "127.0.0.1:" + str(port), "RUSTFS_CONSOLE_ENABLE": "false", "RUSTFS_LOGS_DIR": str(var / "logs/rustfs"), "RUST_LOG": "warn"})
+            "RUSTFS_ADDRESS": "127.0.0.1:" + str(port), "RUSTFS_CONSOLE_ENABLE": "true", "RUSTFS_CONSOLE_ADDRESS": "127.0.0.1:" + str(ports["rustfs-console"]), "RUSTFS_CONSOLE_PREFIX": "/rustfs/console", "RUSTFS_LOGS_DIR": str(var / "logs/rustfs"), "RUST_LOG": "warn"})
         # 官方 CLI 会拆分带空格的绝对 volume 参数；用数据目录作 cwd，传相对路径。
         return [root / "storage/rustfs/rustfs", "."], environment
     if name == "auth":
-        environment.update({"GOTRUE_API_HOST": "127.0.0.1", "GOTRUE_API_PORT": str(port), "API_EXTERNAL_URL": url("gateway") + "/auth/v1",
-            "GOTRUE_SITE_URL": url("gateway"), "GOTRUE_DB_DRIVER": "postgres", "GOTRUE_DB_DATABASE_URL": db("supabase_auth_admin", "auth-db"),
+        environment.update({"GOTRUE_API_HOST": "127.0.0.1", "GOTRUE_API_PORT": str(port), "API_EXTERNAL_URL": url("business") + "/auth/v1",
+            "GOTRUE_SITE_URL": url("business"), "GOTRUE_DB_DRIVER": "postgres", "GOTRUE_DB_DATABASE_URL": db("supabase_auth_admin", "auth-db"),
             "GOTRUE_JWT_SECRET": secret["jwt"], "GOTRUE_JWT_AUD": "authenticated", "GOTRUE_JWT_ADMIN_ROLES": "service_role",
             "GOTRUE_JWT_DEFAULT_GROUP_NAME": "authenticated", "GOTRUE_EXTERNAL_EMAIL_ENABLED": "true", "GOTRUE_MAILER_AUTOCONFIRM": "true",
             "GOTRUE_DB_MIGRATIONS_PATH": str(root / "platform/auth/migrations"), "GOMAXPROCS": "2"})
@@ -166,7 +176,7 @@ def local_command(c, name, config, secret):
             "STORAGE_BACKEND": "s3", "GLOBAL_S3_BUCKET": "supabase", "GLOBAL_S3_ENDPOINT": url("rustfs"), "GLOBAL_S3_PROTOCOL": "http",
             "GLOBAL_S3_FORCE_PATH_STYLE": "true", "AWS_ACCESS_KEY_ID": secret["s3-access"], "AWS_SECRET_ACCESS_KEY": secret["s3"],
             "REGION": "us-east-1", "TENANT_ID": "anp", "FILE_SIZE_LIMIT": "52428800", "ENABLE_IMAGE_TRANSFORMATION": "false",
-            "STORAGE_PUBLIC_URL": url("gateway"), "REQUEST_ALLOW_X_FORWARDED_PATH": "true", "DATABASE_CONNECTION_POOL_SIZE": "3"})
+            "STORAGE_PUBLIC_URL": url("business"), "REQUEST_ALLOW_X_FORWARDED_PATH": "true", "DATABASE_CONNECTION_POOL_SIZE": "3"})
         return [root / "platform/storage-api/bin/storage"], environment
     if name == "meta":
         if sys.platform.startswith("linux"):
@@ -186,7 +196,7 @@ def local_command(c, name, config, secret):
         environment.update({"STUDIO_PG_META_URL": url("meta"), "POSTGRES_HOST": "127.0.0.1", "POSTGRES_PORT": str(ports["postgres"]),
             "POSTGRES_DB": "postgres", "POSTGRES_USER": "anp", "POSTGRES_PASSWORD": secret["postgres"],
             "POSTGRES_USER_READ_WRITE": "anp", "POSTGRES_USER_READ_ONLY": "anp_studio_reader",
-            "PG_META_CRYPTO_KEY": secret["meta-crypto"], "SUPABASE_URL": url("gateway"), "SUPABASE_PUBLIC_URL": url("gateway"),
+            "PG_META_CRYPTO_KEY": secret["meta-crypto"], "SUPABASE_URL": url("business"), "SUPABASE_PUBLIC_URL": url("business"),
             "SUPABASE_ANON_KEY": secret["anon-key"], "SUPABASE_SERVICE_KEY": secret["service-key"], "AUTH_JWT_SECRET": secret["jwt"],
             "DEFAULT_PROJECT_NAME": "ANP", "DEFAULT_ORGANIZATION_NAME": "ANP", "ENABLED_FEATURES_LOGS_ALL": "false"})
         return [root / "platform/studio/bin/studio"], environment
@@ -195,7 +205,7 @@ def local_command(c, name, config, secret):
         environment["NODE_OPTIONS"] = "--max-old-space-size=2048"
         environment.update({"DATABASE_URL": db("langfuse", "langfuse-db", "langfuse") + "?connection_limit=4&pool_timeout=30",
             "DIRECT_URL": db("langfuse", "langfuse-db", "langfuse"), "SALT": secret["langfuse-salt"], "ENCRYPTION_KEY": secret["langfuse-encryption"],
-            "NEXTAUTH_SECRET": secret["langfuse-auth"], "NEXTAUTH_URL": url("gateway") + "/langfuse/api/auth", "NEXT_PUBLIC_BASE_PATH": "/langfuse",
+            "NEXTAUTH_SECRET": secret["langfuse-auth"], "NEXTAUTH_URL": url("business") + "/langfuse/api/auth", "NEXT_PUBLIC_BASE_PATH": "/langfuse",
             "TELEMETRY_ENABLED": "false", "LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES": "false", "CLICKHOUSE_URL": url("clickhouse"),
             "LANGFUSE_INIT_ORG_ID": "anp-local", "LANGFUSE_INIT_ORG_NAME": "ANP", "LANGFUSE_INIT_PROJECT_ID": "anp-local",
             "LANGFUSE_INIT_PROJECT_NAME": "ANP", "LANGFUSE_INIT_PROJECT_PUBLIC_KEY": secret["langfuse-public-key"],
@@ -220,47 +230,9 @@ def local_command(c, name, config, secret):
         if name == "langfuse-web":
             return ["/bin/sh", root / "platform/langfuse/web/web/entrypoint.sh", node, root / "platform/langfuse/web/web/server.js", "--keepAliveTimeout", "110000"], environment
         return [node, root / "platform/langfuse/worker/dist/index.js"], environment
-    if name == "gateway":
-        conf = var / "run/Caddyfile"
-        c.write(conf, f'''{{
-    admin off
-    auto_https off
-}}
-http://127.0.0.1:{port} {{
-    bind 127.0.0.1
-    @langfuse path /langfuse /langfuse/*
-    handle /litellm/v1/* {{
-        uri strip_prefix /litellm
-        reverse_proxy 127.0.0.1:{ports['litellm']}
-    }}
-    @business path /workbench /workbench/* /api/auth/* /api/health /api/platforms /api/workbench /threads /threads/* /runs /runs/* /assistants /assistants/* /store/* /docs /openapi.json /dbx /dbx/* /supabase /supabase/* /litellm /litellm/*
-    handle @business {{
-        reverse_proxy 127.0.0.1:{ports['business']}
-    }}
-    handle_path /auth/v1/* {{
-        reverse_proxy 127.0.0.1:{ports['auth']}
-    }}
-    handle_path /rest/v1/* {{
-        reverse_proxy 127.0.0.1:{ports['postgrest']}
-    }}
-    handle_path /storage/v1/* {{
-        reverse_proxy 127.0.0.1:{ports['storage-api']}
-    }}
-    handle @langfuse {{
-        reverse_proxy 127.0.0.1:{ports['langfuse-web']}
-    }}
-    handle /realtime/* {{
-        respond "Realtime 未包含在此版本" 404
-    }}
-    handle {{
-        reverse_proxy 127.0.0.1:{ports['studio']}
-    }}
-}}
-''')
-        return [root / "platform/gateway/caddy", "run", "--config", conf, "--adapter", "caddyfile"], environment
     if name == "dbx":
         environment.update({"DBX_BIND_ADDR": "127.0.0.1", "DBX_PORT": str(port),
-            "DBX_DATA_DIR": str(var / "data/dbx"), "DBX_PASSWORD": secret["dbx-password"], "DBX_PUBLIC_BASE_PATH": "/dbx"})
+            "DBX_DATA_DIR": str(var / "data/dbx"), "DBX_DISABLE_PASSWORD": "true", "DBX_PUBLIC_BASE_PATH": "/dbx"})
         return [root / "platform/dbx/dbx-web"], environment
     if name == "business":
         # 网关尚未启动时，初始化直接调用本包 Auth；不读取其他项目配置。
@@ -270,12 +242,22 @@ http://127.0.0.1:{port} {{
             import external
             email = external.load(config)["namespace"] + "@anp.local"
         ensure_admin(url("auth"), secret, var, email)
+        override_path = root / "config/business-overrides.json"
+        if override_path.exists():
+            overrides = json.loads(override_path.read_text())
+            # 只升级本包旧默认 LiteLLM 地址，用户自定义的外部上游保持不变。
+            if overrides.get("platforms", {}).get("litellm", "").rstrip("/") == url("litellm"):
+                overrides["platforms"]["litellm"] = url("litellm") + "/litellm/"
+                c.write(override_path, json.dumps(overrides, ensure_ascii=False, indent=2) + "\n")
         business_config = var / "run/config/business.json"
         c.write(business_config, json.dumps({"server": {"host": "127.0.0.1", "port": port},
-            "supabase": {"url": url("gateway"), "anon_key": secret["anon-key"]},
-            "platforms": {"dbx": url("dbx") + "/dbx/", "langfuse": url("langfuse-web") + "/langfuse/",
-                          "litellm": url("litellm") + "/", "supabase": url("studio") + "/"}}))
-        environment.update({"ANP_BUSINESS_CONFIG": str(business_config), "ANP_BUSINESS_DATA_ROOT": str(var / "data/business"),
-                            "LANGSMITH_TRACING": "false"})
+            "supabase": {"url": url("business"), "anon_key": secret["anon-key"]},
+            "ingress": {"enabled": True, "auth": url("auth") + "/", "rest": url("postgrest") + "/", "storage": url("storage-api") + "/", "studio": url("studio") + "/"},
+            "platforms": {"rustfs": url("rustfs-console") + "/rustfs/", "rustfs_api": url("rustfs") + "/", "dbx": url("dbx") + "/dbx/", "langfuse": url("langfuse-web") + "/langfuse/",
+                          "litellm": url("litellm") + "/litellm/", "supabase": url("studio") + "/", "grafana": url("grafana") + "/grafana/"},
+            "model": {"base_url": url("litellm") + "/litellm/v1"},
+            "observability": {"enabled": observability.settings(config)["enabled"], "endpoint": url("otelcol"), "service_name": "anp-business"}}))
+        environment.update({"ANP_NATIVE_ROOT": str(root), "ANP_BUSINESS_OVERRIDES": str(root / "config/business-overrides.json"), "ANP_BUSINESS_CONFIG": str(business_config), "ANP_BUSINESS_DATA_ROOT": str(var / "data/business"),
+                            "LANGSMITH_TRACING": "false", "ANP_SERVICE_VERSION": (root / "VERSION").read_text().strip() if (root / "VERSION").exists() else "development"})
         return [root / "tools/python/bin/python3", "-I", "-B", root / "runtime/business_launcher.py"], environment
     raise RuntimeError("未知平台服务：" + name)

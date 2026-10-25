@@ -45,6 +45,9 @@ def upstream():
             response = Response("ok")
             response.set_cookie("__Host-csrf", "proof", secure=True, path="/")
             return response
+        if path == "upload/resumable":
+            return Response(status_code=201, headers={"Location": "https://storage.invalid/storage/v1/upload/resumable/fixture-id",
+                "Access-Control-Allow-Headers": "Authorization, Upload-Metadata", "Upload-Offset": "6"})
         if path == "gzip":
             raw = gzip.compress(b"compressed static asset")
             return Response(raw, headers={"Content-Encoding": "gzip", "Vary": "Accept-Encoding"}, media_type="text/javascript")
@@ -77,7 +80,7 @@ def upstream():
 
 @pytest.fixture
 def client(monkeypatch, upstream):
-    for name in ("DBX", "LANGFUSE", "LITELLM", "SUPABASE", "SUPABASE_API"):
+    for name in ("DBX", "LANGFUSE", "LITELLM", "SUPABASE", "SUPABASE_API", "GRAFANA", "RUSTFS", "RUSTFS_API"):
         monkeypatch.setenv(f"ANP_PLATFORM_{name}_URL", upstream)
     app = FastAPI()
     app.include_router(router)
@@ -174,7 +177,7 @@ def test_targets_and_escaped_paths_are_not_user_controlled(client):
 
 def test_platform_list_only_exposes_public_links(client):
     result = client.get("/api/platforms").json()
-    assert len(result) == 4 and all(item["status"] == "available" for item in result)
+    assert len(result) == 6 and all(item["status"] == "available" for item in result)
     assert all(set(item) == {"id", "name", "path", "status"} for item in result)
 
 
@@ -183,3 +186,66 @@ def test_realtime_websocket_uses_gateway_instead_of_studio(client,monkeypatch):
     with client.websocket_connect('/supabase/realtime/v1/websocket',subprotocols=['echo']) as websocket:
         websocket.send_text('realtime-via-api')
         assert websocket.receive_text()=='realtime-via-api'
+
+
+@pytest.fixture
+def unified_client(monkeypatch, upstream, tmp_path):
+    import json
+    from langgraph_sdk import Auth
+    from anp_business.server import security
+    from anp_business.server.ingress import NativeIngress
+    from anp_business.server.platforms import RustFSS3Proxy
+    config = tmp_path / "business.json"
+    config.write_text(json.dumps({"ingress": {"enabled": True, **{key: upstream for key in ("auth", "rest", "storage", "studio")}},
+                                  "platforms": {"litellm": upstream}}))
+    monkeypatch.setenv("ANP_BUSINESS_CONFIG", str(config))
+    async def user(headers):
+        if headers.get("cookie") != "anp_session=admin":
+            raise Auth.exceptions.HTTPException(status_code=401, detail="请先登录")
+        return {"id": "fixture", "role": "admin"}
+    monkeypatch.setattr(security, "current_user", user)
+    app = FastAPI()
+    app.include_router(router)
+    app.add_middleware(NativeIngress)
+    app.add_middleware(RustFSS3Proxy)
+    app.add_middleware(security.PlatformAccess)
+    with TestClient(app) as result:
+        yield result
+
+
+@pytest.mark.parametrize("path", ["/project/default", "/_next/chunk.js", "/api/platform/profile", "/supabase", "/litellm/ui/"])
+def test_unified_studio_and_platform_routes_keep_admin_boundary(unified_client, path):
+    assert unified_client.get(path, follow_redirects=False).status_code == 401
+
+
+@pytest.mark.parametrize("branch", ["auth", "rest", "storage"])
+def test_unified_vendor_apis_preserve_jwt_and_body_without_console_cookie(unified_client, branch):
+    response = unified_client.post(f"/{branch}/v1/echo?tag=one&tag=two", content=b"payload", headers={
+        "Authorization": "Bearer vendor-jwt", "apikey": "vendor-key", "X-Forwarded-Prefix": "/forged"})
+    value = response.json()
+    assert value["path"] == "echo" and value["body"] == "payload"
+    assert value["query"] == "tag=one&tag=two"
+    assert value["headers"]["authorization"] == "Bearer vendor-jwt" and value["headers"]["apikey"] == "vendor-key"
+    assert value["headers"]["x-forwarded-prefix"] == f"/{branch}/v1"
+
+
+def test_unified_tus_location_and_cors_headers(unified_client):
+    response = unified_client.post("/storage/v1/upload/resumable", content=b"123456", headers={"X-Source": "dashboard"})
+    assert response.status_code == 201 and response.headers["upload-offset"] == "6"
+    assert response.headers["location"] == "http://testserver/storage/v1/upload/resumable/fixture-id"
+    assert "Authorization" in response.headers["access-control-allow-headers"] and "X-Source" in response.headers["access-control-allow-headers"]
+
+
+def test_unified_studio_same_origin_redirect_and_csrf(unified_client):
+    headers = {"cookie": "anp_session=admin"}
+    assert unified_client.get("/supabase", headers=headers, follow_redirects=False).headers["location"] == "/project/default"
+    assert unified_client.get("/litellm", headers=headers, follow_redirects=False).headers["location"] == "/litellm/ui/"
+    assert unified_client.get("/project/default", headers=headers).json()["path"] == "project/default"
+    assert unified_client.post("/api/platform/write", headers={**headers,"Origin":"https://foreign.invalid"}).status_code == 403
+    assert unified_client.get("/litellm/v1/echo", headers={"Authorization":"Bearer vendor-key"}).json()["headers"]["authorization"] == "Bearer vendor-key"
+
+
+def test_root_platform_redirect_never_becomes_network_path():
+    from anp_business.server.platforms import Platform, rewrite_location
+    platform = Platform("", "Studio", 53200, "", config_key="studio", config_group="ingress")
+    assert rewrite_location(platform.target + "project/default", platform, platform.target) == "/project/default"

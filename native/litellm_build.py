@@ -101,6 +101,6 @@ def generate_client(bundle, lock):
                     "PRISMA_BINARY_PLATFORM": lock["platform"], "PRISMA_BINARY_CACHE_DIR": str(cli),
                     "DATABASE_URL": "postgresql://build:build@127.0.0.1:9/build", "PRISMA_HIDE_UPDATE_MESSAGE": "true"})
         subprocess.run([str(node), str(cli / "node_modules/prisma/build/index.js"), "generate", "--schema", str(work / "schema.prisma")],
-                       env=env, check=True)
+                       cwd=work, env=env, check=True)
     if not (lite / "site-packages/prisma/models.py").is_file():
         raise RuntimeError("LiteLLM Prisma Python 客户端未生成")

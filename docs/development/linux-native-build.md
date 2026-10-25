@@ -19,7 +19,7 @@ python3 native/linux_check.py --archive var/exports/anp-0.3.0-poc-linux-amd64.ta
 
 ## 已有 Linux 主机的功能验收
 
-完整干净环境验收仍使用上面的 Debian/Alpine 容器，不要用实机结果替代无外网结论。已有 Linux 主机可显式使用 `native/platform_check.py --host-runtime --bundle <未运行的目录>`；回执会标注 `runtime_scope=linux-host` 和 `external_network_isolation_enforced=false`。
+完整干净环境验收仍使用上面的 Debian/Alpine 容器，不要用实机结果替代无外网结论。已有 Linux 主机可显式使用 `python3 -m native.checks.platform_check --host-runtime --bundle <未运行的目录>`；回执会标注 `runtime_scope=linux-host` 和 `external_network_isolation_enforced=false`。
 
 执行验收脚本的 Python 需要放在独立 bootstrap 目录，不能使用待验收输入目录自身的 Python：原生 Python 启动会生成该目录的 `var/cache`，导致“不得复制已有运行数据”的保护拒绝输入。bootstrap 需带上包内 `tools/python`、`tools/libc`、`tools/elf` 和 `runtime/elf_exec.py`。
 

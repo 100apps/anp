@@ -21,6 +21,8 @@ def main():
     # 框架将 .langgraph_api 写在 cwd；固定到实例 var/，不修改不可变源码。
     os.chdir(runtime)
     spec = json.loads((BUSINESS_ROOT / "langgraph.json").read_text())
+    from anp_business.shared.telemetry import telemetry
+    telemetry()
     def absolute(value):
         path, attribute = value.rsplit(":", 1)
         return str((BUSINESS_ROOT / path).resolve()) + ":" + attribute

@@ -3,7 +3,8 @@
   "postgres": {
     "host": "postgres.example.internal", "port": 5432,
     "username": "", "password": "", "sslmode": "prefer",
-    "supabase_database": "agentloop_supabase", "langfuse_database": "agentloop_langfuse", "litellm_database": "agentloop_litellm"
+    "supabase_database": "agentloop_supabase", "langfuse_database": "agentloop_langfuse", "litellm_database": "agentloop_litellm",
+    "grafana_database": "agentloop_grafana"
   },
   "redis": {"host": "redis.example.internal", "port": 6379, "password": "", "cluster": true},
   "clickhouse": {
@@ -18,6 +19,6 @@
   "roles": {
     "anon": "agentloop_anon", "authenticated": "agentloop_authenticated", "service": "agentloop_service",
     "auth": "agentloop_auth", "storage": "agentloop_storage", "langfuse": "agentloop_lf", "litellm": "agentloop_llm",
-    "studio_read_only": "agentloop_anon"
+    "studio_read_only": "agentloop_anon", "grafana": "agentloop_grafana"
   }
 }

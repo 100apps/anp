@@ -1,132 +1,115 @@
 # ANP
 
-ANP 将基础工具、存储、平台和业务示例打包成可搬移的目录。原生发行支持 **Mac ARM64、Linux x64**，解压运行不依赖 Docker、Homebrew、系统 Python 或在线安装。Intel Mac 与 Realtime 暂不包含。
+ANP 把基础工具、存储、平台和可复制的 Business 业务层打包为可搬移目录。解压后运行 `./anp start`，不依赖宿主 Python、Node、Homebrew 或 Docker。
 
-## 原生包：下载运行
+支持 **Mac ARM64、Linux x64**；Windows 使用 WSL 运行 Linux 包，Business 可以在 Windows 原生目录开发。Intel Mac、Realtime、Pyroscope、eBPF 暂不发布。
 
-从 [GitHub Releases](https://github.com/100apps/anp/releases) 下载对应系统的压缩包及 SHA256 文件，核对摘要，解压后进入 `anp-macos-arm64/` 或 `anp-linux-amd64/`：
+## 下载与启动
+
+从 [GitHub Releases](https://github.com/100apps/anp/releases) 下载对应系统的压缩包和 `.sha256`，核对摘要后解压：
 
 ```sh
+cd anp-macos-arm64        # Linux 为 anp-linux-amd64
 ./anp verify
 ./anp start
 ./anp status
 ./anp stop
 ```
 
-默认工作台：`http://127.0.0.1:58000/workbench/`。首次启动生成独立数据与随机凭据，保存在当前包的私有 `var/secrets/runtime.json`。业务管理员为 `admin@anp.local`，密码字段为 `business-user-password`；DBX 密码字段为 `dbx-password`。不要将该文件提交或发到聊天中。
+默认入口为 [http://127.0.0.1:58000/workbench/](http://127.0.0.1:58000/workbench/)。启动器会输出实际地址、PID、端口、健康状态及日志路径。默认全部监听 `127.0.0.1`；只有显式修改控制台的入口监听设置后才开放局域网。
 
-包含 uv、Python、Node，PostgreSQL、Redis、ClickHouse、RustFS，Supabase Auth/Data API/Storage/Meta/Studio，Langfuse Web/Worker、LiteLLM、DBX，以及可独立复制的 `business/`。业务使用 uv、shadcn/ui 和 LangGraph 内置 Agent Server，提供 Supabase 登录与权限、Workflow 和 Deep Agent 两个离线模型演示；真实供应商需要另行配置。
+首次启动生成独立数据和随机凭据：`var/secrets/runtime.json`（权限 0600）。业务管理员为 `admin@anp.local`，密码字段为 `business-user-password`。不要提交或传播该文件。Langfuse、LiteLLM、RustFS 仍需要自己的登录时，控制台会注明，登录管理员可查看对应凭据。
+
+## 单入口与功能
+
+业务和平台代理统一放在 **LangGraph 内置 Agent Server** 中，不再单独运行 Caddy。平台后台要求管理员身份；Supabase JWT/RLS、S3 签名和模型/观测 SDK 的密钥校验继续保留。
+
+| 入口 | 用途 |
+| --- | --- |
+| `/workbench/` | Workflow、Deep Agent 两个业务示例 |
+| `/workbench/console/` | 服务状态、启停、运行配置、代理映射、OAuth 与登录凭据 |
+| `/supabase` | 同源 Supabase Studio，Auth、Data API、Storage |
+| `/dbx/` | 数据库管理；统一登录 |
+| `/langfuse/` | Trace 与观测平台 |
+| `/litellm/` | 模型网关及后台 |
+| `/rustfs/console/` | 对象存储管理后台 |
+| `/grafana/` | 可选的日志、指标与调用链入口 |
+
+OTel/LGTM 包含 Collector、Grafana、Prometheus、Loki、Tempo，默认不启动；Grafana 元数据使用 PostgreSQL。旧配置的 `gateway` 端口自动交给 Agent Server，避免改变已有入口地址。业务默认使用离线演示模型，真实供应商调用需要另行配置。
+
+## 目录
+
+源码按职责组织，生成文件只写入被忽略的 `var/`：
 
 ```text
-anp-macos-arm64/              # Linux 为 anp-linux-amd64/
-├── anp                      # 启动、状态、日志、停止、清单验证
-├── tools/                   # uv、Python、Node；Linux 另带 glibc 运行库
-├── storage/                 # PostgreSQL、Redis、ClickHouse、RustFS
-├── platform/                # Supabase、Langfuse、LiteLLM、DBX 等
-├── business/                # 可复制的业务源码、配置示例与前端
-├── runtime/                 # 启动管理与配置生成
-├── defaults/                # 默认配置
-├── config/                  # 用户配置
-├── manifest/                # 来源、校验值、许可证
-└── var/                     # 首次启动生成，不随压缩包发布
+anp/
+├── business/          # 可独立复制的 uv + shadcn/ui + LangGraph 业务层
+├── native/            # 原生构建、发行与运行
+│   ├── build.py       # make build / dist 的实现
+│   ├── checks/        # 目录、压缩包、权限、业务、上传与干净环境验收
+│   ├── runtime/       # 随包的进程管理与配置生成
+│   ├── defaults/      # 首次启动配置、OAuth、OTel 模板
+│   ├── locks/         # 官方 URL、SHA256、源码和构建镜像锁
+│   ├── packages/      # 冻结的 Python / JS 构建依赖
+│   └── licenses/      # 随产物保留的许可证
+├── platform/sources/  # 仅构建需要的锁定上游 submodule
+├── docker/            # 保留的 Docker 交付，独立于原生包
+├── config/            # Docker 配置示例，不放秘密
+├── scripts/           # 开发、环境诊断与 Docker 命令
+├── tests/             # 回归、运行器和构建契约
+├── docs/              # 架构、开发、发行和验收证据
+└── var/               # 构建缓存、导出包、日志、隔离验收实例；不提交
 ```
 
-源码构建与验证：
+发行包的目录与源码仓库分开：
+
+```text
+anp-macos-arm64/        # Linux 为 anp-linux-amd64/
+├── anp                # 启动、停止、状态、日志及完整性校验
+├── tools/             # uv、Python、Node；Linux 另含 glibc / ELF 工具
+├── storage/           # PostgreSQL、Redis、ClickHouse、RustFS
+├── platform/          # Supabase、Langfuse、LiteLLM、DBX、可选 OTel/LGTM
+├── business/          # 可复制的业务代码、锁文件与前端
+├── runtime/           # 包内生命周期管理
+├── defaults/          # 只读默认配置
+├── config/            # 用户配置
+├── manifest/          # 来源、文件摘要与许可证
+└── var/               # 首次运行生成；不进入发行压缩包
+```
+
+目录可以在停止服务后搬移，数据与配置随目录保存。不要移动正在运行的实例，也不要用构建覆盖包含运行数据的目录。
+
+## 从源码构建
+
+构建需要对应架构的原生主机；Linux 在独立 Debian 构建容器中组装：
 
 ```sh
-git clone --branch master https://github.com/100apps/anp.git
+git clone --branch main https://github.com/100apps/anp.git
 cd anp
-make build
-make native-check
-make dist
-# 再对生成的真实压缩包执行 native/check.py；Linux 用 native/linux_check.py
+make context
+make doctor
+make test
+make build            # 按本机架构取锁定产物和构建缺少的组件
+make native-check     # 从隔离副本启动真实服务并验收
+make dist             # var/exports/ 下生成压缩包及 SHA256
+# 真实解压包复验
+python3 native/check.py --archive var/exports/anp-<版本>-macos-arm64.tar.gz
+# Linux 使用 python3 native/linux_check.py --archive <Linux压缩包>
 ```
 
-构建与运行必须匹配本机系统和架构。Linux 使用独立 Debian 构建容器，详见 [Linux 构建](docs/development/linux-native-build.md)。`make build NATIVE_PROFILE=poc` 保留精简构建模式。更详细的配置、地址和管理命令见[原生包说明](native/README.md)；单独复制业务见 [Business](business/README.md)。
+优先使用固定版本的官方二进制或代码包；没有适用发行物才从锁定源码构建，不从第三方 Docker 镜像提取运行文件。Python 使用 `uv --frozen`，前端使用 `pnpm --frozen-lockfile`。
 
-最新版本为 [0.3.6](https://github.com/100apps/anp/releases/tag/native-v0.3.6)，[发行流水线](https://github.com/100apps/anp/actions/runs/39961444941)全部通过。GitHub 原生 Mac ARM64 runner 的目录与真实压缩包各通过 22 项检查，Business 各 24 项通过；Linux 在无外网的干净 Debian 与 Alpine 中，目录与压缩包各通过 23 项检查，Business 各 24 项通过。完整回归 94 项通过。见[验收报告](docs/acceptance/native-release-2026-10-23.md)与[原始发行回执](docs/acceptance/native-0.3.6/)。
+仅开发业务时不需要编译平台，直接复制 `business/` 并配置依赖地址，见 [Business 使用说明](business/README.md)。常规开发的回归命令为 `make test`。Docker 交付见 [Docker 开发环境](docs/development/Docker开发环境.md)。
 
-本轮 0.3.7 源码候选包含：Linux 旧 glibc/宿主 NSS 兼容，LiteLLM 独立数据库与冻结 Prisma 工具，ClickHouse 内存计量修正，OSS 证书与批量删除兼容，以及显式外部资源配置。目标 Linux 主机完整模式 23 项、云模式 32 项和重启审计 8 项通过，见[目标主机修复验收](docs/acceptance/linux-host-2026-10-24.md)。正式发行与新压缩包的验收结果将在本轮流水线完成后更新，当前正式下载仍为上面的 0.3.6。
+## 配置与发行依据
 
-外部资源模式：将包内 `defaults/external-resources.example.json` 复制到包外的 0600 私有文件，配置已有 PostgreSQL、Redis、ClickHouse 和 S3 服务；`config/anp.json` 保留 ports，设置 `services: ["gateway"]` 与 `external_resources_file` 绝对路径，即可关闭本地四存储。必须使用独立 namespace、数据库 schema 和对象前缀，不覆盖已有项目；管理员邮箱为 `<namespace>@anp.local`。详细要求见[原生包说明](native/README.md)。
+- [原生配置与组件来源](native/README.md)
+- [Linux 构建与干净环境](docs/development/linux-native-build.md)
+- [平台控制台、代理与 OAuth](docs/development/平台控制台与OAuth.md)
+- [OTel/LGTM](docs/development/OTel-LGTM使用说明.md)
+- [Release 流水线](docs/development/原生发行流水线.md)
+- [文档与验收索引](docs/README.md)
 
-**本机兼容性限制：** 当前 macOS 26.5.1 上，新解压服务出现 `SIGKILL`（正式 0.3.6 为 Redis，此前 DBX 也复现），本机整包解压验收未通过；CI 的 Mac 15 通过不代表该问题已解决。Mac 尚未做 Apple notarization，其他实体 Mac、组织执行策略及真实模型供应商尚未验证。
+推送 `main` 触发带版本的原生 Release。发布必须通过 Mac 的目录与真实解压包验收，以及 Linux 在禁用外网的 Debian、Alpine 容器中的目录与解压包验收，再核对 GitHub 服务端资产 SHA256。源码候选、本机覆盖目录、CI 构建与正式附件的结果分别记录，不能互相替代。
 
-推送代码到 `master` 会触发[原生发行流水线](.github/workflows/native-release.yml)：分别构建两个架构、验收目录与真实解压包，再核对 GitHub 资产摘要后发布带版本的 Release。仅修改根 README 或 `docs/` 不重复构建；[流水线说明](docs/development/原生发行流水线.md)。
-
-以下为原有 Docker 全功能开发环境，独立保留：
-
-一个可插拔的 AI 应用脚手架：Debian slim 工具镜像内置存储和平台，业务代码在本地运行，LangGraph 内置 Agent Server 扩展提供统一HTTP入口，前端使用React、shadcn/ui和Vite。
-
-## 快速开始
-
-需要 Docker（Linux容器）、uv、Node.js 24、pnpm 11.25 和 Make。命令行快捷操作还需要 Python 3.11 或以上；Windows使用python，Linux/macOS使用python3。uv会按锁文件准备业务Python 3.12环境。
-
-```sh
-git clone --branch master https://github.com/100apps/anp.git
-cd anp
-make init
-make pull
-make up
-make dev
-```
-
-首次使用发布镜像不需要检出平台源码。默认拉取 `ghcr.io/100apps/anp:latest`；正式部署可在根.env固定 `sha-<提交SHA>` 或镜像digest。发布镜像目标为linux/amd64与linux/arm64，Docker自动选择本机架构。
-
-工作台：[http://127.0.0.1:51760/workbench/](http://127.0.0.1:51760/workbench/)。平台路径为 `/dbx/`、`/langfuse/`、`/litellm/`、`/supabase/`。业务API：[http://127.0.0.1:20260/docs](http://127.0.0.1:20260/docs)。默认离线模型可直接运行普通Workflow与Deep Agents工具调用演示。
-
-## 开发与F5
-
-VSCode/Qoder打开仓库，安装推荐的Python和debugpy扩展，选择 **ANP: 一键前后端热重载**，按F5。准备任务先停止已登记的本工作区开发进程，便于从make dev切换，再安装锁定依赖、启动工具容器、Vite和带debugpy的LangGraph后端；后端支持子进程断点和热重载。前端JavaScript断点可选择另一个需Edge的联合调试配置。
-
-停止调试仅结束本工作区登记的开发进程，工具容器继续运行。默认业务20260、前端51760、调试56796；初次准备依赖和平台迁移可能需要数分钟。
-
-## 快捷命令
-
-| 命令 | 用途 |
-| --- | --- |
-| make doctor / make context | 工具检查 / 不含凭据的Agent入口JSON |
-| make pull / make up | 拉取发布镜像 / 启动全部服务 |
-| make up SERVICES=storage | 仅四存储 |
-| make up SERVICES=redis,dbx | 指定多个服务 |
-| make up SERVICES=langfuse | Langfuse及依赖；supabase同理 |
-| make status / make logs | 状态 / 容器管理日志 |
-| make restart / make down | 重启 / 停止工具容器，保留数据 |
-| make dev / make stop | 前后端热重载 / 停止本项目开发进程 |
-| make test | 两Demo、代理与运行时契约测试及前端生产构建 |
-| make smoke / make platform-operations | 四存储和两图 / 平台真实API操作 |
-| make realtime-check | Supabase 对象 CRUD/RLS、实时订阅、广播与在线状态 |
-| make acceptance / make debug-check | 镜像完整回归 / 断点与热重载协议 |
-| make image-size / make image-export | 镜像体积 / 导出Zstd分发包 |
-
-业务演示只使用离线模型，不调用付费API。业务包含 Workflow 与 Deep Agent 两个演示。
-
-## 自行构建与定制平台
-
-```sh
-make sources
-make docker-build
-# 运行自行构建的镜像：根.env设 ANP_IMAGE=anp/toolbox:local
-make up
-
-# 双架构发布到自己有权限的仓库，需先docker login：
-make build-multi IMAGE=ghcr.io/你的账号/anp:dev
-```
-
-只有 `docker/toolbox/Dockerfile` 是镜像构建入口。优先使用官方二进制和已发布代码包，固定 URL、SHA256 或包管理器完整性校验；必须编译的组件在同一个Dockerfile的阶段内完成。PostgreSQL使用锁定Supabase源码和官方Nix缓存，缓存缺失时构建同一版本及扩展，不依赖本机已有组件镜像。源码位于真实submodule，版本与提交在 `docker/toolbox/versions.lock.json`。
-
-首次全量源码构建需要较多时间、内存和磁盘。推荐双架构分别使用原生机器构建；本地QEMU仿真可以使用，但编译明显更慢。CI采用各架构原生runner，候选镜像分别通过启动验收后才合并发布latest。
-
-## 配置与持久化
-
-根.env控制镜像、服务、端口、资源和数据根；business/.env控制业务；容器 `/data/config/` 存放平台配置、凭据与生效参数。资源基线8核16GiB，首次生成配置的CPU不超过Docker实际可用核心数。配置和数据通过一个独立目录映射到 `/data`。
-
-`/data/run` 使用容器内的 tmpfs 保存临时运行状态与 Unix socket，重建时重新生成，避免 macOS 共享目录的 socket 权限限制。数据库、配置和媒体仍写入独立持久目录。
-
-Windows Docker Desktop 默认使用Linux主机目录 `/var/lib/anp-next/data`，避免ClickHouse在NTFS上的重命名兼容问题；它不是Windows本机文件夹，迁移机器需单独备份。当前开发机为兼容既有数据保留 `/var/lib/anp3/data`，与产品名称无关。Docker实例默认 `anp-next`，避免覆盖同机旧版ANP。
-
-根.env、business/.env和credentials.json均不提交。已有数据根的凭据不会因修改环境变量而隐式轮换。详细配置见[配置参考](docs/development/配置参考.md)。
-
-更多：[架构与Agent指南](docs/architecture/架构与Agent指南.md)、[版本与参数](docs/development/版本与运行参数.md)、[平台代理](docs/architecture/平台统一入口.md)、[本地验收](docs/acceptance/本地验收.md)、[镜像体积](docs/development/镜像体积优化.md)、[GitHub构建](docs/development/GitHub构建.md)。
-
-完整文档见[文档导航](docs/README.md)，业务范围见[业务演示](docs/business/业务演示.md)。新验收回执写入 `var/evidence/`，固定验收输入位于 `tests/baselines/`。
+当前已公开的历史基线为 [0.3.6](https://github.com/100apps/anp/releases/tag/native-v0.3.6)。当前源码新增单入口控制台、可选 OAuth 和 OTel/LGTM；本次重打包与新 Release 的最终结果将在验收完成后更新。Mac 包未做 Apple notarization，Linux 的实际兼容范围以对应版本的干净环境回执为准。

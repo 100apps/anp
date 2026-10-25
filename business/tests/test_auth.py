@@ -43,6 +43,9 @@ def client(monkeypatch):
     @app.get("/api/platforms")
     def platforms():
         return {"ok": True}
+    @app.get("/langfuse/api/public/projects")
+    def machine_api():
+        return {"fixture_only": True}
     @app.post("/dbx/write")
     def write():
         return {"ok": True}
@@ -86,6 +89,31 @@ def test_proxy_strips_business_identity_but_preserves_vendor_token():
     assert auth.access_token({"cookie": "anp_session=business", "authorization": "Bearer vendor"}) == "business"
 
 
+def test_proxy_preserves_specific_cookie_before_legacy_root_cookie():
+    scope = {"type": "http", "method": "GET", "path": "/langfuse/api/auth/csrf", "scheme": "http",
+             "server": ("localhost", 80), "headers": [(b"cookie", b"next-auth.csrf-token=specific; anp_session=secret; next-auth.csrf-token=legacy-root")]}
+    headers = dict(forwarded_headers(Request(scope), PLATFORMS["langfuse"]))
+    assert headers["cookie"] == "next-auth.csrf-token=specific; next-auth.csrf-token=legacy-root"
+
+
 def test_login_rejects_malformed_json_and_foreign_origin(client):
     assert client.post("/api/auth/login", json=[]).status_code == 400
     assert client.post("/api/auth/login", json={}, headers={"origin": "https://foreign.invalid"}).status_code == 403
+
+
+def test_langfuse_machine_api_delegates_key_validation_without_opening_ui(client):
+    # 这里只检查路由边界；真实项目密钥与错误密钥另做上游验收。
+    assert client.get("/langfuse/api/public/projects").status_code == 401
+    assert client.get("/langfuse/api/public/projects",headers={"authorization":"Basic fixture"}).status_code == 200
+    assert client.get("/langfuse/",headers={"authorization":"Basic fixture"}).status_code == 401
+
+
+@pytest.mark.parametrize("suffix", ["", "?X-Amz-Algorithm=AWS4-HMAC-SHA256"])
+def test_rustfs_root_s3_requires_console_admin(client, suffix):
+    signed = {"authorization":"AWS4-HMAC-SHA256 fixture-signature"}
+    assert client.get("/" + suffix, headers=signed).status_code == 401
+    assert client.get("/" + suffix, headers={**signed,"cookie":"anp_session=user"}).status_code == 403
+
+
+def test_unrelated_unicode_query_is_not_intercepted_as_s3(client):
+    assert client.get("/?name=%E4%B8%AD%E6%96%87").status_code == 404

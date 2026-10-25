@@ -1,0 +1,47 @@
+{
+  "studio": "http://127.0.0.1:53200",
+  "gateway": "http://127.0.0.1:58010",
+  "before": {
+    "corsError": "HeaderDisallowedByPreflightResponse",
+    "failedParameter": "x-source"
+  },
+  "after": [
+    {
+      "method": "POST",
+      "path": "/storage/v1/upload/resumable"
+    },
+    {
+      "method": "Network.responseReceived",
+      "path": "/storage/v1/upload/resumable",
+      "status": 201,
+      "location": "http://127.0.0.1:58010/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi8wMGM1YjUxZC03MWRlLTQyMjEtOWIyOS0xNDNlNmU3NDQzZjM"
+    },
+    {
+      "method": "PATCH",
+      "path": "/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi8wMGM1YjUxZC03MWRlLTQyMjEtOWIyOS0xNDNlNmU3NDQzZjM"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi8wMGM1YjUxZC03MWRlLTQyMjEtOWIyOS0xNDNlNmU3NDQzZjM"
+    },
+    {
+      "method": "Network.responseReceived",
+      "path": "/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi8wMGM1YjUxZC03MWRlLTQyMjEtOWIyOS0xNDNlNmU3NDQzZjM",
+      "status": 204
+    },
+    {
+      "method": "Network.responseReceived",
+      "path": "/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi8wMGM1YjUxZC03MWRlLTQyMjEtOWIyOS0xNDNlNmU3NDQzZjM",
+      "status": 204
+    },
+    {
+      "method": "PATCH",
+      "path": "/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi8wMGM1YjUxZC03MWRlLTQyMjEtOWIyOS0xNDNlNmU3NDQzZjM"
+    },
+    {
+      "method": "Network.responseReceived",
+      "path": "/storage/v1/upload/resumable/dGVzdC90dXMtbXVsdGlwYXJ0LmJpbi8wMGM1YjUxZC03MWRlLTQyMjEtOWIyOS0xNDNlNmU3NDQzZjM",
+      "status": 204
+    }
+  ]
+}

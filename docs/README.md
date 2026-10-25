@@ -6,6 +6,8 @@
 - [目录与启动方案](architecture/目录与启动方案.md)
 - [平台统一入口](architecture/平台统一入口.md)
 
+- [OTel/LGTM 原生集成](architecture/OTel-LGTM原生集成调研-2026-10-25.md)
+
 ## 开发与构建
 
 - [原生发行包](../native/README.md)
@@ -23,7 +25,16 @@
 
 - [Workflow 与 Deep Agent](business/业务演示.md)
 
+- [平台控制台与 OAuth](development/平台控制台与OAuth.md)
+- [OTel/LGTM 使用说明](development/OTel-LGTM使用说明.md)
+- [Docker 开发环境](development/Docker开发环境.md)
+
 ## 验收
+
+- [统一入口 Mac 验收](acceptance/统一入口-Mac验收-2026-10-25.md)
+- [平台控制台 Mac 验收](acceptance/平台控制台-Mac验收-2026-10-25.md)
+- [Linux 目标主机验收](acceptance/linux-host-2026-10-24.md)
+- [0.3.6 历史正式发行](acceptance/native-release-2026-10-23.md)
 
 - [原生 0.3.0 验收与修复报告](acceptance/native-0.3.0-progress.md)
 

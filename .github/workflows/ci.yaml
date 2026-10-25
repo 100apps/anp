@@ -34,7 +34,7 @@ jobs:
           uv run --project business --frozen pytest business/tests tests/integration tests/runtime -q
           pnpm --dir business/ui build
   image:
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     needs: test
     permissions:
       contents: read

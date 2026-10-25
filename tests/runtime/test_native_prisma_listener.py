@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_query_engine_listener_requires_both_exact_binary_and_litellm_group(monkeypatch, tmp_path):
-    spec = importlib.util.spec_from_file_location('prisma_port_check', ROOT/'native/platform_check.py')
+    spec = importlib.util.spec_from_file_location('prisma_port_check', ROOT/'native/checks/platform_check.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     monkeypatch.setattr(module.sys, 'platform', 'linux')

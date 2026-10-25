@@ -15,9 +15,22 @@
     "langfuse-web": 53100,
     "langfuse-worker": 53130,
     "litellm": 54000,
-    "gateway": 58000,
     "dbx": 54424,
-    "business": 20260
+    "business": 58000,
+    "loki": 3100,
+    "loki-grpc": 19095,
+    "tempo": 3200,
+    "tempo-grpc": 19096,
+    "tempo-otlp-grpc": 4417,
+    "tempo-otlp-http": 4418,
+    "tempo-memberlist": 17947,
+    "prometheus": 9090,
+    "otelcol": 4318,
+    "otelcol-grpc": 4317,
+    "otelcol-health": 13133,
+    "otelcol-metrics": 18888,
+    "grafana": 53000,
+    "rustfs-console": 59003
   },
   "services": [
     "postgres",
@@ -33,7 +46,13 @@
     "langfuse-worker",
     "litellm",
     "dbx",
-    "business",
-    "gateway"
-  ]
+    "business"
+  ],
+  "observability": {
+    "enabled": false,
+    "retention_hours": 24,
+    "prometheus_retention_size": "512MB",
+    "collector_memory_mib": 256,
+    "loki_wal_disk_full_threshold": 0.98
+  }
 }

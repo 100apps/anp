@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "files": 225072,
+  "command": "/Users/guangfeng/github/anp/var/native/console-macos-arm64/anp verify",
+  "scope": "local-overlay-candidate"
+}

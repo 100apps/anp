@@ -2,7 +2,7 @@ name: ANP 原生发行
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths-ignore: ["docs/**", "README.md"]
   workflow_dispatch:
     inputs:
@@ -85,6 +85,9 @@ jobs:
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           key: native-components-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-cache-env.outputs.sdk }}-${{ hashFiles('native/langfuse_build.py', 'native/platform_build.py', 'native/dbx_build.py', 'native/locks/*macos-arm64.json', 'native/packages/*/package-lock.json') }}
+          # 旧缓存也必须由构建器复核源码提交、配方与产物摘要，不能跳过验收。
+          restore-keys: |
+            native-components-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.native-cache-env.outputs.sdk }}-
           path: |
             var/native/langfuse-build/runtime
             var/native/langfuse-build/work/packages/native
@@ -233,7 +236,7 @@ jobs:
           if-no-files-found: ignore
 
   release:
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     needs: [version, macos, linux]
     runs-on: ubuntu-24.04
     permissions:
@@ -267,7 +270,7 @@ jobs:
               group = [value for value in values if value['target'] == target]
               assert len(group) == count
               assert len({value['bundle_files_manifest_sha256'] for value in group}) == 1, '目录与归档的制品清单不一致'
-          Path('release-notes.md').write_text('Mac ARM64 与 Linux x64 原生发行包。\n\n解压后执行 ./anp start。包含 DBX、Supabase、Langfuse、LiteLLM 和可复制的 business/。Realtime 与 Intel Mac 暂不包含；业务 Demo 默认使用离线演示模型。\n\n目录、压缩包和干净环境验收回执随附件提供。\n')
+          Path('release-notes.md').write_text('Mac ARM64 与 Linux x64 原生发行包。\n\n解压后执行 ./anp verify、./anp start，进入 http://127.0.0.1:58000/workbench/。\n\nAgent Server 单入口，内置平台控制台、Supabase、DBX、Langfuse、LiteLLM、RustFS 与可复制的 business/；保留管理员及上游 API 鉴权。OTel/LGTM 五组件可选，Grafana 使用 PostgreSQL。OAuth 默认不填。\n\n原生验收代码统一在 native/checks/；修复 Linux 含空格路径的 NSS 预载。Realtime、Pyroscope、eBPF 与 Intel Mac 暂不包含；业务 Demo 默认使用离线模型。\n\n两个架构的目录和真实解压包均通过验收；Linux 在禁用外网的 Debian、Alpine 干净容器验证。六份回执与 SHA256 随附件提供。\n')
           PY
       - name: 上传草稿、核对服务端摘要后发布
         run: |

@@ -2,8 +2,10 @@ from langchain_core.messages import HumanMessage
 
 from anp_business.shared.models import get_model, model_mode
 from anp_business.workflow_demo.state import WorkflowState
+from anp_business.shared.telemetry import traced
 
 
+@traced("workflow.normalize")
 def normalize(state: WorkflowState) -> dict:
     text = " ".join(state.get("text", "").split())
     if not text:
@@ -11,6 +13,7 @@ def normalize(state: WorkflowState) -> dict:
     return {"normalized": text}
 
 
+@traced("workflow.summarize")
 async def summarize(state: WorkflowState) -> dict:
     text = state["normalized"]
     if model_mode() == "demo":
@@ -21,5 +24,6 @@ async def summarize(state: WorkflowState) -> dict:
     return {"summary": summary, "model_mode": model_mode()}
 
 
+@traced("workflow.finish")
 def finish(state: WorkflowState) -> dict:
     return {"summary": state["summary"]}

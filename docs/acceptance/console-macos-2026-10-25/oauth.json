@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "provider": "https://pre-cestlavie.alibaba-inc.com",
+  "protocol": "OIDC authorization-code + PKCE S256",
+  "checks": {
+    "discovery_and_jwks_available": true,
+    "real_chrome_provider_login_and_supabase_session": true,
+    "unmapped_user_ui_hides_console": true,
+    "explicit_admin_subject_mapping_and_console": true,
+    "defaults_restored_disabled": true
+  },
+  "iab_limitation": "公司可信设备认证不支持内嵌浏览器；使用已有登录态的本机 Chrome 完成真实回调。"
+}

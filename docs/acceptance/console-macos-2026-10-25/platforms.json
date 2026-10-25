@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "checks": {
+    "litellm_api_denies_anonymous": true,
+    "litellm_api_accepts_master_key": true,
+    "litellm_manual_ui_login": true,
+    "langfuse_ui_denies_machine_key": true,
+    "langfuse_sdk_denies_invalid_key": true,
+    "langfuse_sdk_accepts_project_key": true,
+    "langfuse_manual_ui_login": true,
+    "langfuse_real_otlp_write": true,
+    "langfuse_real_worker_readback": true,
+    "langfuse_observations_require_project_key": true
+  },
+  "scope": "本地真实服务；trace 内容为合成验收事件，不涉及模型供应商调用。"
+}

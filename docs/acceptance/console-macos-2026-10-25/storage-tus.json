@@ -1,0 +1,8 @@
+{
+  "studio_cors_preflight": true,
+  "location_scheme_port_prefix": true,
+  "head_resume_offset": true,
+  "patch_complete": true,
+  "readback_8mib_sha256": "d078f60d24f84bfd64aca2632da4595902f86cbc16a64065993b756c99d85ba8",
+  "own_bucket_cleaned": true
+}

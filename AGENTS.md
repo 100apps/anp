@@ -21,6 +21,7 @@
 
 - Python 用 uv、前端用 pnpm，冻结安装并提交锁文件；前端使用 shadcn/ui。
 - 优先固定官方二进制或代码包，每个下载必须锁定 URL 与 SHA256。缺少原生产物才从真实 submodule 提交构建，不从第三方服务镜像抽取文件。
+- 保留有效的官方代码签名；修改 Mach-O 或库路径前先验证签名影响。自行 ad-hoc 重签不能作为跨主机分发通过的证据，禁止通过修改系统安全设置解决分发问题。
 - 原生发行仅支持 `macos-arm64`、`linux-amd64`。Docker 的 `linux/amd64`、`linux/arm64` 多架构锁与原生范围分开，不混淆。
 - 业务 HTTP 与平台代理统一放在 LangGraph 内置 Agent Server 的扩展中，不另起业务服务器或独立原生网关。
 - 平台后台与管理 API 校验 Supabase 管理员身份，管理写入和 WebSocket 检查来源；Auth/Data/Storage 与 SDK API 保留各自 JWT、RLS、签名或机器密钥，不绕过上游验证。
@@ -33,6 +34,7 @@
 - 常规修改执行 `make test`；运行器、代理、鉴权、上传、构建或依赖改动还需启动真实服务验证，不能只看 HTTP 200。
 - 原生发行必须分别验证干净构建目录和真实压缩包，覆盖首次初始化、身份权限、数据库/RLS、上传回读、重启持久化及含空格路径搬移。
 - Mac 在目标 ARM64 主机/runner 的离线沙箱验收；Linux 在固定 Debian、Alpine、无外网、无开发工具的容器中验收。不要用现有运行目录冒充全新解压验收。
+- Mac CI 归档还须下载到目标实体 Mac 复验；本机自行编译归档和 CI 下载归档必须分别记录版本与 SHA256，不得互相替代。
 - 修改 Docker 生成输入时，先 `make sources`、`python scripts/validate_sources.py`，再运行 `python scripts/generate_dockerfile.py` 并提交生成结果；原生修改不要求启动 Docker。
 - 发布以 `.github/workflows/native-release.yml` 的实际结果、六份回执、压缩包摘要、GitHub 资产摘要和公开 Release 状态为准。草稿或作业启动不代表完成。
 - 明确区分离线演示、真实数据库操作、真实模型供应商、单机验证、CI 和下载附件；未执行的检查不能写通过。

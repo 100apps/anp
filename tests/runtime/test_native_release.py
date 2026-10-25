@@ -24,12 +24,13 @@ def execute_publisher(monkeypatch, tmp_path, *, existing=False, partial=False,
     state = {"release": {"id": 42, "tag_name": "native-v0.3.5", "draft": not published,
                          "target_commitish": "0" * 40 if wrong_source else SHA,
                          "assets": assets[:1] if partial else assets} if existing else None,
-             "created": 0, "uploads": 0, "published": 0}
+             "created": 0, "uploads": 0, "published": 0, "create_args": []}
 
     def run(args, **kwargs):
         if args[:3] == ["gh", "release", "create"]:
             assert state["release"] is None, "重复创建草稿"
             state["created"] += 1
+            state["create_args"] = args
             state["release"] = {"id": 42, "tag_name": "native-v0.3.5", "draft": True,
                                 "target_commitish": SHA, "assets": assets}
         elif args[:3] == ["gh", "release", "upload"]:
@@ -74,6 +75,11 @@ def test_new_draft_without_public_tag_is_verified_and_published_by_id(monkeypatc
     state = execute_publisher(monkeypatch, tmp_path)
     assert state["created"] == 1 and state["published"] == 1
     assert state["release"]["draft"] is False
+
+
+def test_ci_only_release_remains_candidate_until_physical_host_acceptance(monkeypatch, tmp_path):
+    state = execute_publisher(monkeypatch, tmp_path)
+    assert "--prerelease" in state["create_args"]
 
 
 def test_existing_complete_draft_is_resumed_without_duplicate_creation(monkeypatch, tmp_path):

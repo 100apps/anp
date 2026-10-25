@@ -480,9 +480,10 @@ def test_start_progress_reuse_and_json_with_native_redis(native_runtime_dir, mod
         shutil.copytree(redis, tmp_path / "storage/redis", symlinks=True)
     else:
         (tmp_path / "storage/redis").mkdir()
-        # 官方 Redis 的 TLS 库位于相邻 lib/；包装器副本必须保留该依赖布局。
-        if (redis / "lib").is_dir():
-            (tmp_path / "storage/redis/lib").symlink_to(redis / "lib", target_is_directory=True)
+        # 官方签名二进制位于 bin/，TLS 库位于 lib/；真实延迟包装器保留完整布局。
+        for directory in ("bin", "lib"):
+            if (redis / directory).is_dir():
+                shutil.copytree(redis / directory, tmp_path / "storage/redis" / directory, symlinks=True)
         shutil.copy2(redis / "redis-server", tmp_path / "storage/redis/redis-server-real")
         (tmp_path / "storage/redis/redis-cli").symlink_to(redis / "redis-cli")
         wrapper = tmp_path / "storage/redis/redis-server"

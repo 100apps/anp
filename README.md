@@ -118,7 +118,7 @@ python3 native/check.py --archive var/exports/anp-<版本>-macos-arm64.tar.gz
 - [Release 流水线](docs/development/原生发行流水线.md)
 - [文档与验收索引](docs/README.md)
 
-推送 `main` 触发带版本的原生 Release。发布必须通过 Mac 的目录与真实解压包验收，以及 Linux 在禁用外网的 Debian、Alpine 容器中的目录与解压包验收，再核对 GitHub 服务端资产 SHA256。源码候选、本机覆盖目录、CI 构建与正式附件的结果分别记录，不能互相替代。
+推送 `main` 自动生成带版本的候选 Release（预发布）。下载到目标实体 Mac 和 Linux 测试机复验通过后，再将同一附件转为正式版本。候选发布必须通过 Mac 的目录与真实解压包验收，以及 Linux 在禁用外网的 Debian、Alpine 容器中的目录与解压包验收，再核对 GitHub 服务端资产 SHA256。源码候选、本机覆盖目录、CI 构建与正式附件的结果分别记录，不能互相替代。
 
 [0.4.15 验收报告与回执](docs/acceptance/native-v0.4.15/README.md)分别记录六份 CI 验收、Mac 正式附件失败与本机构建通过的区别，以及 Linux 测试机云模式结果。Mac 包未做 Apple notarization；Linux 已覆盖 Debian、Alpine 与目标测试机，不能据此宣称兼容任意 Linux。真实模型供应商和外部 OAuth 提供方不在本轮验收范围。
 

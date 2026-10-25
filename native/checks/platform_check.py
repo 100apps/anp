@@ -205,15 +205,21 @@ def main():
             # 显式使用包内官方引擎，即使 PATH 里没有 openssl 也必须可用。
             engine = bundle / "platform/litellm/engines/query-engine"
             probe_engine = (
-                "import os,site;from pathlib import Path;"
+                "import os,site,subprocess;from pathlib import Path;"
                 "site.addsitedir(" + repr(str(bundle / "platform/litellm/site-packages")) + ");"
-                "from prisma.engine.utils import ensure;"
+                "from prisma.engine.utils import ensure\n"
+                "original_run=subprocess.run\n"
+                "def guarded_run(args,**kwargs):\n"
+                " assert Path(args[0]).name!='openssl','unexpected host openssl probe'\n"
+                " return original_run(args,**kwargs)\n"
+                "subprocess.run=guarded_run\n"
                 "assert ensure({})==Path(os.environ['PRISMA_QUERY_ENGINE_BINARY'])"
             )
-            subprocess.run([*sandbox, str(bundle / "tools/python/bin/python3"), "-I", "-B", "-c", probe_engine],
-                           env={"PATH": "/nonexistent", "HOME": str(bundle / "var/cache"),
+            engine_probe = subprocess.run([*sandbox, str(bundle / "tools/python/bin/python3"), "-I", "-B", "-c", probe_engine],
+                           env={"PATH": "/usr/bin:/bin", "HOME": str(bundle / "var/cache"),
                                 "PRISMA_QUERY_ENGINE_BINARY": str(engine)},
-                           check=True, capture_output=True)
+                           text=True, capture_output=True)
+            assert engine_probe.returncode == 0, "Prisma engine probe failed: " + engine_probe.stderr[-1500:]
             receipt["checks"]["prisma_explicit_engine_without_host_openssl"] = True
             cli("verify")
             receipt["checks"]["immutable_manifest"] = True
@@ -388,7 +394,10 @@ NOTIFY pgrst,'reload schema';''')
                 page = response.read()
             asset = re.search(rb'<script[^>]+src="([^"]+)"', page)
             assert asset and asset[1].startswith(b"/langfuse/_next/"), "Langfuse 根路径错误落到了其他应用"
-            assert api(asset[1].decode().replace("&amp;", "&"))[0] == 200
+            asset_path = asset[1].decode().replace("&amp;", "&")
+            assert api(asset_path)[0] == 401, "Langfuse 静态资源缺少管理员鉴权"
+            with browser.open(origin + asset_path, timeout=30) as response:
+                assert response.status == 200, "Langfuse 管理员静态资源请求失败"
             receipt["checks"]["langfuse_admin_cookie_login_and_page_assets"] = True
             auth = "Basic " + base64.b64encode((private["langfuse-public-key"] + ":" + private["langfuse-secret-key"]).encode()).decode()
             trace, span = uuid.uuid4().hex, uuid.uuid4().hex[:16]

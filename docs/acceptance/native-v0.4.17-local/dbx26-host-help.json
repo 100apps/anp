@@ -1,0 +1,14 @@
+{
+  "returncode": -9,
+  "stdout_bytes": 0,
+  "stderr_bytes": 0,
+  "system_security_changed": false,
+  "diagnostic_run": 40225090360,
+  "sdk": "26.5",
+  "producer_os": "26.6.2",
+  "source_commit": "969bcb5da42dcf879c596c873e5176ddd78a7bde",
+  "binary_sha256": "86b6cef8f4a071f038ab6b1c618d68528a75afd34246bb899bd7a41ca1c07991",
+  "artifact_sha256": "b1e57c42d08a9a515cfed77c391a49837fe8d510fbadc8fea4992c79eacaeadf",
+  "strict_signature_valid": true,
+  "conclusion": "Upgrading SDK did not resolve physical Mac execution; distribution trust/signing still requires verification"
+}

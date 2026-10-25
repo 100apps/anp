@@ -31,6 +31,8 @@
 
 ## 验收
 
+- [0.4.17 现场验收与 Mac CI 分发阻碍](acceptance/native-v0.4.17-local/README.md)
+
 - [0.4.16 本机 Mac 压缩包验收（非 CI 附件）](acceptance/native-v0.4.16-local/README.md)
 
 - [0.4.15 云模式验收与 Mac 附件签名问题（历史）](acceptance/native-v0.4.15/README.md)

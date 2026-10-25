@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "target": "macos-arm64",
+  "remote_model_calls": 0,
+  "synthetic_trace": true,
+  "acceptance_script_sha256": "27204de1a02a42d02d1a1d621ee3190fee6fcaf86899a748e1802a9b442b30ce",
+  "checks": {
+    "bundled_uv_python_node_native_tools": true,
+    "prisma_explicit_engine_without_host_openssl": true,
+    "immutable_manifest": true,
+    "foreign_auxiliary_listener_rejected": true,
+    "all_services_ready": true,
+    "external_network_host_package_managers_and_source_tree_denied": true,
+    "all_process_group_listeners_loopback_and_accounted": true,
+    "business_supabase_auth_roles_threads_and_demos": true,
+    "dbx_admin_proxy_assets_login_real_query": true,
+    "single_entry_admin_studio_and_sdk_boundaries": true,
+    "storage_ordinary_and_resumable_8mib_upload_readback": true,
+    "auth_signup_password_login_current_user": true,
+    "auth_admin_user_list": true,
+    "data_api_crud_rpc_user_rls": true,
+    "storage_upload_download_signed_url_user_rls": true,
+    "studio_real_database_query": true,
+    "studio_page": true,
+    "litellm_gateway_auth": true,
+    "litellm_dashboard_database_login": true,
+    "realtime_excluded": true,
+    "langfuse_admin_cookie_login_and_page_assets": true,
+    "langfuse_otlp_async_worker_readback_auth": true,
+    "redis_vectors_and_restart_persistence": true,
+    "relocation_database_file_trace_secrets_persistence": true,
+    "api_deletion": true,
+    "immutable_after_relocation_run": true
+  },
+  "archive_sha256": "75fb022be4161ea8309d1bcf2dda369214a08864d1cce43784bb987f2e981be7",
+  "version": "0.4.17",
+  "bundle_files_manifest_sha256": "8bf5c45225e30278acad6be4956464375042ba9230bc1e1e74ff022f84e741d8",
+  "internal_prisma_http_ports": [
+    52457
+  ],
+  "trace_id": "f69b4529db06459e95536d971574beca"
+}

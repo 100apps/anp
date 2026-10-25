@@ -122,4 +122,4 @@ python3 native/check.py --archive var/exports/anp-<版本>-macos-arm64.tar.gz
 
 [0.4.15 验收报告与回执](docs/acceptance/native-v0.4.15/README.md)分别记录六份 CI 验收、Mac 正式附件失败与本机构建通过的区别，以及 Linux 测试机云模式结果。Mac 包未做 Apple notarization；Linux 已覆盖 Debian、Alpine 与目标测试机，不能据此宣称兼容任意 Linux。真实模型供应商和外部 OAuth 提供方不在本轮验收范围。
 
-本机新构建归档的独立结果见 [0.4.16 Mac 验收](docs/acceptance/native-v0.4.16-local/README.md)：26 项主检查已通过，但不能替代 GitHub CI 附件的跨主机验收。
+最新[现场验收与分发状态](docs/acceptance/native-v0.4.17-local/README.md)：Linux 0.4.15 附件在测试机使用云存储通过；本机自建 Mac 0.4.17 目录与压缩包各通过 26 项检查。CI DBX 在旧、新 SDK 下均被实体 Mac 终止，新双架构正式 Release 仍被该问题阻断，需要继续验证分发签名与信任。候选 #17 已取消，不能将本机自建成功解释为 GitHub Mac 附件可用。

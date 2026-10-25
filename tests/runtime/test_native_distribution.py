@@ -169,6 +169,8 @@ def test_postgrest_selects_its_database_dependency():
 
 def test_next_title_requires_own_executable_and_working_directory(tmp_path, monkeypatch):
     control = module("native_next_identity", "native/runtime/control.py")
+    # 此 fixture 模拟 lsof；Linux 实现必须单独按 /proc 检查，不能误走宿主分支。
+    monkeypatch.setattr(control.sys, "platform", "darwin")
     monkeypatch.setattr(control, "ROOT", tmp_path)
     command = "Thu Oct 22 12:18:17 2026     next-server (v16.3.8)"
     node = tmp_path / "tools/node/bin/node"
@@ -178,6 +180,26 @@ def test_next_title_requires_own_executable_and_working_directory(tmp_path, monk
         monkeypatch.setattr(control.subprocess, "run", lambda *a, value=output, **kw: SimpleNamespace(stdout=value))
         assert control.retitled_node_owned("langfuse-web", 123, command) is expected
     assert not control.retitled_node_owned("redis", 123, command)
+
+
+def test_linux_next_title_requires_proc_executable_and_working_directory(tmp_path, monkeypatch):
+    linux = module("native_linux_next_identity", "native/runtime/linux_process.py")
+    proc = tmp_path / "proc"
+    folder = proc / "123"
+    folder.mkdir(parents=True)
+    original_path = Path
+    monkeypatch.setattr(linux, "Path", lambda value: proc if value == "/proc" else original_path(value))
+    root = tmp_path / "bundle"
+    node = root / "tools/node/bin/node"
+    cached_node = root / "var/cache/elf/tools/node/bin/node.elf"
+    cwd = root / "platform/langfuse/web/web"
+    for executable, directory, expected in ((node, cwd, True), (cached_node, cwd, True),
+            (tmp_path / "foreign-node", cwd, False), (node, tmp_path / "foreign-project", False)):
+        for name, target in (("exe", executable), ("cwd", directory)):
+            link = folder / name
+            link.unlink(missing_ok=True)
+            link.symlink_to(target)
+        assert linux.node_owned(root, 123) is expected
 
 
 def test_dist_never_contains_runtime_secrets(tmp_path, monkeypatch):
@@ -334,6 +356,9 @@ def test_start_progress_reuse_and_json_with_native_redis(native_runtime_dir, mod
         (tmp_path / "storage/redis").symlink_to(redis)
     else:
         (tmp_path / "storage/redis").mkdir()
+        # 官方 Redis 的 TLS 库位于相邻 lib/；包装器副本必须保留该依赖布局。
+        if (redis / "lib").is_dir():
+            (tmp_path / "storage/redis/lib").symlink_to(redis / "lib", target_is_directory=True)
         shutil.copy2(redis / "redis-server", tmp_path / "storage/redis/redis-server-real")
         (tmp_path / "storage/redis/redis-cli").symlink_to(redis / "redis-cli")
         wrapper = tmp_path / "storage/redis/redis-server"

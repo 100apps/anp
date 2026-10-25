@@ -97,3 +97,24 @@ def test_external_roles_redis_cluster_and_schema_isolation():
     assert not ext.environment("dbx", data, "http://127.0.0.1:58000")
     text = auth["GOTRUE_DB_DATABASE_URL"] + data["postgres"]["password"]
     assert "fixture/pw@" not in ext.redact(text, data) and "fixture%2Fpw%40" not in ext.redact(text, data)
+
+
+def test_s3_request_checksum_compatibility_is_explicit_and_scoped(tmp_path):
+    import pytest
+    ext = runtime().external
+    data = profile()
+    for service in ("storage-api", "langfuse-web", "langfuse-worker"):
+        assert ext.environment(service, data, "http://localhost")["AWS_REQUEST_CHECKSUM_CALCULATION"] == "WHEN_SUPPORTED"
+    data["s3"]["request_checksum_calculation"] = "WHEN_REQUIRED"
+    p = tmp_path / "resources.json"
+    p.write_text(json.dumps(data))
+    p.chmod(0o600)
+    loaded = ext.load({"external_resources_file": str(p)})
+    for service in ("storage-api", "langfuse-web", "langfuse-worker"):
+        assert ext.environment(service, loaded, "http://localhost")["AWS_REQUEST_CHECKSUM_CALCULATION"] == "WHEN_REQUIRED"
+    for service in ("auth", "postgrest", "meta", "studio", "dbx", "business"):
+        assert "AWS_REQUEST_CHECKSUM_CALCULATION" not in ext.environment(service, loaded, "http://localhost")
+    data["s3"]["request_checksum_calculation"] = "DISABLED"
+    p.write_text(json.dumps(data))
+    with pytest.raises(RuntimeError, match="request_checksum_calculation"):
+        ext.load({"external_resources_file": str(p)})

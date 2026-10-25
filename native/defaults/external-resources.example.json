@@ -14,7 +14,8 @@
   },
   "s3": {
     "endpoint": "https://s3.example.internal", "region": "", "bucket": "",
-    "access_key": "", "secret_key": "", "force_path_style": false
+    "access_key": "", "secret_key": "", "force_path_style": false,
+    "request_checksum_calculation": "WHEN_SUPPORTED"
   },
   "roles": {
     "anon": "agentloop_anon", "authenticated": "agentloop_authenticated", "service": "agentloop_service",

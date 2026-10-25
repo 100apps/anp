@@ -84,6 +84,8 @@ Linux 包携带 glibc 加载器和动态库闭包，运行时按当前解压路�
 
 必须使用独立 namespace。Langfuse、LiteLLM 在配置的既有专用数据库内使用独立 PostgreSQL schema；Redis 使用带 hash tag 的独立前缀；Langfuse 的 S3 对象和 Storage tenant 隔离。ClickHouse database 需要明确指定本次独立数据库。请勿将实际资源文件放进 Git、CDN、镜像或压缩包。
 
+S3 默认沿用官方 SDK 的 `WHEN_SUPPORTED` 请求校验。阿里云 OSS 不支持流式 `STREAMING-UNSIGNED-PAYLOAD-TRAILER` 时，在私有资源配置中设置 `s3.request_checksum_calculation: "WHEN_REQUIRED"`；只对 Storage 和 Langfuse 生效，保留 API 必需的校验及原有签名、权限检查。配置依据见 [AWS 数据完整性文档](https://docs.aws.amazon.com/sdkref/latest/guide/feature-dataintegrity.html)。
+
 源码平台模式为 LiteLLM 准备独立数据库，并在构建时生成 Prisma Python 客户端、冻结 CLI 和官方查询/迁移引擎。首次启动执行官方迁移，管理台登录纳入验收。Linux 修复版保留官方静态 patchelf，以实例内 RPATH 代替全局 LD_LIBRARY_PATH，避免旧 glibc 宿主 shell 冲突；具体通过范围以当次目标主机报告为准。
 
 远程使用独立 loopback 服务时，除网关 58000 外，还需转发 Studio 53200 和 LiteLLM UI 54000。它们的入口会跳转到配置的独立端口，不要把只有网关的隧道当成完整后台访问。

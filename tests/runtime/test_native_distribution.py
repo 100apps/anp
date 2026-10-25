@@ -652,6 +652,70 @@ def test_macho_audit_ignores_install_id_and_fat_headers_but_checks_loaded_librar
 
 
 
+def test_macos_redis_preserves_vendor_bytes_and_scopes_library_override(tmp_path, monkeypatch):
+    import zipfile
+    import hashlib
+    installer = module("native_redis_vendor", "native/otel_build.py")
+    bundle = tmp_path / "bundle with spaces"
+    lib = bundle / "storage/postgres/lib"
+    lib.mkdir(parents=True)
+    (bundle / "manifest").mkdir()
+    libraries = {name: ("official " + name).encode() for name in ("libssl.3.dylib", "libcrypto.3.dylib")}
+    for name, data in libraries.items():
+        (lib / name).write_bytes(data)
+    binaries = {name: ("signed vendor " + name).encode() for name in ("redis-server", "redis-cli")}
+    archive = tmp_path / "vendor.zip"
+    with zipfile.ZipFile(archive, "w") as zipped:
+        for name, data in binaries.items():
+            zipped.writestr("bin/" + name, data)
+    def reject_mutation(*args, **kwargs):
+        raise AssertionError("不得改写或重新签名官方 Redis")
+    monkeypatch.setattr(installer.subprocess, "run", reject_mutation)
+    installer.install_redis(bundle, archive)
+    receipt = json.loads((bundle / "manifest/redis-distribution.json").read_text())
+    for name, data in binaries.items():
+        path = bundle / "storage/redis/bin" / name
+        assert path.read_bytes() == data
+        assert receipt["signed_binaries"][str(path.relative_to(bundle))] == hashlib.sha256(data).hexdigest()
+        launcher = bundle / "storage/redis" / name
+        assert launcher.stat().st_mode & 0o111
+        assert receipt["launchers"][str(launcher.relative_to(bundle))] == hashlib.sha256(launcher.read_bytes()).hexdigest()
+    assert all((bundle / "storage/redis/lib" / name).read_bytes() == data for name, data in libraries.items())
+
+
+@pytest.mark.parametrize("trusted_vendor", [True, False])
+@pytest.mark.parametrize("tampered_launcher", [True, False])
+def test_redis_library_override_requires_vendor_signature_and_intact_launcher(tmp_path, monkeypatch, trusted_vendor, tampered_launcher):
+    import hashlib
+    builder = module("native_redis_audit", "native/build.py")
+    binary = tmp_path / "storage/redis/bin/redis-server"
+    binary.parent.mkdir(parents=True)
+    binary.write_bytes(b"\xcf\xfa\xed\xfe vendor fixture")
+    launcher = tmp_path / "storage/redis/redis-server"
+    launcher.write_text("immutable launcher")
+    lib = tmp_path / "storage/redis/lib"
+    lib.mkdir()
+    (lib / "libssl.3.dylib").write_bytes(b"bundled official OpenSSL")
+    manifest = tmp_path / "manifest/redis-distribution.json"
+    manifest.parent.mkdir()
+    manifest.write_text(json.dumps({"signed_binaries": {str(binary.relative_to(tmp_path)): hashlib.sha256(binary.read_bytes()).hexdigest()},
+        "launchers": {str(launcher.relative_to(tmp_path)): hashlib.sha256(launcher.read_bytes()).hexdigest()}}))
+    if tampered_launcher:
+        launcher.write_text("different launcher")
+    dependency = "/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib"
+    monkeypatch.setattr(builder.subprocess, "check_output", lambda *args, **kwargs: "cmd LC_LOAD_DYLIB\n name " + dependency + " (offset 24)\n")
+    monkeypatch.setattr(builder.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=0, stderr="TeamIdentifier=" + ("UUK47G4BAZ" if trusted_vendor else "OTHER")))
+    if not trusted_vendor or tampered_launcher:
+        with pytest.raises(SystemExit, match="官方 Redis"):
+            builder.macho_audit(tmp_path)
+    else:
+        receipt = builder.macho_audit(tmp_path)
+        assert receipt["external_dependencies"] == []
+        assert receipt["scoped_library_overrides"] == [{"path": str(binary.relative_to(tmp_path)), "library": dependency,
+            "provided_by": "storage/redis/lib/libssl.3.dylib", "vendor_team": "UUK47G4BAZ"}]
+        assert not receipt["resigned"]
+
+
 def test_official_binary_selection_ignores_same_named_directory_and_rejects_ambiguity(tmp_path):
     builder = module("native_platform_binary", "native/platform_build.py")
     (tmp_path / "usr/share/clickhouse").mkdir(parents=True)

@@ -59,11 +59,11 @@ ANP_OFFLINE=1 ./anp start    # 应用进程只可访问本机，禁止读取 Hom
 
 首次启动生成独立数据库、服务角色、JWT/S3 密钥及 Langfuse 本地管理员。Langfuse 管理员邮箱为 admin@anp.local，随机密码和初始项目 API key 保存在私有 var/secrets/runtime.json。业务管理员邮箱同为 admin@anp.local，密码字段是 `business-user-password`；当前候选 DBX 经统一管理员鉴权，无需二次密码；历史包的 DBX 密码字段是 `dbx-password`。文件权限 0600；不要在聊天或日志中打印其内容。Auth 为本机开发启用邮箱自动确认；未配置外部邮件或第三方登录。Studio 管理入口仅供本机使用。LiteLLM 保持空模型配置，尚未接入真实供应商。
 
-官方产物优先：Auth、PostgREST、ClickHouse、RustFS 和 migrate 使用固定官方发行；Storage、Meta、Studio 使用 supabase/slim-services 的官方 Mac 归档。Langfuse 无相应原生发行包，从真实锁定 submodule 编译 Web、Worker 和 Darwin ARM64 Rust 扩展。Mac Redis 使用 Redis 官方 ZIP，复用随包 OpenSSL，不再编译；Linux Redis 使用官方 DEB，DBX 使用官方 Linux Web 压缩包。Mac DBX 官方没有对应 Web 原生包，因此从锁定源码编译。OTel/LGTM 五个组件均下载官方预构建包。版本、URL、校验值及源码提交在 native/locks 固定；Python 使用 frozen uv.lock，JS 工具使用 package-lock.json，Langfuse 使用上游 frozen pnpm-lock.yaml/Cargo.lock。
+官方产物优先：Auth、PostgREST、ClickHouse、RustFS 和 migrate 使用固定官方发行；Storage、Meta、Studio 使用 supabase/slim-services 的官方 Mac 归档。Langfuse 无相应原生发行包，从真实锁定 submodule 编译 Web、Worker 和 Darwin ARM64 Rust 扩展。Mac Redis 使用 Redis 官方 ZIP，保留 Redis Labs Developer ID 签名与二进制原字节，通过仅作用于 Redis 进程的启动器加载随包 OpenSSL，不再编译或改签；Linux Redis 使用官方 DEB，DBX 使用官方 Linux Web 压缩包。Mac DBX 官方没有对应 Web 原生包，因此从锁定源码编译。OTel/LGTM 五个组件均下载官方预构建包。版本、URL、校验值及源码提交在 native/locks 固定；Python 使用 frozen uv.lock，JS 工具使用 package-lock.json，Langfuse 使用上游 frozen pnpm-lock.yaml/Cargo.lock。
 
 Supabase 原生归档采用其已发布的版本，与 Docker 层的组件版本不要求相同；以 manifest/platform-sources.lock.json 为准。PostgreSQL 保留 Supabase 官方 CLI 运行文件，仅初始化所需角色和扩展，不承诺 Docker 版本的完整扩展集合。业务对象应经 Supabase Data API/RPC，文件经 Supabase Storage；不要让业务绕过平台直接连底层 PostgreSQL/RustFS。
 
-`make dist` 按不可变清单校验后打包，不包含 var、用户配置或日志。存在运行数据时构建拒绝覆盖。升级前停止服务并备份 var/、config/；不要移动运行中的目录。macOS 签名使用本机 ad-hoc，不包含 Apple notarization；其他机器仍需实际验收，不能由本机结果推定。
+`make dist` 按不可变清单校验后打包，不包含 var、用户配置或日志。存在运行数据时构建拒绝覆盖。升级前停止服务并备份 var/、config/；不要移动运行中的目录。macOS 保留有效的上游供应商签名；自编译组件及必须修改的 Mach-O 使用 ad-hoc，不包含整包 Apple notarization。Redis 不修改 Mach-O、不重新签名。其他机器仍需实际验收，不能由本机结果推定。
 
 ## 可移植性与验收边界
 
@@ -71,30 +71,30 @@ Linux 包携带 glibc 加载器和动态库闭包，运行时按当前解压路�
 
 `business/` 的独立安装、配置和运行步骤见其 README。Python 依赖用 uv 冻结管理，前端用 pnpm；LangGraph 内置 Agent Server 提供 HTTP 扩展。默认 Workflow 和 Deep Agent 使用离线演示模型；真实供应商需要另行配置。业务对象通过 Supabase Data API/RPC，文件通过 Storage。
 
-发布门禁包括独立目录、真实压缩包和干净环境的功能验收。Mac 在本机离线沙箱中验证，Linux 在 Debian 与 Alpine 的干净容器中验证；以当次回执及 GitHub Actions 实际结果为准。本机成功不代表其他 Mac 的签名策略与公证验收已通过。最新进展见 `docs/acceptance/native-0.3.0-progress.md`。
+发布门禁包括独立目录、真实压缩包和干净环境的功能验收。Mac 在本机离线沙箱中验证，Linux 在 Debian 与 Alpine 的干净容器中验证；以当次回执及 GitHub Actions 实际结果为准。本机成功不代表其他 Mac 的签名策略与公证验收已通过。以仓库 `docs/acceptance/` 下对应版本的报告为准；CI 回执与实体机附件验收分别记录。
 
 完整平台包的资源需求高于精简 PoC。ClickHouse 服务上限为 4 GiB，默认单查询限制为 512 MiB；上限不是预留内存，也不代表已在小内存机器上验收。当前源码设置 `memory_worker_use_cgroup=0`：多服务共享 cgroup 时按 ClickHouse 自身分配器统计，避免将其他服务与缓存的总用量误算为 ClickHouse 的内存。在 Alibaba Cloud Linux 目标机曾出现进程 RSS 约 661 MiB、共享 cgroup 用量超过 4 GiB，导致 Langfuse 返回 422；修改后同一追踪写入与 worker 读回探针通过，完整验收以当次报告为准。
 
 
-## 外部资源模式（源码候选，Linux 目标机已验收）
+## 外部资源模式
 
-`0.3.6` 正式附件不包含这一入口；当前源码与目标主机修复候选分开记录，不把单元测试当作云端成功。
+`0.4.16` 原生包支持复用 PostgreSQL、Redis、ClickHouse 和 S3 云资源，不启动包内四个存储服务。包内仍保留存储二进制，方便使用默认内置模式；实际启动范围由配置决定。
 
-将 `defaults/external-resources.example.json` 复制到包外的私有 JSON 文件，填写 PostgreSQL、Redis、ClickHouse、S3 地址和凭据，并设置权限 0600。在 `config/anp.json` 中保留完整 ports，改为 `services: ["studio", "langfuse-worker", "litellm", "dbx", "business"]`，再设置 `external_resources_file` 为该 JSON 的绝对路径。启动会展开平台依赖，但拒绝启动四个本地存储。已有角色和 Supabase Auth/Storage schema 需预先准备，运行器不创建云数据库或角色。
+将 `defaults/external-resources.example.json` 复制到包外的私有 JSON 文件，填写服务地址和凭据，权限设为 0600。在 `config/anp.json` 中保留完整 ports，设置 `services: ["studio", "langfuse-worker", "litellm", "dbx", "business"]`，再将 `external_resources_file` 指向该 JSON 的绝对路径。依赖会展开为十个平台服务。已有数据库、角色和 Supabase Auth/Storage schema 需预先准备；运行器不创建云数据库或角色，启动会执行本实例的官方应用迁移。
 
-必须使用独立 namespace。Langfuse、LiteLLM 在配置的既有专用数据库内使用独立 PostgreSQL schema；Redis 使用带 hash tag 的独立前缀；Langfuse 的 S3 对象和 Storage tenant 隔离。ClickHouse database 需要明确指定本次独立数据库。请勿将实际资源文件放进 Git、CDN、镜像或压缩包。
+使用独立 namespace。Langfuse、LiteLLM 在配置的既有专用数据库内使用独立 PostgreSQL schema，Redis 使用带 hash tag 的独立前缀，Langfuse S3 对象与 Supabase Storage tenant 隔离。ClickHouse database 需明确指定本实例的数据库。资源文件不要进入 Git、CDN、镜像或发行包。
 
-S3 默认沿用官方 SDK 的 `WHEN_SUPPORTED` 请求校验。阿里云 OSS 不支持流式 `STREAMING-UNSIGNED-PAYLOAD-TRAILER` 时，在私有资源配置中设置 `s3.request_checksum_calculation: "WHEN_REQUIRED"`；只对 Storage 和 Langfuse 生效，保留 API 必需的校验及原有签名、权限检查。配置依据见 [AWS 数据完整性文档](https://docs.aws.amazon.com/sdkref/latest/guide/feature-dataintegrity.html)。
+S3 请求校验默认沿用官方 SDK 的 `WHEN_SUPPORTED`。阿里云 OSS 不支持流式 `STREAMING-UNSIGNED-PAYLOAD-TRAILER` 时，在私有配置设置 `s3.request_checksum_calculation: "WHEN_REQUIRED"`；仅作用于 Storage 和 Langfuse，保留 API 必需的校验、签名及权限检查。依据见 [AWS 数据完整性文档](https://docs.aws.amazon.com/sdkref/latest/guide/feature-dataintegrity.html)。
 
-源码平台模式为 LiteLLM 准备独立数据库，并在构建时生成 Prisma Python 客户端、冻结 CLI 和官方查询/迁移引擎。首次启动执行官方迁移，管理台登录纳入验收。Linux 修复版保留官方静态 patchelf，以实例内 RPATH 代替全局 LD_LIBRARY_PATH，避免旧 glibc 宿主 shell 冲突；具体通过范围以当次目标主机报告为准。
+远程统一入口为 Agent Server 的 58000 端口，只需 SSH 转发此端口，即可访问工作台、Studio、DBX、Langfuse 和 LiteLLM。各上游默认仍监听 loopback，平台后台要求 Supabase 管理员，SDK API 保留自己的鉴权。云模式的对象管理通过 Supabase Storage，未运行的 RustFS 没有本地管理后台。
 
-远程使用独立 loopback 服务时，除网关 58000 外，还需转发 Studio 53200 和 LiteLLM UI 54000。它们的入口会跳转到配置的独立端口，不要把只有网关的隧道当成完整后台访问。
+云模式管理员邮箱为 `<namespace>@anp.local`，密码位于本实例私有 `var/secrets/runtime.json`。已有同邮箱账号不会被自动提升为管理员；迁移既有实例时需确认其受信管理员身份，并保留原实例的私有凭据与管理员标记。不要只复制数据目录后假定账户自动接管。
 
-目标机云模式的 32 项功能、8 项重启/持久化/运行库审计，以及本机经隧道的 Business 24 项与 DBX 4 项检查已通过，证据见 `docs/acceptance/linux-host-2026-10-24.md`。云模式管理员邮箱为 `<namespace>@anp.local`，密码仍取本实例的私有 runtime.json；不覆盖已有同邮箱账号。Studio MCP 的独立只读登录未纳入此轮验收。
+可选 OTel/LGTM 默认关闭。云模式启用 Grafana 前，需配置其专用 PostgreSQL 数据库及角色，仍不使用 SQLite。完整内置包的五个观测组件另有独立验收。
 
-云兼容处理包含：Auth/Storage 角色的显式搜索路径，LiteLLM 迁移元数据限定当前 schema，Studio 连接 URI 转义，Node 补充冻结 certifi 的公共根证书，以及 Storage/Langfuse 批量删除使用 MD5。修改的官方迁移和 Storage 调用记录原始/修改后摘要，仍从固定官方发行包安装。
+云适配还包括 Auth/Storage 角色的显式搜索路径、LiteLLM 迁移限定当前 schema、Studio 连接 URI 转义、冻结 certifi 公共根证书，以及 Storage/Langfuse 批量删除的 MD5。固定官方产物的必要适配均记录摘要。
 
-Linux 构建增加本项目的小型 NSS 适配库，只为包内进程使用 glibc 内置 files/DNS 解析，避免加载宿主 myhostname/SSSD 等插件。普通 ELF 使用实例缓存的 NEEDED；官方 Slim Node 因布局限制使用本次 exec 的临时预载，构造器在 main 前清除预载变量，宿主 shell 子进程不继承。宿主配置不变，仍读取其 hosts/resolv.conf 和本地用户记录。此轮未重新发布 Release，也没有重跑修改后的 Mac 整包或干净容器 CI。
+Linux 包自带 ELF 库闭包和小型 NSS 适配库，不修改宿主配置。普通 ELF 使用实例内 RPATH；Slim Node 的临时预载在进入 main 前清除，宿主 shell 子进程不继承。仍使用宿主 hosts/resolv.conf 与用户记录。兼容范围、云配置和实际验收边界见 [版本验收记录](https://github.com/100apps/anp/tree/main/docs/acceptance)。
 
 ## 图形控制台
 

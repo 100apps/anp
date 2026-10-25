@@ -79,7 +79,9 @@ def install_python(project, uv, python, environment):
 def macho_audit(bundle, source_built=None):
     """审计包外依赖；保留有效官方签名，修复无效签名和源码 DBX 签名。"""
     source_built = {"platform/dbx/dbx-web"} if source_built is None else set(source_built)
-    result = {"mach_o_files": 0, "resigned": [], "linker_stub_signatures": [], "preserved_upstream_signatures": [], "external_dependencies": []}
+    result = {"mach_o_files": 0, "resigned": [], "linker_stub_signatures": [], "preserved_upstream_signatures": [], "external_dependencies": [], "scoped_library_overrides": []}
+    redis_manifest = bundle / "manifest/redis-distribution.json"
+    redis = json.loads(redis_manifest.read_text()) if redis_manifest.exists() else {}
     for p in bundle.rglob("*"):
         if not p.is_file() or p.is_symlink():
             continue
@@ -104,16 +106,33 @@ def macho_audit(bundle, source_built=None):
                 libraries.append(match.group(1))
         forbidden = sorted({name for name in libraries if name.startswith("/")
                             and not name.startswith(("/usr/lib/", "/System/Library/"))})
-        if forbidden:
-            result["external_dependencies"].append({"path": str(p.relative_to(bundle)), "libraries": forbidden})
+        relative = str(p.relative_to(bundle))
         signature = subprocess.run(["codesign", "-dvv", str(p)], capture_output=True, text=True)
         linker_stub = "linker-signed" in signature.stderr
         verified = subprocess.run(["codesign", "--verify", "--strict", str(p)], capture_output=True)
+        if relative in {"storage/redis/bin/redis-server", "storage/redis/bin/redis-cli"}:
+            launcher = relative.replace("/bin/", "/")
+            vendor = (verified.returncode == 0 and "TeamIdentifier=UUK47G4BAZ" in signature.stderr
+                      and redis.get("signed_binaries", {}).get(relative) == digest(p)
+                      and (bundle / launcher).is_file()
+                      and redis.get("launchers", {}).get(launcher) == digest(bundle / launcher))
+            if vendor:
+                requirement = '=anchor apple generic and certificate leaf[subject.OU] = "UUK47G4BAZ"'
+                vendor = subprocess.run(["codesign", "--verify", "--strict", "--test-requirement", requirement, str(p)], capture_output=True).returncode == 0
+            if not vendor:
+                raise SystemExit("官方 Redis 签名或启动器不匹配：" + relative)
+            allowed = {"/opt/homebrew/opt/openssl@3/lib/" + name for name in ("libssl.3.dylib", "libcrypto.3.dylib")
+                       if (bundle / "storage/redis/lib" / name).is_file()} if vendor else set()
+            for library in sorted(set(forbidden) & allowed):
+                result["scoped_library_overrides"].append({"path": relative, "library": library,
+                    "provided_by": "storage/redis/lib/" + Path(library).name, "vendor_team": "UUK47G4BAZ"})
+            forbidden = [library for library in forbidden if library not in allowed]
+        if forbidden:
+            result["external_dependencies"].append({"path": relative, "libraries": forbidden})
         if linker_stub:
             result["linker_stub_signatures"].append(str(p.relative_to(bundle)))
         # linker stub 的哈希校验可通过，但 macOS 26 AMFI 仍可能拒绝。
         # 在归档前生成完整签名；不修改系统安全设置或下载隔离标记。
-        relative = str(p.relative_to(bundle))
         if verified.returncode or (linker_stub and relative in source_built):
             run(["codesign", "--force", "--sign", "-", p], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             run(["codesign", "--verify", "--strict", p], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

@@ -1,5 +1,6 @@
 """从固定官方发行包组装 LGTM 和 Mac Redis，不编译上游项目。"""
 import json
+import hashlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -64,17 +65,24 @@ def install_redis(bundle, archive):
     libraries.mkdir()
     for name in ("libssl.3.dylib", "libcrypto.3.dylib"):
         shutil.copy2(bundle / "storage/postgres/lib" / name, libraries / name)
-    subprocess.run(["install_name_tool", "-change", "@rpath/libcrypto.3.dylib",
-                    "@loader_path/libcrypto.3.dylib", str(libraries / "libssl.3.dylib")], check=True)
+    binaries = destination / "bin"
+    binaries.mkdir()
+    signed_binaries, launchers = {}, {}
     with zipfile.ZipFile(archive) as zipped:
         for name in ("redis-server", "redis-cli"):
-            path = destination / name
+            path = binaries / name
             path.write_bytes(zipped.read("bin/" + name))
             path.chmod(0o755)
-            for library in ("libssl.3.dylib", "libcrypto.3.dylib"):
-                subprocess.run(["install_name_tool", "-change", "/opt/homebrew/opt/openssl@3/lib/" + library,
-                                "@executable_path/lib/" + library, str(path)], check=True)
+            signed_binaries[str(path.relative_to(bundle))] = hashlib.sha256(path.read_bytes()).hexdigest()
+            # Redis 官方签名允许 DYLD_LIBRARY_PATH；只在此进程中绑定包内库。
+            # 改写 Mach-O 会破坏 Redis Labs 的 Developer ID，不能重新改为 adhoc。
+            launcher = destination / name
+            launcher.write_text('#!/bin/sh\nset -eu\nANP_REDIS_HOME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\n'
+                                'DYLD_LIBRARY_PATH="$ANP_REDIS_HOME/lib" exec "$ANP_REDIS_HOME/bin/' + name + '" "$@"\n')
+            launcher.chmod(0o755)
+            launchers[str(launcher.relative_to(bundle))] = hashlib.sha256(launcher.read_bytes()).hexdigest()
     (bundle / "manifest/redis-distribution.json").write_text(json.dumps({
         "distribution": "official-binary", "version": "8.10.2", "modules_enabled": False,
-        "adaptations": ["OpenSSL -> bundled official PostgreSQL libraries", "final Mach-O signing"],
+        "adaptations": ["unchanged Redis Labs signed binaries", "process-scoped bundled OpenSSL lookup"],
+        "signed_binaries": signed_binaries, "launchers": launchers,
     }, indent=2) + "\n")

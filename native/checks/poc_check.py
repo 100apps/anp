@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 ROOT = Path(__file__).resolve().parents[2]
 HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-SANDBOX = ["/usr/bin/sandbox-exec", "-p", '(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote ip "localhost:*"))(deny file-read* (subpath "/opt/homebrew") (subpath "/usr/local") (subpath "/nix"))']
+SANDBOX = ["/usr/bin/sandbox-exec", "-p", '(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote ip "localhost:*"))(allow network-outbound (remote unix-socket))(deny file-read* (subpath "/opt/homebrew") (subpath "/usr/local") (subpath "/nix"))']
 
 
 def token(secret):

@@ -34,6 +34,7 @@ def generate(bundle, target, fetch):
     scope_migration_metadata(bundle)
     generate_client(bundle, lock)
     adapt_prisma_engine_slot(bundle)
+    prefer_explicit_prisma_engine(bundle)
     (bundle / "manifest/litellm-prisma.json").write_text(json.dumps({"prisma_version": lock["prisma_version"],
         "engine_commit": lock["engine_commit"], "platform": lock["platform"], "artifacts": lock["artifacts"],
         "package_lock_sha256": hashlib.sha256((package / "package-lock.json").read_bytes()).hexdigest()}, indent=2) + "\n")
@@ -76,6 +77,26 @@ def adapt_prisma_engine_slot(bundle):
     (bundle / "manifest/litellm-prisma-compat.json").write_text(json.dumps({
         "path": str(path.relative_to(bundle)), "prisma_version": "0.15.0",
         "reason": "引擎跟踪使用 Prisma 0.15 的实际存储槽，保留事务跟踪和重连行为",
+        "upstream_sha256": hashlib.sha256(original.encode()).hexdigest(),
+        "patched_sha256": hashlib.sha256(updated.encode()).hexdigest(),
+    }, ensure_ascii=False, indent=2) + "\n")
+
+
+
+def prefer_explicit_prisma_engine(bundle):
+    """显式引擎路径不再探测宿主发行版和 openssl 可执行文件。"""
+    path = bundle / "platform/litellm/site-packages/prisma/engine/utils.py"
+    original = path.read_text()
+    before = "    name = query_engine_name()"
+    after = ("    binary = os.environ.get('PRISMA_QUERY_ENGINE_BINARY')\n"
+             "    name = Path(binary).name if binary else query_engine_name()")
+    if original.count(before) != 1:
+        raise RuntimeError("未知 Prisma 引擎发现布局，拒绝适配")
+    updated = original.replace(before, after, 1)
+    path.write_text(updated)
+    (bundle / "manifest/prisma-explicit-engine.json").write_text(json.dumps({
+        "path": str(path.relative_to(bundle)),
+        "reason": "显式官方引擎优先，保留存在性与版本校验，不依赖宿主 openssl",
         "upstream_sha256": hashlib.sha256(original.encode()).hexdigest(),
         "patched_sha256": hashlib.sha256(updated.encode()).hexdigest(),
     }, ensure_ascii=False, indent=2) + "\n")

@@ -31,7 +31,7 @@ ORDER = ["postgres", "redis", "postgrest", "litellm"]
 PLATFORM = (ROOT / "platform/langfuse").exists()
 if PLATFORM:
     ORDER = platforms.ORDER
-OFFLINE_PROFILE = '(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote ip "localhost:*"))(deny file-read* (subpath "/opt/homebrew") (subpath "/usr/local") (subpath "/nix"))'
+OFFLINE_PROFILE = '(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote ip "localhost:*"))(allow network-outbound (remote unix-socket))(deny file-read* (subpath "/opt/homebrew") (subpath "/usr/local") (subpath "/nix"))'
 
 
 def confined(args):
@@ -126,8 +126,8 @@ def identity(pid):
     if sys.platform.startswith("linux"):
         from linux_process import identity as linux_identity
         return linux_identity(pid)
-    p = subprocess.run(["/bin/ps", "-p", str(pid), "-o", "lstart=", "-o", "command="], capture_output=True, text=True)
-    return p.stdout.strip() if p.returncode == 0 else ""
+    from darwin_process import identity as darwin_identity
+    return darwin_identity(pid)
 
 
 def state_path(name):

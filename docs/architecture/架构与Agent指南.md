@@ -1,13 +1,16 @@
 # 架构与Agent指南
 
-ANP 是单机 AI 应用脚手架：一个 Debian slim 工具镜像承载四存储与平台，业务代码在宿主用 uv 和 pnpm 运行。服务进程由 Python 标准库管理器按依赖顺序启动，独立UID、日志和环境；不运行Docker-in-Docker。
+ANP 的主交付是 Mac ARM64、Linux x64 可搬移原生目录包。包内提供工具、存储、平台与可单独复制的 Business；服务由包内 Python 管理器按依赖顺序启动，业务 HTTP 与代理统一由 LangGraph Agent Server 承载。
 
-原生目录发行包 PoC 与 Docker 交付共存：`make build` / `make dist` 对应 `native/`，当前支持 macOS ARM64 与 Linux x64 平台 PoC（Supabase、Langfuse、LiteLLM；不含 Realtime），可用 NATIVE_PROFILE=poc 保留精简配置；原全功能镜像使用 `make docker-build`。两种交付的范围与验收分开，不能互相替代。原生包说明见 [native/README.md](../../native/README.md)。
+`make build` / `make dist` 对应 `native/`，包含 Supabase、Langfuse、LiteLLM、DBX 和可选 OTel/LGTM；Realtime 不随原生包发布。`NATIVE_PROFILE=poc` 保留精简构建。Docker 交付继续使用 `make docker-build`，独立于原生运行，不作为其隐式依赖。两种交付分别验收，详见 [原生说明](../../native/README.md) 与 [Docker 开发环境](../development/Docker开发环境.md)。
 
 ## 入口地图
 
 | 工作 | 入口 |
 | --- | --- |
+| 原生构建、打包与依赖来源 | native/build.py、native/locks/、native/defaults/ |
+| 原生生命周期与进程身份检查 | native/runtime/control.py、native/runtime/linux_process.py |
+| 原生目录、压缩包与干净环境验收 | native/checks/、native/check.py、native/linux_check.py |
 | 普通LangChain Workflow | business/src/anp_business/workflow_demo/ |
 | Deep Agents与工具 | business/src/anp_business/deepagent_demo/ |
 | LangGraph路由与静态工作台 | business/langgraph.json、business/src/anp_business/server/http.py |
@@ -21,11 +24,13 @@ ANP 是单机 AI 应用脚手架：一个 Debian slim 工具镜像承载四存�
 
 ## 运行与配置边界
 
-根.env控制容器镜像、资源、服务组合和端口；business/.env控制宿主业务。/data/config/services.json按服务覆盖平台环境，不将其他服务的秘密自动传给无关进程。effective目录由启动器生成，不能手改作为持久配置。
+原生包的 `defaults/` 保存只读默认值，`config/anp.json` 保存用户配置，`var/` 保存本实例数据、日志、生成配置与私有凭据。源码构建缓存和隔离验收实例只写入仓库 `var/`。不要用构建覆盖运行目录，不要因源码目录改名搬动数据根。Business 依靠自己的配置文件与锁文件连接平台，可脱离整套构建独立开发。
+
+Docker 的根 .env 控制镜像、资源、服务组合和端口；business/.env 控制宿主业务。/data/config/services.json 按服务覆盖平台环境，不将其他服务的秘密自动传给无关进程。effective 目录由启动器生成，不能手改作为持久配置。
 
 /data保存配置、数据和日志；/data/run单独挂载tmpfs，保存可重新生成的运行状态与Unix socket，不能放在macOS共享文件系统中。镜像升级不隐式迁移数据目录或主版本。PostgreSQL保持Supabase17兼容扩展组合。需要外部数据库时，明确配置各平台连接，并决定是否关闭自动本地依赖。
 
-业务对象统一通过 Supabase Data API/RPC 管理，文件通过 Storage，实时状态通过 Realtime；PostgreSQL、RustFS 仅为内部基础设施。数据库初始化、迁移与独立验收可以使用底层连接。Supabase 保留 Auth、PostgREST、Storage、Realtime、Studio、Meta、Envoy，DBX 继续保留。
+业务对象统一通过 Supabase Data API/RPC 管理，文件通过 Storage；PostgreSQL、RustFS 仅为内部基础设施。数据库初始化、迁移与独立验收可以使用底层连接。原生 Supabase 保留 Auth、PostgREST、Storage、Studio、Meta，由 Agent Server 代理；Realtime、Envoy 属于另行保留的 Docker 交付范围，不能据此声明原生包已支持。
 
 业务默认演示模型不调用付费API。普通Workflow验证确定性节点与摘要；Deep Agents验证图、资料工具与报告。业务范围为 Workflow 与 Deep Agent 两个演示。
 

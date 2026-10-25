@@ -102,6 +102,42 @@ def test_slim_node_preload_uses_rpath_without_splitting_relocation_spaces(tmp_pa
     assert not any("--add-needed" in args for args in calls)
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS 离线沙箱契约")
+def test_darwin_process_identity_is_stable_inside_offline_sandbox():
+    import os
+    runtime = module("native_darwin_identity", "native/runtime/darwin_process.py")
+    control = module("native_darwin_identity_control", "native/runtime/control.py")
+    expected = runtime.identity(os.getpid())
+    assert expected and len(expected.split(" ", 1)[0]) == 23
+    script = ("import sys;sys.path.insert(0," + repr(str(ROOT / "native/runtime")) + ");"
+              "from darwin_process import identity;print(identity(" + str(os.getpid()) + "))")
+    result = subprocess.run(["/usr/bin/sandbox-exec", "-p", control.OFFLINE_PROFILE, sys.executable, "-I", "-B", "-c", script],
+                            capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == expected
+    child = subprocess.Popen([sys.executable, "-I", "-c", "pass"])
+    child.wait(timeout=10)
+    assert runtime.identity(child.pid) == ""
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS 离线沙箱契约")
+def test_offline_sandbox_allows_local_plugin_ipc_but_denies_external_tcp(native_runtime_dir):
+    control = module("native_local_ipc_profile", "native/runtime/control.py")
+    endpoint = native_runtime_dir / "ipc.sock"
+    with socket.socket(socket.AF_UNIX) as server:
+        server.bind(str(endpoint))
+        server.listen(1)
+        script = ("import socket,errno; s=socket.socket(socket.AF_UNIX); s.connect(" + repr(str(endpoint)) + "); s.sendall(b'local'); s.close(); "
+                  "remote=socket.socket(); remote.settimeout(1); assert remote.connect_ex(('192.0.2.1',9))==errno.EPERM")
+        result = subprocess.run(["/usr/bin/sandbox-exec", "-p", control.OFFLINE_PROFILE, sys.executable, "-I", "-B", "-c", script],
+                                capture_output=True, text=True, timeout=10)
+        assert result.returncode == 0, result.stderr
+        server.settimeout(2)
+        client, _ = server.accept()
+        with client:
+            assert client.recv(5) == b"local"
+
+
 def test_business_configuration_survives_pid_record_write(tmp_path, monkeypatch):
     platforms = module("native_platform_settings", "native/runtime/platforms.py")
     monkeypatch.setitem(sys.modules, "business_init", SimpleNamespace(ensure_admin=lambda *args: None))
@@ -296,7 +332,7 @@ def test_stop_cli_real_foreign_listener(native_runtime_dir, option, answer, code
     tmp_path = native_runtime_dir
     runtime = tmp_path / "runtime"
     runtime.mkdir()
-    for name in ("control.py", "platforms.py", "linux_process.py", "external.py", "observability.py"):
+    for name in ("control.py", "platforms.py", "linux_process.py", "darwin_process.py", "external.py", "observability.py"):
         shutil.copy2(ROOT / "native/runtime" / name, runtime / name)
     sockets = [socket.socket() for _ in range(4)]
     try:
@@ -347,13 +383,14 @@ def test_start_progress_reuse_and_json_with_native_redis(native_runtime_dir, mod
     (tmp_path / "tools/python/bin").mkdir(parents=True)
     (tmp_path / "storage").mkdir()
     (tmp_path / "defaults").mkdir()
-    for name in ("control.py", "platforms.py", "external.py", "observability.py"):
+    for name in ("control.py", "platforms.py", "darwin_process.py", "external.py", "observability.py"):
         shutil.copy2(ROOT / "native/runtime" / name, tmp_path / "runtime" / name)
     shutil.copy2(ROOT / "native/anp", tmp_path / "anp")
     (tmp_path / "anp").chmod(0o755)
     (tmp_path / "tools/python/bin/python3").symlink_to(python)
     if mode == "normal":
-        (tmp_path / "storage/redis").symlink_to(redis)
+        # libproc 按真实可执行文件路径验证本目录身份，不能链接相邻实例的服务。
+        shutil.copytree(redis, tmp_path / "storage/redis", symlinks=True)
     else:
         (tmp_path / "storage/redis").mkdir()
         # 官方 Redis 的 TLS 库位于相邻 lib/；包装器副本必须保留该依赖布局。

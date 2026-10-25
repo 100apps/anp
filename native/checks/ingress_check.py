@@ -43,7 +43,9 @@ def check(root, receipt):
         passed("anonymous_denied:" + path, call(machine, path)[0] == 401)
     status, state = call(admin, "/api/console/state")
     passed("single_agent_server_no_gateway", status == 200 and all(s["id"] != "gateway" for s in state["services"]) and next(s for s in state["services"] if s["id"] == "business")["port"] == config["ports"]["business"])
-    passed("all_managed_services_ready", all(s["state"] == "ready" for s in state["services"]))
+    failed = [{"id": s["id"], "state": s["state"]} for s in state["services"] if s["state"] != "ready"]
+    assert not failed, "services not ready: " + json.dumps(failed)
+    passed("all_managed_services_ready", True)
     status, body = call(admin, "/api/platform/pg-meta/default/query", {"query": "SELECT 42 AS value"})
     passed("studio_real_query", status == 200 and body == [{"value": 42}])
     status, body = call(admin, "/project/default")

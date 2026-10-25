@@ -13,7 +13,8 @@ on:
 
 concurrency:
   group: anp-native-${{ github.ref }}
-  cancel-in-progress: true
+  # 原生编译耗时较长；让当前运行保存组件缓存后，再验收最新提交。
+  cancel-in-progress: false
 
 permissions:
   contents: read

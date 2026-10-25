@@ -202,6 +202,19 @@ def main():
                 subprocess.run([*sandbox, *map(str, command)], check=True, capture_output=True,
                                env={"PATH": "/usr/bin:/bin", "HOME": str(bundle / "var/cache")})
             receipt["checks"]["bundled_uv_python_node_native_tools"] = True
+            # 显式使用包内官方引擎，即使 PATH 里没有 openssl 也必须可用。
+            engine = bundle / "platform/litellm/engines/query-engine"
+            probe_engine = (
+                "import os,site;from pathlib import Path;"
+                "site.addsitedir(" + repr(str(bundle / "platform/litellm/site-packages")) + ");"
+                "from prisma.engine.utils import ensure;"
+                "assert ensure({})==Path(os.environ['PRISMA_QUERY_ENGINE_BINARY'])"
+            )
+            subprocess.run([*sandbox, str(bundle / "tools/python/bin/python3"), "-I", "-B", "-c", probe_engine],
+                           env={"PATH": "/nonexistent", "HOME": str(bundle / "var/cache"),
+                                "PRISMA_QUERY_ENGINE_BINARY": str(engine)},
+                           check=True, capture_output=True)
+            receipt["checks"]["prisma_explicit_engine_without_host_openssl"] = True
             cli("verify")
             receipt["checks"]["immutable_manifest"] = True
             with socket.socket() as foreign:

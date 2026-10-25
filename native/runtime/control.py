@@ -332,14 +332,21 @@ def selected(config, text=None):
 def stop_one(name):
     state = owned(name)
     if state:
-        os.killpg(state["pid"], signal.SIGTERM)
-        for _ in range(100):
+        if name == "postgres":
+            # SIGTERM 是 smart shutdown，会等所有客户端退出；超时强杀会遗留锁文件。
+            # 只向本目录 postmaster 发 SIGINT，按官方 fast 模式回滚事务并完成检查点。
+            os.kill(state["pid"], signal.SIGINT)
+        else:
+            os.killpg(state["pid"], signal.SIGTERM)
+        for _ in range(600 if name == "postgres" else 100):
             if not identity(state["pid"]):
                 break
             time.sleep(0.1)
         else:
             # 仍需复核 identity，绝不因 PID 重用终止无关进程。
             if owned(name):
+                if name == "postgres":
+                    raise RuntimeError("PostgreSQL 仍在完成停机检查点；保留进程与记录，请稍候重试")
                 os.killpg(state["pid"], signal.SIGKILL)
     state_path(name).unlink(missing_ok=True)
 

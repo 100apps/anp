@@ -296,12 +296,29 @@ def dist(target):
     archive = exports / ("anp-" + version + "-" + target + ".tar.gz")
     part = archive.with_suffix(".part")
     with tarfile.open(part, "w:gz") as tar:
+        identical = {}
         for section in ("tools", "storage", "platform", "runtime", "config", "defaults", "manifest"):
             tar.add(bundle / section, arcname=bundle.name + "/" + section, recursive=False)
         if (bundle / "business").exists():
             tar.add(bundle / "business", arcname=bundle.name + "/business", recursive=False)
         for name in sorted([*hashes, "manifest/files.sha256.json"]):
-            tar.add(bundle / name, arcname=bundle.name + "/" + name, recursive=False)
+            path = bundle / name
+            info = tar.gettarinfo(path, arcname=bundle.name + "/" + name)
+            key = (hashes.get(name), info.mode, info.uid, info.gid)
+            immutable = name.split("/", 1)[0] in {"tools", "storage", "platform"}
+            if immutable and info.isfile() and key[0] and key in identical:
+                # 保留所有路径与官方文件字节，归档内相同内容用标准 tar 硬链接表示。
+                # 同时保留可执行权限和所有者边界，不改写构建目录中的原文件。
+                info.type = tarfile.LNKTYPE
+                info.linkname, info.mtime = identical[key]
+                info.size = 0
+            elif immutable and info.isfile() and key[0]:
+                identical[key] = (info.name, info.mtime)
+            if info.isfile():
+                with path.open("rb") as stream:
+                    tar.addfile(info, stream)
+            else:
+                tar.addfile(info)
         # 保留包内相对符号链接；不跟随链接打包包外文件。
         for path in sorted(bundle.rglob("*")):
             if path.relative_to(bundle).parts[0] not in {"tools", "storage", "platform", "runtime", "defaults", "manifest", "business"}:

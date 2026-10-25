@@ -256,6 +256,63 @@ def test_dist_never_contains_runtime_secrets(tmp_path, monkeypatch):
         assert not any('/var/' in name or name.endswith('user.json') for name in tar.getnames())
 
 
+def test_dist_deduplicates_equal_content_and_preserves_executable_mode(tmp_path, monkeypatch):
+    builder = module("native_dist_hardlinks", "native/build.py")
+    monkeypatch.setattr(builder, "ROOT", tmp_path)
+    monkeypatch.setattr(builder, "BASE", tmp_path / "var/native")
+    bundle = builder.BASE / "build/anp-macos-arm64"
+    for folder in ("tools", "storage", "platform", "runtime", "config", "defaults", "manifest", "business"):
+        (bundle / folder).mkdir(parents=True)
+    (bundle / "manifest/build.json").write_text('{}')
+    for name, mode in (("platform/first", 0o644), ("platform/second", 0o644), ("platform/executable", 0o755), ("business/editable", 0o644)):
+        (bundle / name).write_bytes(b"same official artifact bytes")
+        (bundle / name).chmod(mode)
+    hashes = {str(p.relative_to(bundle)): builder.digest(p) for p in bundle.rglob("*") if p.is_file()}
+    (bundle / "manifest/files.sha256.json").write_text(json.dumps(hashes))
+    builder.dist("macos-arm64")
+    archive = tmp_path / "var/exports/anp-0.1.0-poc-macos-arm64.tar.gz"
+    with tarfile.open(archive) as tar:
+        assert tar.getmember("anp-macos-arm64/platform/second").islnk()
+        assert not tar.getmember("anp-macos-arm64/platform/executable").islnk()
+        assert not tar.getmember("anp-macos-arm64/business/editable").islnk()
+        tar.extractall(tmp_path / "unpacked", filter="data")
+    unpacked = tmp_path / "unpacked/anp-macos-arm64"
+    for name, expected in hashes.items():
+        assert builder.digest(unpacked / name) == expected
+    assert (unpacked / "platform/executable").stat().st_mode & 0o777 == 0o755
+    (unpacked / "business/editable").write_bytes(b"business development")
+    assert (unpacked / "platform/first").read_bytes() == b"same official artifact bytes"
+
+
+@pytest.mark.parametrize("name,expected,group", [("postgres", signal.SIGINT, False), ("redis", signal.SIGTERM, True)])
+def test_stop_signal_uses_postgres_fast_shutdown(tmp_path, monkeypatch, name, expected, group):
+    control = module("native_fast_shutdown", "native/runtime/control.py")
+    signals = []
+    monkeypatch.setattr(control, "owned", lambda service: {"pid": 123})
+    monkeypatch.setattr(control, "identity", lambda pid: "")
+    monkeypatch.setattr(control, "state_path", lambda service: tmp_path / (service + ".json"))
+    monkeypatch.setattr(control.os, "kill", lambda pid, signum: signals.append((pid, signum, False)))
+    monkeypatch.setattr(control.os, "killpg", lambda pid, signum: signals.append((pid, signum, True)))
+    control.stop_one(name)
+    assert signals == [(123, expected, group)]
+
+
+def test_postgres_shutdown_timeout_keeps_process_record_and_never_sigkills(tmp_path, monkeypatch):
+    control = module("native_checkpoint_shutdown", "native/runtime/control.py")
+    record = tmp_path / "postgres.json"
+    record.write_text('{}')
+    signals = []
+    monkeypatch.setattr(control, "owned", lambda service: {"pid": 123})
+    monkeypatch.setattr(control, "identity", lambda pid: "same live postgres")
+    monkeypatch.setattr(control, "state_path", lambda service: record)
+    monkeypatch.setattr(control.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(control.os, "kill", lambda pid, signum: signals.append(signum))
+    monkeypatch.setattr(control.os, "killpg", lambda pid, signum: signals.append(signum))
+    with pytest.raises(RuntimeError, match="检查点"):
+        control.stop_one("postgres")
+    assert signals == [signal.SIGINT] and record.exists()
+
+
 @pytest.mark.skipif(sys.platform not in ("darwin", "linux"), reason="需要 POSIX 进程与监听查询")
 @pytest.mark.parametrize("answer,yes,stopped", [("n", False, False), ("yes", False, True), (None, True, True)])
 def test_stop_foreign_listener_confirmation_and_yes(tmp_path, monkeypatch, answer, yes, stopped):

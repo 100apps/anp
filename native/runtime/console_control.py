@@ -96,7 +96,7 @@ def main():
         else:
             if name in PROTECTED:
                 raise ValueError('控制台依赖服务请在终端维护')
-            dependents = [service for service in c.ORDER if name in c.selected(config, service) and service != name and running(service)]
+            dependents = [service for service in c.ORDER if service != name and running(service) and name in c.selected(config, service)]
             if dependents:
                 raise ValueError('请先停止依赖服务：' + ', '.join(dependents))
             c.stop_one(name)  # 仅精确操作本目录持有的进程；不停止依赖或端口上的外来进程。

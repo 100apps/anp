@@ -73,3 +73,18 @@ def test_console_refuses_stopping_dependency_in_use(bridge,monkeypatch):
     monkeypatch.setattr(value,'running',lambda name: {'pid':1} if name=='langfuse-web' else None)
     monkeypatch.setattr(value.c,'stop_one',lambda name:pytest.fail('不得停止依赖'))
     with pytest.raises(ValueError,match='依赖服务'):value.main()
+
+
+def test_cloud_stop_ignores_unstarted_local_storage(bridge, monkeypatch, capsys):
+    value, config = bridge
+    config['external_resources_file'] = '/fixture/cloud.json'
+    (value.c.ROOT / 'platform/otel/grafana').mkdir(parents=True)
+    monkeypatch.setattr(sys, 'argv', ['console_control.py', 'stop'])
+    monkeypatch.setattr(sys, 'stdin', io.StringIO(json.dumps({'service': 'grafana'})))
+    monkeypatch.setattr(value, 'running', lambda name: {'pid': 1} if name == 'grafana' else None)
+    monkeypatch.setattr(value.c, 'selected', lambda *args: pytest.fail('Do not select a stopped dependency'))
+    stopped = []
+    monkeypatch.setattr(value.c, 'stop_one', stopped.append)
+    value.main()
+    assert stopped == ['grafana']
+    assert json.loads(capsys.readouterr().out)['success'] is True

@@ -148,12 +148,16 @@ def credentials(platform: str):
     config_path = directory / 'config/anp.json'
     if not config_path.exists():
         config_path = directory / 'defaults/anp.json'
-    ports = {'rustfs-console': 59003, **json.loads(config_path.read_text())['ports']}
+    native_config = json.loads(config_path.read_text())
+    ports = {'rustfs-console': 59003, **native_config['ports']}
     name = 'langfuse-web' if platform == 'langfuse' else 'rustfs-console' if platform == 'rustfs' else platform
     if target.hostname != '127.0.0.1' or target.port != ports[name]:
         raise HTTPException(409, '已配置外部平台，请使用外部平台账号')
     values = json.loads((directory / 'var/secrets/runtime.json').read_text())
     username, key = fields[platform]
+    if platform == 'langfuse' and native_config.get('external_resources_file'):
+        resources = json.loads(Path(native_config['external_resources_file']).read_text())
+        username = resources['namespace'] + '@anp.local'
     if platform == "rustfs":
         username = values["s3-access"]
     if not values.get(key):

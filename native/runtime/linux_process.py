@@ -16,23 +16,30 @@ def identity(pid):
 
 
 def listener_pids(port):
-    sockets = set()
-    for filename in ("/proc/net/tcp", "/proc/net/tcp6"):
+    return listener_snapshot([port])[port]
+
+
+def listener_snapshot(ports, *, proc_root=Path('/proc')):
+    """Read-only inventory snapshot; process mutations always take a fresh scan."""
+    result = {port: set() for port in ports}
+    sockets = {}
+    for filename in (proc_root / 'net/tcp', proc_root / 'net/tcp6'):
         try:
-            lines = Path(filename).read_text().splitlines()[1:]
+            lines = filename.read_text().splitlines()[1:]
         except FileNotFoundError:
             continue
         for line in lines:
             parts = line.split()
-            if parts[3] == "0A" and int(parts[1].rsplit(":", 1)[1], 16) == port:
-                sockets.add("socket:[" + parts[9] + "]")
-    result = set()
-    for folder in Path("/proc").iterdir():
+            port = int(parts[1].rsplit(":", 1)[1], 16)
+            if parts[3] == "0A" and port in result:
+                sockets.setdefault("socket:[" + parts[9] + "]", set()).add(port)
+    for folder in proc_root.iterdir():
         if not folder.name.isdigit():
             continue
         try:
-            if any(os.readlink(fd) in sockets for fd in (folder / "fd").iterdir()):
-                result.add(int(folder.name))
+            for fd in (folder / 'fd').iterdir():
+                for port in sockets.get(os.readlink(fd), ()):
+                    result[port].add(int(folder.name))
         except (FileNotFoundError, ProcessLookupError, PermissionError):
             continue
     return result

@@ -33,12 +33,37 @@ def test_console_inventory_marks_optional_missing_and_protected(bridge):
     assert set(status['configuration'])=={'bind','ports','observability'}
 
 
+def test_inventory_parallel_probes_preserve_order_and_ownership(bridge, monkeypatch):
+    import threading
+    value, config = bridge
+    names = value.c.ORDER[:4]
+    monkeypatch.setattr(value.c, 'ORDER', names)
+    barrier = threading.Barrier(4)
+    def owned(name):
+        barrier.wait(timeout=3)
+        return {'pid': 100 + names.index(name)}
+    monkeypatch.setattr(value.c, 'owned', owned)
+    monkeypatch.setattr(value.c, 'healthy', lambda name, config, **kwargs: name != names[-1])
+    items = value.inventory(config)['services']
+    assert [item['id'] for item in items] == names
+    assert items[-1]['state'] == 'unhealthy'
+    assert [item['pid'] for item in items] == list(range(100, 104))
+
+
 def test_console_refuses_stopping_auth_and_does_not_kill_foreign(bridge,monkeypatch):
     value,_=bridge
     monkeypatch.setattr(sys,'argv',['console_control.py','stop'])
     monkeypatch.setattr(sys,'stdin',io.StringIO(json.dumps({'service':'auth'})))
     monkeypatch.setattr(value.c,'stop_one',lambda name:pytest.fail('不得执行停止'))
     with pytest.raises(ValueError,match='终端维护'):value.main()
+
+
+def test_inventory_snapshot_rejects_port_shared_with_foreign_process(bridge, monkeypatch):
+    value, config = bridge
+    monkeypatch.setattr(value.c.os, 'getpgid', lambda pid: 100 if pid == 101 else 200)
+    assert value.c.group_owns_port({'pid': 100}, 58000, listeners={58000: {101}})
+    assert not value.c.group_owns_port({'pid': 100}, 58000, listeners={58000: {101, 201}})
+    assert not value.c.group_owns_port({'pid': 100}, 58000, listeners={58000: set()})
 
 
 def test_console_refuses_stopping_dependency_in_use(bridge,monkeypatch):

@@ -22,6 +22,8 @@ cd anp-macos-arm64        # Linux 为 anp-linux-amd64
 
 首次启动生成独立数据和随机凭据：`var/secrets/runtime.json`（权限 0600）。业务管理员为 `admin@anp.local`，密码字段为 `business-user-password`。不要提交或传播该文件。Langfuse、LiteLLM、RustFS 仍需要自己的登录时，控制台会注明，登录管理员可查看对应凭据。
 
+外部云资源模式下，Langfuse 初始化账号为 `<namespace>@anp.local`，并非本地模式的 `admin@anp.local`；请使用控制台“登录与凭据”显示的当前实例账号。平台内改过密码后，以修改后的密码为准。
+
 ## 单入口与功能
 
 业务和平台代理统一放在 **LangGraph 内置 Agent Server** 中，不再单独运行 Caddy。平台后台要求管理员身份；Supabase JWT/RLS、S3 签名和模型/观测 SDK 的密钥校验继续保留。

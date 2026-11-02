@@ -192,17 +192,23 @@ def listener_pids(port):
     return {int(s) for s in p.stdout.split()}
 
 
-def group_owns_port(state, port):
-    pids = listener_pids(port)
+def group_owns_port(state, port, *, listeners=None):
+    pids = listener_pids(port) if listeners is None else listeners.get(port, set())
     try:
         return bool(pids) and all(os.getpgid(pid) == state["pid"] for pid in pids)
     except ProcessLookupError:
         return False
 
 
-def healthy(name, config):
+def healthy(name, config, *, listeners=None):
     state = owned(name)
-    if not state or not group_owns_port(state, config["ports"][name]):
+    if not state:
+        return False
+    if listeners is None:
+        owns = group_owns_port(state, config["ports"][name])
+    else:
+        owns = group_owns_port(state, config["ports"][name], listeners=listeners)
+    if not owns:
         return False
     if name == "postgres":
         return execute([ROOT / "storage/postgres/bin/pg_isready", "-h", "127.0.0.1", "-p", config["ports"][name]], check=False).returncode == 0

@@ -3,6 +3,7 @@ import fcntl
 import hashlib
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor
 import control as c
 
 PROTECTED = {'business', 'auth', 'postgrest', 'storage-api', 'postgres', 'rustfs'}
@@ -29,16 +30,23 @@ def installed(name):
 
 def inventory(config):
     external = bool(config.get('external_resources_file'))
-    items = []
-    for name in c.ORDER:
+    listeners = None
+    if sys.platform.startswith('linux'):
+        from linux_process import listener_snapshot
+        listeners = listener_snapshot(config['ports'].values())
+    def inspect(name):
         remote = external and name in STORAGE
         record = running(name)
-        state = 'external' if remote else 'not-installed' if not installed(name) else 'ready' if record and c.healthy(name, config) else 'unhealthy' if record else 'conflict' if c.port_open(config['ports'][name]) else 'stopped'
-        items.append({'id': name, 'group': 'storage' if name in STORAGE else 'observability' if name in c.platforms.observability.SERVICES else 'platform',
+        ready = record and (c.healthy(name, config) if listeners is None else c.healthy(name, config, listeners=listeners))
+        state = 'external' if remote else 'not-installed' if not installed(name) else 'ready' if ready else 'unhealthy' if record else 'conflict' if c.port_open(config['ports'][name]) else 'stopped'
+        return {'id': name, 'group': 'storage' if name in STORAGE else 'observability' if name in c.platforms.observability.SERVICES else 'platform',
                       'port': config['ports'][name], 'state': state, 'pid': record['pid'] if record else None,
                       'can_start': not remote and installed(name) and state == 'stopped',
                       'can_stop': bool(record) and name not in PROTECTED,
-                      'note': '使用外部存储，不启动本机进程' if remote else '控制台运行依赖；请使用 ./anp stop 在终端维护' if name in PROTECTED else '未打包此可选组件' if not installed(name) else ''})
+                      'note': '使用外部存储，不启动本机进程' if remote else '控制台运行依赖；请使用 ./anp stop 在终端维护' if name in PROTECTED else '未打包此可选组件' if not installed(name) else ''}
+    # Read-only probes can run concurrently; all process mutations stay serial.
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        items = list(executor.map(inspect, c.ORDER))
     path = c.ROOT / 'config/anp.json'
     return {'services': items, 'configuration': {'bind': config['bind'], 'ports': config['ports'], 'observability': config.get('observability', {})}, 'revision': revision(path)}
 

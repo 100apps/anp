@@ -151,9 +151,19 @@ class TelemetryMiddleware:
                 state.logger.info("http.request.complete", extra=attributes)
 
 
+@functools.lru_cache(maxsize=2)
+def _tls_context(trust_env):
+    import httpx
+    return httpx.create_ssl_context(verify=True, trust_env=trust_env)
+
+
 def http_client(**options):
     """仅包装本项目 HTTP 调用，传播 traceparent，不记录 URL/查询串和请求正文。"""
     import httpx
+    # Reuse certificate configuration, not sessions or authentication decisions.
+    # Creating a new default SSL context blocks the event loop even for HTTP.
+    if 'verify' not in options:
+        options['verify'] = _tls_context(options.get('trust_env', True))
     class Client(httpx.AsyncClient):
         async def send(self, request, **kwargs):
             state = telemetry()

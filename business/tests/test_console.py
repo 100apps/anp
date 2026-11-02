@@ -66,6 +66,15 @@ def test_native_credentials_do_not_appear_in_inventory(client, monkeypatch, tmp_
     assert response.status_code == 200 and response.json()['password'] == 'fixture-not-a-real-secret'
     assert response.headers['cache-control'] == 'no-store'
     assert client.post('/api/console/credentials/dbx', headers=ADMIN).status_code == 404
+    resources = tmp_path / 'cloud.json'
+    resources.write_text(json.dumps({'namespace': 'fixture-cloud'}))
+    config = root / 'config/anp.json'
+    config.write_text(json.dumps({'ports': {'langfuse-web': 53100, 'litellm': 54000},
+                                 'external_resources_file': str(resources)}))
+    cloud = client.post('/api/console/credentials/langfuse', headers=ADMIN)
+    assert cloud.status_code == 200
+    assert cloud.json()['username'] == 'fixture-cloud@anp.local'
+    assert cloud.json()['password'] == 'fixture-not-a-real-secret'
     override = console.override_path()
     override.write_text(json.dumps({'platforms':{'langfuse':'https://external.invalid/'}}))
     assert client.post('/api/console/credentials/langfuse', headers=ADMIN).status_code == 409

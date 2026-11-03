@@ -68,3 +68,19 @@ def test_grafana_uses_shanghai_and_private_postgres_url(monkeypatch, tmp_path):
     assert unquote(raw_options) == "-c timezone=Asia/Shanghai -c role=test_role"
     assert "%20" in raw_options and "+" not in raw_options
     assert query["options"] == ["-c timezone=Asia/Shanghai -c role=test_role"]
+
+
+def test_grafana_url_has_no_space_bearing_driver_options(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+    from urllib.parse import parse_qs, urlsplit
+    ob = module(monkeypatch, "observability")
+    import external
+    resources = {"namespace": "test", "postgres": {"host": "localhost", "username": "test", "password": "test", "grafana_database": "grafana"}, "roles": {"grafana": "gf_role"}}
+    monkeypatch.setattr(external, "load", lambda config: resources)
+    c = SimpleNamespace(ROOT=tmp_path, env=lambda: {}, execute=lambda *args, **kwargs: SimpleNamespace(stdout="gf_role"))
+    query = parse_qs(urlsplit(ob.grafana_database(c, {}, {})).query)
+    assert query["TimeZone"] == ["Asia/Shanghai"]
+    assert query["role"] == ["gf_role"]
+    assert query["search_path"] == ["test_grafana"]
+    assert "options" not in query
+    assert all(" " not in item for values in query.values() for item in values)

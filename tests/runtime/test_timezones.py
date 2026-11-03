@@ -84,3 +84,16 @@ def test_grafana_url_has_no_space_bearing_driver_options(monkeypatch, tmp_path):
     assert query["search_path"] == ["test_grafana"]
     assert "options" not in query
     assert all(" " not in item for values in query.values() for item in values)
+
+
+def test_grafana_packaged_dashboard_defaults_to_shanghai(monkeypatch, tmp_path):
+    import json
+    tz = module(monkeypatch, "timezones")
+    folder = tmp_path / "defaults/otel/dashboards"
+    folder.mkdir(parents=True)
+    path = folder / "anp-overview.json"
+    path.write_text(json.dumps({"title": "ANP", "timezone": "browser"}))
+    assert tz.prepare_grafana_dashboards(tmp_path) == [str(path.relative_to(tmp_path))]
+    assert json.loads(path.read_text())["timezone"] == "Asia/Shanghai"
+    assert tz.prepare_grafana_dashboards(tmp_path) == []
+    assert json.loads((ROOT / "native/defaults/otel/dashboards/anp-overview.json").read_text())["timezone"] == "Asia/Shanghai"

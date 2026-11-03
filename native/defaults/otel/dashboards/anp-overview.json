@@ -3,7 +3,7 @@
   "title": "ANP 业务观测",
   "schemaVersion": 39,
   "version": 1,
-  "timezone": "browser",
+  "timezone": "Asia/Shanghai",
   "refresh": "15s",
   "time": {
     "from": "now-1h",

@@ -1,4 +1,5 @@
 """上海运行/展示时区；Langfuse 的固定 UTC 数据编码需显式列类型。"""
+import json
 import re
 from pathlib import Path
 
@@ -28,5 +29,20 @@ def prepare_langfuse_migrations(root):
             temporary.write_text(after)
             temporary.chmod(path.stat().st_mode & 0o777)
             temporary.replace(path)
+            changed.append(str(path.relative_to(root)))
+    return changed
+
+
+def prepare_grafana_dashboards(root):
+    """仅修正包内默认仪表盘；用户运行数据和个人偏好不在构建输入中。"""
+    root = Path(root)
+    changed = []
+    for path in sorted((root / "defaults/otel/dashboards").rglob("*.json")):
+        if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):
+            raise RuntimeError("Unexpected Grafana dashboard symlink")
+        value = json.loads(path.read_text())
+        if value.get("timezone") == "browser":
+            value["timezone"] = DEFAULT_TIMEZONE
+            path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
             changed.append(str(path.relative_to(root)))
     return changed

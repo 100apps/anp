@@ -20,7 +20,7 @@ def main(bundle=None, assemble_only=False, target="macos-arm64"):
     tools = BASE / "build-tools/node_modules/.bin"
     rust = BASE / "rust/bin"
     environment = {**os.environ, "PATH": f"{node}:{tools}:{rust}:" + os.environ["PATH"],
-        "CI": "true", "HUSKY": "0", "NEXT_TELEMETRY_DISABLED": "1", "DOCKER_BUILD": "1",
+        "TZ": "Asia/Shanghai", "CI": "true", "HUSKY": "0", "NEXT_TELEMETRY_DISABLED": "1", "DOCKER_BUILD": "1",
         "NEXT_PUBLIC_BASE_PATH": "/langfuse", "NEXT_IGNORE_BUILD_ERRORS": "true",
         "NODE_OPTIONS": "--max-old-space-size=4096", "pnpm_config_verify_deps_before_run": "false",
         "npm_config_registry": "https://registry.npmjs.org/", "CARGO_BUILD_JOBS": "2",
@@ -52,7 +52,7 @@ def main(bundle=None, assemble_only=False, target="macos-arm64"):
         run([node / "npm", "ci", "--prefix", tool_output, "--registry=https://registry.npmjs.org/", "--no-audit", "--no-fund"], ROOT, "native-tools")
         tool_stamp.write_text(expected)
     # 已完成的运行目录可复用；输入改变时重新编译，不能拿旧产物冒充新配置。
-    fingerprint = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    fingerprint = hashlib.sha256(Path(__file__).read_bytes() + (ROOT / "native/runtime/timezones.py").read_bytes()).hexdigest()
     runtime = BASE / "langfuse-build/runtime"
     if (runtime / "build.json").exists():
         receipt = json.loads((runtime / "build.json").read_text())
@@ -125,6 +125,8 @@ def main(bundle=None, assemble_only=False, target="macos-arm64"):
     assert (engines / ("schema-engine-" + engine_target)).exists(), "缺少 Prisma 原生迁移引擎"
     query = "libquery_engine-" + engine_target + (".dylib.node" if target == "macos-arm64" else ".so.node")
     assert (engines / query).exists(), "缺少 Prisma 原生查询引擎"
+    from runtime.timezones import prepare_langfuse_migrations
+    prepare_langfuse_migrations(runtime)
     shutil.copy2(source / "LICENSE", runtime / "LICENSE")
     (runtime / "build.json").write_text(json.dumps({"commit": sha, "recipe_sha256": fingerprint, "assembly_only": assemble_only, "rust": "1.98.0", "pnpm": "12.8.2", "turbo": "2.11.7",
         "source_lock_sha256": hashlib.sha256((source / "pnpm-lock.yaml").read_bytes()).hexdigest(),

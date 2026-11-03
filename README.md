@@ -41,6 +41,12 @@ cd anp-macos-arm64        # Linux 为 anp-linux-amd64
 
 OTel/LGTM 包含 Collector、Grafana、Prometheus、Loki、Tempo，默认不启动；Grafana 元数据使用 PostgreSQL。旧配置的 `gateway` 端口自动交给 Agent Server，避免改变已有入口地址。业务默认使用离线演示模型，真实供应商调用需要另行配置。
 
+## 时区
+
+ANP 管理的服务进程、本地 PostgreSQL（会话与日志）、ClickHouse 服务器以及 Grafana 默认使用 `Asia/Shanghai`；云 PostgreSQL 连接显式设置本次会话时区，不修改共享云服务的全局配置。
+
+Langfuse 官方客户端固定使用 UTC 文本编码时间，因此打包时为其 ClickHouse 建表 SQL 补齐显式 UTC 类型，保留原始精度。UTC 是内部时间点编码，不能把时间戳整体加 8 小时作为显示转换。已有数据库不会被启动器自动回填；旧版隐式时区表须先审计、备份，再单独迁移。Langfuse 页面保留上游的浏览器本地时区显示，上海浏览器显示上海时间。
+
 ## 目录
 
 源码按职责组织，生成文件只写入被忽略的 `var/`：

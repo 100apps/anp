@@ -133,7 +133,7 @@ def local_command(c, name, config, secret):
         data.mkdir(parents=True, exist_ok=True)
         conf = var / "run/clickhouse.xml"
         from xml.sax.saxutils import escape
-        c.write(conf, f'''<clickhouse><logger><level>warning</level><console>1</console></logger>
+        c.write(conf, f'''<clickhouse><timezone>Asia/Shanghai</timezone><logger><level>warning</level><console>1</console></logger>
 <listen_host>127.0.0.1</listen_host><http_port>{port}</http_port><tcp_port>{ports['clickhouse-native']}</tcp_port>
 <interserver_http_host>127.0.0.1</interserver_http_host><disable_internal_dns_cache>1</disable_internal_dns_cache>
 <path>{escape(str(data))}/</path><tmp_path>{escape(str(data))}/tmp/</tmp_path>

@@ -27,7 +27,7 @@ def grafana_database(c, config, secret):
         if not database or not role:
             raise ValueError("外部 Grafana 需要 postgres.grafana_database 和 roles.grafana，数据库及角色须预先准备")
         schema = resources["namespace"].replace("-", "_") + "_grafana"
-        environment = {**c.env(), "PGPASSWORD": pg["password"], "PGOPTIONS": "-c role=" + role,
+        environment = {**c.env(), "PGPASSWORD": pg["password"], "PGOPTIONS": "-c timezone=Asia/Shanghai -c role=" + role,
                        "PGSSLMODE": pg.get("sslmode", "prefer")}
         sql = [c.ROOT / "storage/postgres/bin/psql", "-h", pg["host"], "-p", str(pg.get("port", 5432)),
                "-U", pg["username"], "-d", database, "-v", "ON_ERROR_STOP=1", "-At"]
@@ -36,7 +36,7 @@ def grafana_database(c, config, secret):
             raise RuntimeError("Grafana schema 已属于其他角色，拒绝接管")
         if not owner:
             c.execute(sql, env=environment, input='CREATE SCHEMA "' + schema + '" AUTHORIZATION "' + role + '";')
-        query = urlencode({"sslmode": pg.get("sslmode", "prefer"), "search_path": schema, "options": "-c role=" + role})
+        query = urlencode({"sslmode": pg.get("sslmode", "prefer"), "search_path": schema, "options": "-c timezone=Asia/Shanghai -c role=" + role})
         return "postgres://" + quote(pg["username"], safe="") + ":" + quote(pg["password"], safe="") + "@" + pg["host"] + ":" + str(pg.get("port", 5432)) + "/" + quote(database, safe="") + "?" + query
     if not c.sql(config, secret, "SELECT 1 FROM pg_roles WHERE rolname='anp_grafana';").strip():
         c.sql(config, secret, "CREATE ROLE anp_grafana LOGIN PASSWORD '" + secret["grafana-db"] + "';")
@@ -153,7 +153,7 @@ def command(c, name, config, secret):
             "data = " + str(data), "logs = " + str(var / "logs/otel-grafana"),
             "plugins = " + str(var / "cache/otel/grafana/plugins"), "provisioning = " + str(provisioning),
             "[auth.anonymous]", "enabled = false", "[auth.proxy]", "enabled = true", "header_name = X-ANP-User", "header_property = username", "auto_sign_up = true", "whitelist = 127.0.0.1", "enable_login_token = false", "[auth]", "disable_login_form = true", "[users]", "allow_sign_up = false",
-            "[analytics]", "reporting_enabled = false", "check_for_updates = false", "check_for_plugin_updates = false",
+            "[date_formats]", "default_timezone = Asia/Shanghai", "[analytics]", "reporting_enabled = false", "check_for_updates = false", "check_for_plugin_updates = false",
             "[plugins]", "preinstall_disabled = true", "[database]", "type = postgres",
             "url = $__file{" + str(database_file) + "}", "max_open_conn = 5", "max_idle_conn = 2",
             "[security]", "admin_user = admin", "admin_password = $__file{" + str(password_file) + "}",

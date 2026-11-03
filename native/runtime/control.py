@@ -99,6 +99,7 @@ def env():
     locale = "C" if sys.platform.startswith("linux") else "en_US.UTF-8"
     return {"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(VAR / "cache"),
             "TMPDIR": str(VAR / "run"), "LANG": locale, "LC_ALL": locale,
+            "TZ": "Asia/Shanghai", "PGTZ": "Asia/Shanghai", "PGOPTIONS": "-c timezone=Asia/Shanghai",
             "LITELLM_LOCAL_MODEL_COST_MAP": "true", "DO_NOT_TRACK": "1", "LITELLM_TELEMETRY": "false",
             "PYTHON_DOTENV_DISABLED": "1",
             "PYTHONDONTWRITEBYTECODE": "1"}
@@ -275,7 +276,7 @@ def command(name, config, secret):
     environment = env()
     if name == "postgres":
         prepare_postgres(secret)
-        return [ROOT / "storage/postgres/bin/postgres", "-D", VAR / "data/postgres", "-p", port, "-h", "127.0.0.1", "-k", "", "-c", "shared_buffers=64MB", "-c", "max_connections=" + ("100" if PLATFORM else "30")], environment
+        return [ROOT / "storage/postgres/bin/postgres", "-D", VAR / "data/postgres", "-p", port, "-h", "127.0.0.1", "-k", "", "-c", "timezone=Asia/Shanghai", "-c", "log_timezone=Asia/Shanghai", "-c", "shared_buffers=64MB", "-c", "max_connections=" + ("100" if PLATFORM else "30")], environment
     if name == "redis":
         folder = VAR / "data/redis"
         folder.mkdir(parents=True, exist_ok=True)

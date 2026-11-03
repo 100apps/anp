@@ -38,9 +38,9 @@ def load(config):
 
 def pgurl(resources, database, role=None):
     pg = resources["postgres"]
-    query = {"application_name": resources["namespace"], "sslmode": pg.get("sslmode", "prefer")}
+    query = {"application_name": resources["namespace"], "sslmode": pg.get("sslmode", "prefer"), "options": "-c timezone=Asia/Shanghai"}
     if role:
-        query["options"] = "-c role=" + role
+        query["options"] += " -c role=" + role
         configured = roles(resources)
         for service, schema in (("auth", "auth"), ("storage", "storage")):
             if role == configured[service]:

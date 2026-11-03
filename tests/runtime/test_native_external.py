@@ -89,7 +89,7 @@ def test_external_roles_redis_cluster_and_schema_isolation():
     ext = runtime().external
     data = profile()
     auth = ext.environment("auth", data, "http://127.0.0.1:58000")
-    assert parse_qs(urlparse(auth["GOTRUE_DB_DATABASE_URL"]).query)["options"] == ["-c role=custom_auth -c search_path=auth,public,extensions"]
+    assert parse_qs(urlparse(auth["GOTRUE_DB_DATABASE_URL"]).query)["options"] == ["-c timezone=Asia/Shanghai -c role=custom_auth -c search_path=auth,public,extensions"]
     lf = ext.environment("langfuse-worker", data, "http://127.0.0.1:58000")
     assert lf["REDIS_CLUSTER_ENABLED"] == "true" and lf["REDIS_KEY_PREFIX"] == "{anp-test-036}:"
     assert parse_qs(urlparse(lf["DATABASE_URL"]).query)["schema"] == ["anp_test_036"]

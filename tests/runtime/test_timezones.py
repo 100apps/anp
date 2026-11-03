@@ -20,6 +20,7 @@ def test_runtime_defaults_ignore_host_timezone_without_importing_secrets(monkeyp
     environment = c.env()
     assert environment["TZ"] == environment["PGTZ"] == "Asia/Shanghai"
     assert environment["PGOPTIONS"] == "-c timezone=Asia/Shanghai"
+    assert all(environment[key] == str(c.ROOT / "storage/postgres/share/postgresql/timezone") for key in ("TZDIR", "ZONEINFO", "PYTHONTZPATH"))
     assert "PGPASSWORD" not in environment
     monkeypatch.setattr(c, "prepare_postgres", lambda value: None)
     command, _ = c.command("postgres", {"ports": {"postgres": 5432}}, {})

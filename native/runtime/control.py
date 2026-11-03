@@ -99,7 +99,11 @@ def env():
     locale = "C" if sys.platform.startswith("linux") else "en_US.UTF-8"
     return {"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(VAR / "cache"),
             "TMPDIR": str(VAR / "run"), "LANG": locale, "LC_ALL": locale,
-            "TZ": "Asia/Shanghai", "PGTZ": "Asia/Shanghai", "PGOPTIONS": "-c timezone=Asia/Shanghai",
+            "TZ": "Asia/Shanghai",
+            "TZDIR": str(ROOT / "storage/postgres/share/postgresql/timezone"),
+            "ZONEINFO": str(ROOT / "storage/postgres/share/postgresql/timezone"),
+            "PYTHONTZPATH": str(ROOT / "storage/postgres/share/postgresql/timezone"),
+            "PGTZ": "Asia/Shanghai", "PGOPTIONS": "-c timezone=Asia/Shanghai",
             "LITELLM_LOCAL_MODEL_COST_MAP": "true", "DO_NOT_TRACK": "1", "LITELLM_TELEMETRY": "false",
             "PYTHON_DOTENV_DISABLED": "1",
             "PYTHONDONTWRITEBYTECODE": "1"}

@@ -201,6 +201,7 @@ def build(target, profile="platform"):
                 payload = children[0] if len(children) == 1 and children[0].is_dir() else folder
                 section = "storage" if name == "postgres" else "platform" if name == "postgrest" else "tools"
                 copy_tree(payload, temporary / section / name)
+        assert (temporary / "storage/postgres/share/postgresql/timezone/Asia/Shanghai").is_file(), "官方 PostgreSQL 包缺少上海时区数据"
         for p in (temporary / "storage/postgres/bin").iterdir():
             if p.is_file():
                 p.chmod(p.stat().st_mode | 0o111)

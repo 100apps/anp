@@ -44,7 +44,7 @@ def test_langfuse_schema_explicit_utc_preserves_precision_and_other_timezones(mo
 
 def test_grafana_uses_shanghai_and_private_postgres_url(monkeypatch, tmp_path):
     from types import SimpleNamespace
-    from urllib.parse import parse_qs, urlsplit
+    from urllib.parse import parse_qs, unquote, urlsplit
     ob = module(monkeypatch, "observability")
     c = SimpleNamespace(ROOT=tmp_path / "bundle", VAR=tmp_path / "instance", env=lambda: {})
     def write(path, value):
@@ -60,5 +60,10 @@ def test_grafana_uses_shanghai_and_private_postgres_url(monkeypatch, tmp_path):
     assert (c.VAR / "secrets/grafana-database-url").read_text() == "postgres://private"
     external = module(monkeypatch, "external")
     resources = {"namespace": "test", "postgres": {"host": "localhost", "username": "test", "password": "test"}, "roles": {"langfuse": "test_role"}}
-    query = parse_qs(urlsplit(external.pgurl(resources, "langfuse", "test_role")).query)
+    raw_query = urlsplit(external.pgurl(resources, "langfuse", "test_role")).query
+    query = parse_qs(raw_query)
+    # libpq URI percent-decodes options; unlike form decoders it preserves literal +.
+    raw_options = next(item.split("=", 1)[1] for item in raw_query.split("&") if item.startswith("options="))
+    assert unquote(raw_options) == "-c timezone=Asia/Shanghai -c role=test_role"
+    assert "%20" in raw_options and "+" not in raw_options
     assert query["options"] == ["-c timezone=Asia/Shanghai -c role=test_role"]

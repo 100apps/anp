@@ -50,7 +50,7 @@ def pgurl(resources, database, role=None):
         # Prisma 在既有专用数据库中使用本次独立 schema，避免升级其他项目表。
         query["schema"] = resources["namespace"].replace("-", "_") + ("_litellm" if database == pg.get("litellm_database") else "")
     return ("postgresql://" + quote(pg["username"], safe="") + ":" + quote(pg["password"], safe="")
-            + "@" + pg["host"] + ":" + str(pg.get("port", 5432)) + "/" + quote(database, safe="") + "?" + urlencode(query))
+            + "@" + pg["host"] + ":" + str(pg.get("port", 5432)) + "/" + quote(database, safe="") + "?" + urlencode(query, quote_via=quote))
 
 
 def roles(resources):

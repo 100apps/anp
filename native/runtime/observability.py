@@ -36,7 +36,7 @@ def grafana_database(c, config, secret):
             raise RuntimeError("Grafana schema 已属于其他角色，拒绝接管")
         if not owner:
             c.execute(sql, env=environment, input='CREATE SCHEMA "' + schema + '" AUTHORIZATION "' + role + '";')
-        query = urlencode({"sslmode": pg.get("sslmode", "prefer"), "search_path": schema, "options": "-c timezone=Asia/Shanghai -c role=" + role})
+        query = urlencode({"sslmode": pg.get("sslmode", "prefer"), "search_path": schema, "options": "-c timezone=Asia/Shanghai -c role=" + role}, quote_via=quote)
         return "postgres://" + quote(pg["username"], safe="") + ":" + quote(pg["password"], safe="") + "@" + pg["host"] + ":" + str(pg.get("port", 5432)) + "/" + quote(database, safe="") + "?" + query
     if not c.sql(config, secret, "SELECT 1 FROM pg_roles WHERE rolname='anp_grafana';").strip():
         c.sql(config, secret, "CREATE ROLE anp_grafana LOGIN PASSWORD '" + secret["grafana-db"] + "';")

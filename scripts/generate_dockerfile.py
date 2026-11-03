@@ -185,6 +185,7 @@ COPY --from=litellm-build /opt/liteadmin /opt/liteadmin
 COPY --from=litellm-build /app/schema.prisma /app/schema.prisma
 COPY docker/licenses /usr/share/licenses/anp
 COPY docker/toolbox/runtime /opt/anp/runtime
+COPY native/runtime/timezones.py /opt/anp/runtime/timezones.py
 COPY docker/toolbox/versions.lock.json /opt/anp/versions.lock.json
 COPY docker/build/tools.lock.json /opt/anp/build-tools.lock.json
 COPY docker/toolbox/optimize.py /opt/anp/build/optimize.py
@@ -192,7 +193,7 @@ RUN ln -s /opt/anp/runtimes/node24/bin/node /usr/bin/node && /usr/bin/python3 /o
 FROM debian:trixie-slim AS toolbox
 COPY --from=assembled / /
 WORKDIR /opt/anp
-ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 NODE_ENV=production TZ=UTC
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 NODE_ENV=production TZ=Asia/Shanghai
 LABEL org.opencontainers.image.title="ANP" org.opencontainers.image.source="https://github.com/100apps/anp"
 EXPOSE 5432 6379 8123 9000 9002 9003 4224 3100 4000 3200 8000 9750
 STOPSIGNAL SIGTERM

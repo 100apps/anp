@@ -46,3 +46,11 @@ for executable in executables:
     dependencies=subprocess.run(['ldd',str(executable)],capture_output=True,text=True)
     assert 'not found' not in dependencies.stdout+dependencies.stderr, str(executable)+' 缺少动态运行库'
 print('官方二进制架构与动态运行库检查通过')
+
+# 镜像构建时固定官方 UTC 编码；不会连接或回填运行中的 ClickHouse。
+from timezones import explicit_langfuse_utc
+migrations = Path('/opt/anp/services/langfuse-web/packages/shared/clickhouse/migrations')
+assert migrations.is_dir(), '缺少 Langfuse ClickHouse 建表 SQL'
+for path in migrations.rglob('*.sql'):
+    assert not path.is_symlink() and path.resolve().is_relative_to(migrations.resolve()), 'SQL 路径异常'
+    path.write_text(explicit_langfuse_utc(path.read_text()))

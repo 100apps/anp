@@ -126,8 +126,8 @@ password_encryption='scram-sha-256'
 log_min_duration_statement=1000
 log_checkpoints=on
 log_connections=off
-log_timezone='UTC'
-timezone='UTC'
+log_timezone='Asia/Shanghai'
+timezone='Asia/Shanghai'
 """,UIDS['postgres'])
     atomic(conf/'redis.conf',f"""bind 0.0.0.0
 port 6379
@@ -144,6 +144,7 @@ save 900 1
 save 300 10
 """,UIDS['redis'])
     atomic(conf/'clickhouse.xml',f"""<clickhouse>
+<timezone>Asia/Shanghai</timezone>
 <logger><level>warning</level><console>1</console></logger>
 <listen_host>0.0.0.0</listen_host><http_port>8123</http_port><tcp_port>9000</tcp_port>
 <path>{DATA}/clickhouse/</path><tmp_path>{DATA}/clickhouse/tmp/</tmp_path>
@@ -228,7 +229,7 @@ def definitions(secret,limits):
     engine = 'linux-arm64-openssl-3.0.x' if platform.machine() == 'aarch64' else 'debian-openssl-3.0.x'
     public=os.getenv('ANP_PUBLIC_URL','http://127.0.0.1:51760').rstrip('/')
     pgurl=url('postgres','POSTGRES_PASSWORD')
-    common={'NODE_ENV':'production','TZ':'UTC','PATH':'/opt/anp/runtimes/node24/bin:/opt/anp/bin:/usr/bin:/bin',
+    common={'NODE_ENV':'production','TZ':'Asia/Shanghai','PGTZ':'Asia/Shanghai','PGOPTIONS':'-c timezone=Asia/Shanghai','PATH':'/opt/anp/runtimes/node24/bin:/opt/anp/bin:/usr/bin:/bin',
             'LD_LIBRARY_PATH':COMPAT,'NODE_OPTIONS':'--max-old-space-size=512','HOSTNAME':'0.0.0.0'}
     lf={'DATABASE_URL':url('langfuse','LANGFUSE_DB_PASSWORD','langfuse')+'?connection_limit=5&pool_timeout=30',
         'DIRECT_URL':url('langfuse','LANGFUSE_DB_PASSWORD','langfuse'),

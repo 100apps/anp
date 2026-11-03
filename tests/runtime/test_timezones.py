@@ -97,3 +97,21 @@ def test_grafana_packaged_dashboard_defaults_to_shanghai(monkeypatch, tmp_path):
     assert json.loads(path.read_text())["timezone"] == "Asia/Shanghai"
     assert tz.prepare_grafana_dashboards(tmp_path) == []
     assert json.loads((ROOT / "native/defaults/otel/dashboards/anp-overview.json").read_text())["timezone"] == "Asia/Shanghai"
+
+
+def test_docker_generated_configuration_defaults_to_shanghai(monkeypatch, tmp_path):
+    import sys
+    import xml.etree.ElementTree as ET
+    sys.path.insert(0, str(ROOT / "docker/toolbox/runtime"))
+    import settings
+    monkeypatch.setattr(settings, "DATA", tmp_path)
+    monkeypatch.setattr(settings.os, "chown", lambda *args, **kwargs: None)
+    secret, limits = settings.prepare()
+    pg = (tmp_path / "config/effective/postgresql.conf").read_text()
+    assert "log_timezone='Asia/Shanghai'" in pg
+    assert "timezone='Asia/Shanghai'" in pg
+    assert ET.parse(tmp_path / "config/effective/clickhouse.xml").findtext("timezone") == "Asia/Shanghai"
+    graph = settings.definitions(secret, limits)
+    assert all(service["env"]["TZ"] == "Asia/Shanghai" for service in graph.values())
+    assert "TZ=Asia/Shanghai" in (ROOT / "docker/toolbox/Dockerfile").read_text()
+    assert "COPY native/runtime/timezones.py /opt/anp/runtime/timezones.py" in (ROOT / "docker/toolbox/Dockerfile").read_text()
